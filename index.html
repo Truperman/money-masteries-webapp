@@ -6175,6 +6175,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item master-tool-item" onclick="showScreen('businessmaster')" id="nav-businessmaster"><span class="nav-item-icon">🏢</span> Business Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('financialmaster')" id="nav-financialmaster"><span class="nav-item-icon">💰</span> Financial Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('proshub')" id="nav-proshub"><span class="nav-item-icon">🧰</span> Pros Hub</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('geniemaster')" id="nav-geniemaster"><span class="nav-item-icon">🧞</span> Genie Agent Master</div>
     <div class="sidebar-section-label">Community</div>
     <div class="nav-item" onclick="showScreen('community')" id="nav-community"><span class="nav-item-icon">💬</span> Community</div>
     <div class="nav-item" onclick="showScreen('events')" id="nav-events" style="display:none"><span class="nav-item-icon">🎥</span> Live Events <span class="pro-tag">PRO</span></div>
@@ -7281,6 +7282,36 @@ document.addEventListener('DOMContentLoaded', function() {
             <thead><tr><th>Invoice #</th><th>Client</th><th>Amount</th><th>Status</th><th>Due</th><th></th></tr></thead>
             <tbody id="phInvoicesBody"></tbody>
           </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENIE AGENT MASTER (buy page — always open, no plan gate) -->
+    <div class="screen" id="screen-geniemaster" data-sbg="geniemaster">
+      <div class="screen-title">🧞 Genie Agent <span>Master</span></div>
+      <div class="comp-note" style="margin-bottom:20px">Done-for-you AI and marketing help — pick what you need below. Each is a one-time purchase; our team reaches out to get you set up right after checkout.</div>
+      <div class="mk-grid">
+        <div class="mk-card">
+          <span class="mk-badge purple">PRO SERVICE</span>
+          <div class="mk-emoji">🧞</div>
+          <div class="mk-name">Genie AI Agent</div>
+          <div class="mk-desc">Your own AI agent, set up and configured for your business — automations, lead follow-up, and 24/7 responses handled for you.</div>
+          <div class="mk-price-row"><span class="mk-price">$50</span></div>
+          <div class="mk-actions">
+            <button class="mk-share" onclick="shareProduct('s-genie', this)">🔗 Share &amp; Earn</button>
+            <button class="mk-buy" onclick="buyProduct('s-genie')">Buy</button>
+          </div>
+        </div>
+        <div class="mk-card">
+          <span class="mk-badge purple">PRO SERVICE</span>
+          <div class="mk-emoji">📢</div>
+          <div class="mk-name">Marketing Expert</div>
+          <div class="mk-desc">A dedicated marketing expert works with you directly — content, campaigns, and getting your offer in front of the right people.</div>
+          <div class="mk-price-row"><span class="mk-price">$99</span></div>
+          <div class="mk-actions">
+            <button class="mk-share" onclick="shareProduct('s-mktexpert', this)">🔗 Share &amp; Earn</button>
+            <button class="mk-buy" onclick="buyProduct('s-mktexpert')">Buy</button>
+          </div>
         </div>
       </div>
     </div>
@@ -11839,7 +11870,9 @@ var DEFAULT_PRODUCTS = [
   { id:'d-ai',    type:'digital',    emoji:'🤖', name:'AI Side-Hustle Pack',     price:47,  desc:'Prompt packs + automations to launch income streams' },
   { id:'s-reval', type:'service',    emoji:'🎓', name:'Education Revalidation Service', price:50, recurring:true, commissionRecurring:true, capTotal:3000,
     plan:'$50/month recurring — billing stops automatically once $3,000 total is paid in full',
-    desc:'A licensed professional revalidates your degree and education credentials for your country of origin — document review, translation coordination, and official submission handled for you. Pay as you go: just $50/month until your $3,000 total is complete, then it ends.' }
+    desc:'A licensed professional revalidates your degree and education credentials for your country of origin — document review, translation coordination, and official submission handled for you. Pay as you go: just $50/month until your $3,000 total is complete, then it ends.' },
+  { id:'s-genie',      type:'service', emoji:'🧞', name:'Genie AI Agent',    price:50, desc:'Your own AI agent, set up and configured for your business — automations, lead follow-up, and 24/7 responses handled for you.' },
+  { id:'s-mktexpert',  type:'service', emoji:'📢', name:'Marketing Expert',  price:99, desc:'A dedicated marketing expert works with you directly — content, campaigns, and getting your offer in front of the right people.' }
 ];
 window.UPLOADED_PRODUCTS = window.UPLOADED_PRODUCTS || [];
 
