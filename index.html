@@ -1580,6 +1580,9 @@ body{background:#0A0E1A;color:#e5e7eb;font-family:Inter,Segoe UI,sans-serif;min-
 .comp-section-title{font-size:.95rem;font-weight:700;color:#2E7BFF;margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid #1f2937}
 .comp-note{background:#1c1a0d;border:1px solid #2E7BFF40;border-radius:10px;padding:14px 18px;font-size:.8rem;color:#9ca3af;margin-bottom:20px;line-height:1.6}
 .comp-note b{color:#2E7BFF}
+.genie-upsell{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0d2118,#111827);border:1px solid #34d39950;color:#34d399;border-radius:10px;padding:9px 16px;font-size:.78rem;font-weight:700;cursor:pointer;margin-bottom:18px;transition:border-color .15s,transform .15s}
+.genie-upsell:hover{border-color:#34d399;transform:translateY(-1px)}
+.genie-upsell-arrow{opacity:.7}
 .comp-note b.p{color:#a855f7}
 
 @media(max-width:680px){
@@ -6953,6 +6956,20 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- MARKETING MASTER -->
     <div class="screen" id="screen-marketingmaster" data-sbg="marketingmaster">
       <div class="screen-title">🚀 <span>Marketing Master</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
+      <div class="mk-grid" style="margin-bottom:18px">
+        <div class="mk-card">
+          <span class="mk-badge purple">ADD-ON</span>
+          <div class="mk-emoji">📣</div>
+          <div class="mk-name">Ads &amp; Ad Spend Access</div>
+          <div class="mk-desc">Push and manage paid ads directly from Marketing Master — no AI agent included, just the ads &amp; ad spend tooling on its own.</div>
+          <div class="mk-price-row"><span class="mk-price">$25</span></div>
+          <div class="mk-actions">
+            <button class="mk-share" onclick="shareProduct('s-adsaccess', this)">🔗 Share &amp; Earn</button>
+            <button class="mk-buy" onclick="buyProduct('s-adsaccess')">Buy</button>
+          </div>
+        </div>
+      </div>
       <div style="border:1px solid #1f2937;border-radius:14px;overflow:hidden;height:calc(100vh - 170px);min-height:520px;background:#0A0E1A">
         <iframe src="marketing-master.html" title="Marketing Master" style="width:100%;height:100%;border:none;display:block"></iframe>
       </div>
@@ -6961,6 +6978,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- MARKETS MASTER (Elite Tools live here for now) -->
     <div class="screen" id="screen-marketsmaster" data-sbg="marketsmaster">
       <div class="screen-title">📈 <span>Markets Master</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
       <div class="payout-card">
         <div class="po-title">📈 Live market data, powered by real APIs</div>
         <div class="po-sub">Ask about crypto, stocks, forex, or futures — Markets Master pulls live prices before it answers, and shows where each number came from. Educational information only, not personalized financial advice.</div>
@@ -6986,6 +7004,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- BUSINESS MASTER (demo) -->
     <div class="screen" id="screen-businessmaster" data-sbg="businessmaster">
       <div class="screen-title">🏢 <span>Business Master</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="fm-demo-banner">
         <div class="fm-demo-icon">🧪</div>
@@ -7054,6 +7073,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- FINANCIAL MASTER (demo) -->
     <div class="screen" id="screen-financialmaster" data-sbg="financialmaster">
       <div class="screen-title">💰 <span>Financial Master</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="fm-demo-banner">
         <div class="fm-demo-icon">🧪</div>
@@ -7213,6 +7233,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- PROS HUB (native CRM tab — fulfills the CRM needs of every member, right inside Money Masteries) -->
     <div class="screen" id="screen-proshub" data-sbg="proshub">
       <div class="screen-title">🧰 <span>Pros Hub</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="fm-demo-banner">
         <div class="fm-demo-icon">🧪</div>
@@ -7301,6 +7322,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="mk-share" onclick="shareProduct('s-genie', this)">🔗 Share &amp; Earn</button>
             <button class="mk-buy" onclick="buyProduct('s-genie')">Buy</button>
           </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1f2937">
+            <div style="font-size:.72rem;color:#8ba0c4;margin-bottom:8px">Optional add-on — give this Genie the ability to run ads and manage ad spend:</div>
+            <button class="mk-buy" style="width:100%" onclick="buyProduct('s-adsaccess')">📣 Add Ads &amp; Ad Spend Access — $25</button>
+          </div>
         </div>
         <div class="mk-card">
           <span class="mk-badge purple">PRO SERVICE</span>
@@ -7312,6 +7337,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="mk-share" onclick="shareProduct('s-mktexpert', this)">🔗 Share &amp; Earn</button>
             <button class="mk-buy" onclick="buyProduct('s-mktexpert')">Buy</button>
           </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1f2937;font-size:.72rem;color:#34d399;font-weight:700">✓ Ads &amp; Ad Spend access included free</div>
         </div>
       </div>
     </div>
@@ -8349,6 +8375,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="rei-demo-btn" onclick="reiDemoOn()" title="See what REI Master looks like once a data source is connected">▶ View Demo</button>
     <button class="rei-gear" onclick="reiOpenSettings()">⚙ Setup</button>
   </div>
+
+  <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
   <!-- Jarvis AI chat -->
   <div class="payout-card" style="margin-bottom:20px">
@@ -11872,7 +11900,8 @@ var DEFAULT_PRODUCTS = [
     plan:'$50/month recurring — billing stops automatically once $3,000 total is paid in full',
     desc:'A licensed professional revalidates your degree and education credentials for your country of origin — document review, translation coordination, and official submission handled for you. Pay as you go: just $50/month until your $3,000 total is complete, then it ends.' },
   { id:'s-genie',      type:'service', emoji:'🧞', name:'Genie AI Agent',    price:50, desc:'Your own AI agent, set up and configured for your business — automations, lead follow-up, and 24/7 responses handled for you.' },
-  { id:'s-mktexpert',  type:'service', emoji:'📢', name:'Marketing Expert',  price:99, desc:'A dedicated marketing expert works with you directly — content, campaigns, and getting your offer in front of the right people.' }
+  { id:'s-mktexpert',  type:'service', emoji:'📢', name:'Marketing Expert',  price:99, desc:'A dedicated marketing expert works with you directly — content, campaigns, and getting your offer in front of the right people. Includes Ads & Ad Spend access free.' },
+  { id:'s-adsaccess',  type:'service', emoji:'📣', name:'Ads & Ad Spend Access', price:25, desc:'Push and manage paid ads and ad spend — sold on its own (via Marketing Master) or as an add-on to the $50 Genie AI Agent. Included free with the $99 Marketing Expert.' }
 ];
 window.UPLOADED_PRODUCTS = window.UPLOADED_PRODUCTS || [];
 
