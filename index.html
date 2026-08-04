@@ -394,7 +394,7 @@
   window.renderProductMockup = async (prompt) => { return await _generateImage(prompt); };
   // Record a print-on-demand order. A Cloud Function submits paid orders to Printful.
   window.requestPayout = async (obj) => {
-    try { await addDoc(collection(db, 'payouts'), { uid: obj.uid || '', email: obj.email, amount: Number(obj.amount) || 0, note: obj.note || 'Money Masteries commission', status: 'pending', createdAt: serverTimestamp() }); }
+    try { await addDoc(collection(db, 'payouts'), { uid: obj.uid || '', email: obj.email, amount: Number(obj.amount) || 0, note: obj.note || 'Money Masteries commission', status: 'pending', requestedByMember: !!obj.requestedByMember, createdAt: serverTimestamp() }); }
     catch(e){ console.error('requestPayout:', e); }
   };
   window.uploadIntroVideo = async (file, title) => {
@@ -6512,6 +6512,13 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="stat-card"><div class="stat-label">Pending Payout</div><div class="stat-value green" id="commPending">$0.00</div></div>
         <div class="stat-card"><div class="stat-label">Paid Out</div><div class="stat-value" id="commPaid">$0.00</div></div>
       </div>
+      <div class="comp-note" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <span>Payouts are sent manually, not automatically — once a sale is verified, it's added to your Pending Payout balance above. When you're ready to get paid, request it below and it'll be reviewed and sent.</span>
+        <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <button class="admin-save-btn" id="reqPayoutBtn" onclick="requestMyPayout()">💸 Request Payout</button>
+          <span id="reqPayoutStatus" style="font-size:.72rem"></span>
+        </span>
+      </div>
       <div style="background:#111827;border:1px solid #1f2937;border-radius:14px;overflow:hidden">
         <div style="padding:16px;border-bottom:1px solid #1f2937;font-size:.88rem;font-weight:700">Transaction History</div>
         <div id="commTableWrap">
@@ -7351,6 +7358,11 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-banner-title">Welcome, Dr. Gainz</div>
           <div class="admin-banner-sub">Full platform control — only this account can see this portal. Change any member's plan, grant free upgrades, or set custom discounts.</div>
         </div>
+      </div>
+      <div class="admin-table-wrap" style="margin-bottom:22px">
+        <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🔔 Payout Requests</div>
+        <div class="mpm-sub" style="padding:0 16px 12px">Members who've asked to be paid — verified commissions only (see each member's Total Earned / Pending Payout below for the full picture). Mark paid once you've actually sent it.</div>
+        <div id="admPayoutReqWrap"><div style="padding:16px;color:#6b7280;text-align:center">Loading…</div></div>
       </div>
       <div class="mpm-card" id="genieServiceCard" style="border-color:#34d39950;background:linear-gradient(135deg,#0d2118,#111827)">
         <div class="mpm-title" style="color:#34d399">🧞 Genie Service — Client Site Builder</div>
@@ -8537,7 +8549,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 // ── SCREEN NAVIGATION ────────────────────────────────────────────────────────
 function showScreen(id) {
-  if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
+  if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); if (typeof renderPayoutRequestStatus === 'function') renderPayoutRequestStatus(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
   if (id === 'marketsmaster') setTimeout(function(){ if (typeof renderEliteTools === 'function') renderEliteTools(); if (typeof renderMarketsMaster === 'function') renderMarketsMaster(); }, 30);
   if (id === 'marketplace')  setTimeout(function(){ if (typeof renderMarketplace === 'function') renderMarketplace(); }, 30);
@@ -8545,7 +8557,7 @@ function showScreen(id) {
   if (id === 'mystore')      setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
   if (id === 'revalidation') setTimeout(function(){ if (typeof buildRevalLink === 'function') buildRevalLink(); }, 30);
   if (id === 'community')    setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
-  if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); }, 80);
+  if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); }, 80);
   if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); }, 30);
   if (id === 'businessmaster') setTimeout(function(){ if (typeof renderBusinessMaster === 'function') renderBusinessMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('businessmaster'); }, 30);
   if (id === 'financialmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('financialmaster'); }, 30);
@@ -8776,6 +8788,102 @@ async function loadCommissions() {
     wrap.innerHTML = `<table class="comm-table"><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
   } catch(e) { console.log('Commissions:', e); }
 }
+
+// ── MEMBER-INITIATED PAYOUT REQUESTS ─────────────────────────────────────────
+// Payouts are never automatic (David sends them manually) — this just lets a
+// member say "I'm ready to be paid" instead of silently waiting. It writes to
+// the same `payouts` collection the Master Portal's "Pay via PayPal" button
+// already uses, tagged requestedByMember:true so admin can tell the two apart.
+async function requestMyPayout(){
+  if (!window.currentUser || !window.userData) { if(typeof showNotifToast==='function') showNotifToast('⚠ Not logged in','Please log in first.'); return; }
+  var pending = Number(window.userData.pendingPayout) || 0;
+  if (pending <= 0) { if(typeof showNotifToast==='function') showNotifToast('Nothing to request yet','Your pending payout is $0.00 right now — share your affiliate link to start earning.'); return; }
+  var pi = window.userData.payoutInfo || {};
+  if (!pi.paypal) { if(typeof showNotifToast==='function') showNotifToast('⚠ Add a payout email first','Go to My Account and add your PayPal email so we know where to send it.'); showScreen('account'); return; }
+  var btn = document.getElementById('reqPayoutBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  try {
+    var FB = window.FB;
+    var already = false;
+    if (FB && FB.db) {
+      var snap = await FB.getDocs(FB.query(FB.collection(FB.db,'payouts'), FB.where('uid','==',window.currentUser.uid)));
+      snap.forEach(function(d){ var v = d.data(); if (v.status === 'pending' && v.requestedByMember) already = true; });
+    }
+    if (already) {
+      if(typeof showNotifToast==='function') showNotifToast('Already requested','You already have a payout request pending review.');
+    } else {
+      await window.requestPayout({ uid: window.currentUser.uid, email: pi.paypal, amount: pending, note: 'Member-requested payout', requestedByMember: true });
+      if(typeof showNotifToast==='function') showNotifToast('✅ Payout requested', '$'+pending.toFixed(2)+' requested — it\'ll be reviewed and sent manually.');
+    }
+    renderPayoutRequestStatus();
+  } catch(e) {
+    console.error('requestMyPayout:', e);
+    if(typeof showNotifToast==='function') showNotifToast('⚠ Something went wrong','Could not submit your request — try again in a moment.');
+    if (btn) { btn.disabled = false; btn.textContent = '💸 Request Payout'; }
+  }
+}
+window.requestMyPayout = requestMyPayout;
+
+async function renderPayoutRequestStatus(){
+  var wrap = document.getElementById('reqPayoutStatus'); var btn = document.getElementById('reqPayoutBtn');
+  if (!wrap || !window.FB || !window.currentUser) return;
+  try {
+    var FB = window.FB;
+    var snap = await FB.getDocs(FB.query(FB.collection(FB.db,'payouts'), FB.where('uid','==',window.currentUser.uid)));
+    var pendingReq = null;
+    snap.forEach(function(d){ var v = d.data(); if (v.status === 'pending' && v.requestedByMember) pendingReq = v; });
+    if (pendingReq) {
+      wrap.textContent = '⏳ $' + Number(pendingReq.amount||0).toFixed(2) + ' requested — pending review.';
+      wrap.style.color = '#facc15';
+      if (btn) { btn.style.display = 'none'; }
+    } else {
+      wrap.textContent = '';
+      if (btn) { btn.style.display = 'inline-block'; btn.disabled = false; btn.textContent = '💸 Request Payout'; }
+    }
+  } catch(e) { console.log('renderPayoutRequestStatus:', e); }
+}
+window.renderPayoutRequestStatus = renderPayoutRequestStatus;
+
+// ── MASTER PORTAL: incoming member payout requests ───────────────────────────
+async function loadPayoutRequests(){
+  var wrap = document.getElementById('admPayoutReqWrap');
+  if (!wrap || !window.FB) return;
+  wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Loading…</div>';
+  try {
+    var FB = window.FB;
+    var snap = await FB.getDocs(FB.query(FB.collection(FB.db,'payouts'), FB.where('status','==','pending')));
+    var list = [];
+    snap.forEach(function(d){ var v = d.data(); if (v.requestedByMember) list.push(Object.assign({ id: d.id }, v)); });
+    renderPayoutRequests(list);
+  } catch(e) { console.log('loadPayoutRequests:', e); wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Could not load requests.</div>'; }
+}
+window.loadPayoutRequests = loadPayoutRequests;
+
+function renderPayoutRequests(list){
+  var wrap = document.getElementById('admPayoutReqWrap');
+  if (!wrap) return;
+  if (!list.length) { wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">No pending payout requests right now.</div>'; return; }
+  wrap.innerHTML = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Member</th><th>Amount</th><th>Requested</th><th></th></tr></thead><tbody>' +
+    list.map(function(r){
+      var member = (window.admMembers||[]).filter(function(m){ return m.id === r.uid; })[0];
+      var name = member ? (member.name || member.email) : (r.email || r.uid);
+      var date = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleDateString() : '—';
+      return '<tr><td>'+name+'</td><td style="color:#2E7BFF;font-weight:700">$'+Number(r.amount||0).toFixed(2)+'</td><td>'+date+'</td>'+
+        '<td><button class="admin-save-btn" onclick="adminFulfillPayoutRequest(\''+r.id+'\',\''+r.uid+'\')">✓ Mark Paid</button></td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+async function adminFulfillPayoutRequest(reqId, uid){
+  try {
+    var FB = window.FB;
+    if (FB && FB.db) { await FB.updateDoc(FB.doc(FB.db,'payouts',reqId), { status: 'paid', paidAt: FB.serverTimestamp() }); }
+    if (typeof window.adminMarkPaid === 'function') await window.adminMarkPaid(uid);
+    if (typeof showNotifToast==='function') showNotifToast('✓ Marked paid','Their pending payout is reset to $0.');
+    loadPayoutRequests();
+    if (typeof window.adminLoadMembers === 'function') setTimeout(window.adminLoadMembers, 700);
+  } catch(e) { console.error('adminFulfillPayoutRequest:', e); if (typeof showNotifToast==='function') showNotifToast('⚠ Error','Could not mark this paid — try again.'); }
+}
+window.adminFulfillPayoutRequest = adminFulfillPayoutRequest;
 
 // ── COPY & SHARE ──────────────────────────────────────────────────────────────
 function copyAffLink(textId, btnId) {
@@ -12376,21 +12484,28 @@ function renderOrderPay(){
           return actions.resolve();
         },
         createOrder:function(data, actions){ return actions.order.create({ purchase_units:[{ amount:{ value:String(Number(_ordProduct.price).toFixed(2)) }, description:(_ordProduct.name||'Order').slice(0,120) }] }); },
-        onApprove:function(data, actions){ return actions.order.capture().then(function(){ finalizeOrder(true); }); }
+        onApprove:function(data, actions){ return actions.order.capture().then(function(){ finalizeOrder(true, data.orderID); }); }
       }).render('#ordPayBtns');
     }catch(e){ if(fb){ fb.style.display='inline-block'; fb.textContent='Place order'; } }
   });
 }
-function finalizeOrder(paid){
+function finalizeOrder(paid, paypalOrderId){
   if(!_ordProduct) return;
   if(!orderFieldsValid()){ if(typeof showNotifToast==='function') showNotifToast('\u26a0 Missing info','Please fill in your details'+(orderIsPhysical()?' and shipping address':'')+'.'); return; }
   var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  // sellerCode: a user-uploaded product carries its own owner's affiliate code
+  // (ownerCode). Everything else in the catalog (Masters, Genie, digital
+  // courses, services) has no owner \u2014 credit goes to whoever's ?ref= link the
+  // buyer actually arrived through instead, via mmGetRef(). This is what
+  // makes "Share & Earn" links actually pay out for catalog products, not
+  // just member-uploaded ones.
   var order={
     productId:_ordProduct.id, productName:_ordProduct.name,
     category:_ordProduct.category||(_ordProduct.custom?'pod':'digital'), provider:_ordProduct.provider||'',
     base:_ordProduct.base||'', baseName:_ordProduct.baseName||'', design:_ordProduct.design||'',
     price:Number(_ordProduct.price)||0, paid:!!paid,
-    sellerUid:_ordProduct.ownerUid||'', sellerCode:_ordProduct.ownerCode||'',
+    paypalOrderId: paypalOrderId || '',
+    sellerUid:_ordProduct.ownerUid||'', sellerCode:_ordProduct.ownerCode || (typeof mmGetRef==='function' ? mmGetRef() : null) || '',
     buyer:{ name:g('ordName'), email:g('ordEmail'), address1:g('ordAddr'), city:g('ordCity'), state:g('ordState'), zip:g('ordZip'), country:g('ordCountry')||'United States' }
   };
   var done=function(){
