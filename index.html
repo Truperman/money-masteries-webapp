@@ -121,6 +121,20 @@
     return res.data;
   };
 
+  // Store checkout (Stripe) — see functions/index.js createStoreCheckoutSession
+  // / storeCheckoutWebhook. Replaces the PayPal JS SDK Buttons flow that used
+  // to render in #ordPayBtns; see buyProduct()/renderOrderPay() below.
+  window.callCreateStoreCheckoutSession = async (orderData) => {
+    const fn = httpsCallable(functionsClient, 'createStoreCheckoutSession');
+    const res = await fn(orderData);
+    return res.data;
+  };
+  window.callGetStoreOrder = async (sessionId) => {
+    const fn = httpsCallable(functionsClient, 'getStoreOrder');
+    const res = await fn({ sessionId });
+    return res.data;
+  };
+
   // Generate a unique affiliate code from uid
   function makeAffCode(uid) {
     return "MM" + uid.substring(0,6).toUpperCase();
@@ -817,7 +831,7 @@
   }
 
   // Plan pricing — keep in sync with the Compensation Plan / PayPal buttons
-  const PLAN_PRICES = { free: 0, basic: 19, pro: 57, elite: 97 };
+  const PLAN_PRICES = { free: 0, basic: 19.99, pro: 50, elite: 99 };
   function joinedMillis(m) {
     const j = m && m.joinedAt;
     if (!j) return 0;
@@ -930,7 +944,7 @@
         '<td><span class="admin-pill ' + plan + '">' + plan.toUpperCase() + '</span></td>' +
         '<td><select class="admin-plan-sel" id="plan-' + m.id + '">' +
           '<option value="free"'  + (plan==='free' ?' selected':'') + '>Free</option>' +
-          '<option value="basic"' + (plan==='basic'?' selected':'') + '>Basic</option>' +
+          '<option value="basic"' + (plan==='basic'?' selected':'') + '>MEH-mbership</option>' +
           '<option value="pro"'   + (plan==='pro'  ?' selected':'') + '>Pro (comped)</option>' +
           '<option value="elite"' + (plan==='elite'?' selected':'') + '>Elite (comped)</option>' +
         '</select></td>' +
@@ -6100,25 +6114,16 @@ document.addEventListener('DOMContentLoaded', function() {
         AI coach, and affiliate earnings.
       </div>
       <div class="pay-tiers" style="margin:18px 0">
-        <div class="pay-tier"><b>Basic</b> — $19/mo · 30% one-time, no Masters</div>
-        <div class="pay-tier pro"><b>Pro</b> — $57/mo · all Masters + 50% commissions + Team</div>
-        <div class="pay-tier elite"><b>Elite</b> — $97/mo · everything + revenue-sharing dividends</div>
+        <div class="pay-tier"><b>MEH-mbership</b> — $19.99/mo · 30% one-time, no Masters</div>
+        <div class="pay-tier pro"><b>Pro</b> — $50/mo · all Masters + 50% commissions + Team</div>
+        <div class="pay-tier elite"><b>Elite</b> — $99/mo · everything + revenue-sharing dividends</div>
       </div>
-      <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" class="pay-form">
-        <input type="hidden" name="cmd" value="_s-xclick" />
-        <input type="hidden" name="hosted_button_id" value="PVSHMXY9EEP7L" />
-        <input type="hidden" name="on0" value="MEMBERSHIP OPTIONS" />
-        <input type="hidden" name="custom" id="gatePpCustom" value="" />
-        <label class="pay-label">Choose your membership</label>
-        <select name="os0" class="pay-select" id="gatePpSelect">
-          <option value="BASIC">BASIC — $19.00 USD / month</option>
-          <option value="PRO" selected>PRO — $57.00 USD / month</option>
-          <option value="ELITE">ELITE — $97.00 USD / month</option>
-        </select>
-        <input type="hidden" name="currency_code" value="USD" />
-        <button type="submit" class="pay-submit">Subscribe with PayPal →</button>
-      </form>
-      <div class="pay-secure">🔒 Secure checkout via PayPal · Cancel anytime</div>
+      <div class="pay-form" style="display:flex;flex-direction:column;gap:10px">
+        <button type="button" class="pay-submit" onclick="openMembershipCheckout('basic')">Subscribe to Basic — $19.99/mo →</button>
+        <button type="button" class="pay-submit" onclick="openMembershipCheckout('pro')" style="background:#2E7BFF">Subscribe to Pro — $50/mo →</button>
+        <button type="button" class="pay-submit" onclick="openMembershipCheckout('elite')" style="background:#a855f7">Subscribe to Elite — $99/mo →</button>
+      </div>
+      <div class="pay-secure">🔒 Secure checkout via Stripe · Cancel anytime</div>
       <div style="margin-top:18px;text-align:center;font-size:.78rem">
         <a onclick="doSignOut()" style="cursor:pointer;color:#6b7280;text-decoration:underline">Sign out</a>
       </div>
@@ -6301,7 +6306,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item" onclick="showScreen('dividends')" id="nav-dividends" style="display:none"><span class="nav-item-icon">💎</span> Elite Dividends</div>
     <div class="nav-item" onclick="showScreen('marketplace')" id="nav-marketplace"><span class="nav-item-icon">🛒</span> Marketplace</div>
     <div class="nav-item" onclick="showScreen('revalidation')" id="nav-revalidation"><span class="nav-item-icon">🎓</span> Revalidation Service</div>
-    <div class="nav-item" onclick="showScreen('studio')" id="nav-studio" style="display:none"><span class="nav-item-icon">🎨</span> Create Product <span class="pro-tag" style="background:#a855f7;color:#fff">ELITE</span></div>
+    <div class="nav-item" onclick="openProductStudio()" id="nav-studio" style="display:none"><span class="nav-item-icon">🎨</span> Create Product <span class="pro-tag" style="background:#a855f7;color:#fff">ELITE</span></div>
     <div class="nav-item" onclick="showScreen('mystore')" id="nav-mystore" style="display:none"><span class="nav-item-icon">🛍</span> My Store</div>
     <div class="sidebar-section-label">Master Tools</div>
     <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon">🏘️</span> REI Master</div>
@@ -6557,38 +6562,38 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="comp-note" style="margin-bottom:18px"><b>Every plan is shareable.</b> Tap "Share This Plan" on any tier below to copy a link with your affiliate code baked in — send people straight to the plan that fits them, and earn when they join.</div>
       <div class="comp-tier-grid">
         <div class="comp-tier">
-          <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">BASIC</div>
-          <div class="comp-tier-price">$19<sub>/mo</sub></div>
+          <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">MEH-MBERSHIP</div>
+          <div class="comp-tier-price">$19.99<sub>/mo</sub></div>
           <div class="comp-tier-label">Full course access</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> Full access: Day Trading, Real Estate, E-Commerce</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 30% commission — one-time, not recurring</div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No team / downline earnings</span></div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No Master Tools included — unlock any single Master for $25</span></div>
-          <button class="bm-add-btn" style="width:100%;margin-top:12px;background:#3b82f6" onclick="openUpgradeModal('basic')">💳 Subscribe Now — $19/mo</button>
+          <button class="bm-add-btn" style="width:100%;margin-top:12px;background:#3b82f6" onclick="openUpgradeModal('basic')">💳 Subscribe Now — $19.99/mo</button>
           <button class="mk-share" style="width:100%;margin-top:8px" onclick="sharePlan('basic', this)">🔗 Share This Plan</button>
         </div>
         <div class="comp-tier pro">
           <div class="comp-tier-badge pro">PRO ⚡</div>
-          <div class="comp-tier-price">$57<sub>/mo</sub></div>
+          <div class="comp-tier-price">$50<sub>/mo</sub></div>
           <div class="comp-tier-label">Everything in Basic, plus team earnings</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> AI Coach + Live Events access</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> All Master Tools: REI, Marketing, Markets, Business, Financial &amp; Pros Hub</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 50% direct + 2% team bonus across 3 levels, recurring every month</div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Elite store / dropshipping</span></div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Revenue-sharing dividends (Elite only)</span></div>
-          <button class="bm-add-btn" style="width:100%;margin-top:12px" onclick="openUpgradeModal('pro')">💳 Subscribe Now — $57/mo</button>
+          <button class="bm-add-btn" style="width:100%;margin-top:12px" onclick="openUpgradeModal('pro')">💳 Subscribe Now — $50/mo</button>
           <button class="mk-share" style="width:100%;margin-top:8px" onclick="sharePlan('pro', this)">🔗 Share This Plan</button>
         </div>
         <div class="comp-tier elite">
           <div class="comp-tier-badge elite">ELITE 💎</div>
-          <div class="comp-tier-price" style="color:#a855f7">$97<sub>/mo</sub></div>
+          <div class="comp-tier-price" style="color:#a855f7">$99<sub>/mo</sub></div>
           <div class="comp-tier-label">Everything, plus revenue-sharing dividends</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> Everything in Pro — all Master Tools included</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> Your own branded eCommerce store</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> Create Product studio (dropship + print-on-demand)</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> 50% direct + tiered 5/3/2/1% team bonus to level 5</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> 💎 Monthly revenue-sharing dividend from the company's growth pool</div>
-          <button class="bm-add-btn" style="width:100%;margin-top:12px;background:#a855f7" onclick="openUpgradeModal('elite')">💳 Subscribe Now — $97/mo</button>
+          <button class="bm-add-btn" style="width:100%;margin-top:12px;background:#a855f7" onclick="openUpgradeModal('elite')">💳 Subscribe Now — $99/mo</button>
           <button class="mk-share" style="width:100%;margin-top:8px" onclick="sharePlan('elite', this)">🔗 Share This Plan</button>
         </div>
       </div>
@@ -6647,7 +6652,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="calc-line"><span>Team downline (<span id="calcRateLbl">2%</span>)</span><b id="calcOutMLM">$0</b></div>
           <div class="calc-line"><span>Product commissions (50%)</span><b id="calcOutProd">$0</b></div>
           <div class="calc-line total"><span>Monthly payout</span><b id="calcOutTotal">$0</b></div>
-          <div class="calc-note">Pro earns 2% on levels 2–4; Elite earns a tiered 5/3/2/1% on levels 2–5 (shown blended). Assumes $57 Pro / $97 Elite memberships and $97 avg product. Educational estimate — actual results depend on effort.</div>
+          <div class="calc-note">Pro earns 2% on levels 2–4; Elite earns a tiered 5/3/2/1% on levels 2–5 (shown blended). Assumes $50 Pro / $99 Elite memberships and $99 avg product. Educational estimate — actual results depend on effort.</div>
         </div>
       </div>
 
@@ -6730,8 +6735,8 @@ document.addEventListener('DOMContentLoaded', function() {
       <!-- TIER SUMMARY CARDS -->
       <div class="comp-tier-grid">
         <div class="comp-tier">
-          <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">BASIC</div>
-          <div class="comp-tier-price">$19<sub>/mo</sub></div>
+          <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">MEH-MBERSHIP</div>
+          <div class="comp-tier-price">$19.99<sub>/mo</sub></div>
           <div class="comp-tier-pct" style="color:#60a5fa">30%</div>
           <div class="comp-tier-label">one-time, on your sale only</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 30% commission — one-time, not recurring</div>
@@ -6741,10 +6746,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="comp-tier pro">
           <div class="comp-tier-badge pro">PRO ⚡</div>
-          <div class="comp-tier-price">$57<sub>/mo</sub></div>
+          <div class="comp-tier-price">$50<sub>/mo</sub></div>
           <div class="comp-tier-pct gold">50%</div>
           <div class="comp-tier-label">direct + 2% on 3 levels</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> $28.50/mo per direct Pro referral</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> $25.00/mo per direct Pro referral</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> $1.14/mo per person on levels 2–4</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 50% on digital product sales</div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Elite store / dropshipping</span></div>
@@ -6752,10 +6757,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="comp-tier elite">
           <div class="comp-tier-badge elite">ELITE 💎</div>
-          <div class="comp-tier-price" style="color:#a855f7">$97<sub>/mo</sub></div>
+          <div class="comp-tier-price" style="color:#a855f7">$99<sub>/mo</sub></div>
           <div class="comp-tier-pct purple">50%</div>
           <div class="comp-tier-label">direct + 5/3/2/1% to level 5</div>
-          <div class="comp-feat"><span class="ci ci-p">✦</span> $28.50/mo per direct Pro referral</div>
+          <div class="comp-feat"><span class="ci ci-p">✦</span> $25.00/mo per direct Pro referral</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> Tiered 5/3/2/1% on levels 2–5</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> 50% on all digital product sales</div>
           <div class="comp-feat"><span class="ci ci-p">✦</span> Personal branded eCommerce store</div>
@@ -6772,7 +6777,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div class="mlm-wrap" id="mlm-pro">
-        <div class="mlm-title">You refer 3 people · each refers 3 more · $57/mo Pro membership</div>
+        <div class="mlm-title">You refer 3 people · each refers 3 more · $50/mo Pro membership</div>
         <div class="mlm-tree">
           <div class="mlm-row">
             <div class="mlm-row-label">You (Pro Member)</div>
@@ -6782,43 +6787,43 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 1 — 3 Direct Referrals → 50% = $28.50 each</div>
+            <div class="mlm-row-label">Level 1 — 3 Direct Referrals → 50% = $25.00 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node"><div class="nn">Alex</div><div class="ne gold">$28.50/mo</div></div>
-              <div class="mlm-node"><div class="nn">Maria</div><div class="ne gold">$28.50/mo</div></div>
-              <div class="mlm-node"><div class="nn">James</div><div class="ne gold">$28.50/mo</div></div>
+              <div class="mlm-node"><div class="nn">Alex</div><div class="ne gold">$25.00/mo</div></div>
+              <div class="mlm-node"><div class="nn">Maria</div><div class="ne gold">$25.00/mo</div></div>
+              <div class="mlm-node"><div class="nn">James</div><div class="ne gold">$25.00/mo</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 2 — 9 People → 2% = $1.14 each</div>
+            <div class="mlm-row-label">Level 2 — 9 People → 2% = $1.00 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:120px"><div class="nn">9 members</div><div class="ne gold">$10.26/mo total</div></div>
+              <div class="mlm-node" style="min-width:120px"><div class="nn">9 members</div><div class="ne gold">$9.00/mo total</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 3 — 27 People → 2% = $1.14 each</div>
+            <div class="mlm-row-label">Level 3 — 27 People → 2% = $1.00 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:120px"><div class="nn">27 members</div><div class="ne gold">$30.78/mo total</div></div>
+              <div class="mlm-node" style="min-width:120px"><div class="nn">27 members</div><div class="ne gold">$27.00/mo total</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 4 — 81 People → 2% = $1.14 each (final Pro level)</div>
+            <div class="mlm-row-label">Level 4 — 81 People → 2% = $1.00 each (final Pro level)</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:120px"><div class="nn">81 members</div><div class="ne gold">$92.34/mo total</div></div>
+              <div class="mlm-node" style="min-width:120px"><div class="nn">81 members</div><div class="ne gold">$81.00/mo total</div></div>
             </div>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid #1f2937">
           <div style="font-size:.8rem;color:#9ca3af">Pro earns 50% on directs + 2% on levels 2, 3 & 4</div>
-          <div style="font-size:1rem;font-weight:800;color:#2E7BFF">Total shown: $85.50 + $10.26 + $30.78 + $92.34 = <span style="font-size:1.2rem">$218.88/mo</span></div>
+          <div style="font-size:1rem;font-weight:800;color:#2E7BFF">Total shown: $75.00 + $9.00 + $27.00 + $81.00 = <span style="font-size:1.2rem">$192.00/mo</span></div>
         </div>
       </div>
 
       <div class="mlm-wrap" id="mlm-elite" style="display:none">
-        <div class="mlm-title">You refer 3 people · each refers 3 more · $57/mo Pro membership · Elite tiered rates</div>
+        <div class="mlm-title">You refer 3 people · each refers 3 more · $50/mo Pro membership · Elite tiered rates</div>
         <div class="mlm-tree">
           <div class="mlm-row">
             <div class="mlm-row-label">You (Elite Member 💎)</div>
@@ -6828,45 +6833,45 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 1 — 3 Direct Referrals → 50% = $28.50 each</div>
+            <div class="mlm-row-label">Level 1 — 3 Direct Referrals → 50% = $25.00 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="border-color:#a855f740"><div class="nn">Alex</div><div class="ne purple">$28.50/mo</div></div>
-              <div class="mlm-node" style="border-color:#a855f740"><div class="nn">Maria</div><div class="ne purple">$28.50/mo</div></div>
-              <div class="mlm-node" style="border-color:#a855f740"><div class="nn">James</div><div class="ne purple">$28.50/mo</div></div>
+              <div class="mlm-node" style="border-color:#a855f740"><div class="nn">Alex</div><div class="ne purple">$25.00/mo</div></div>
+              <div class="mlm-node" style="border-color:#a855f740"><div class="nn">Maria</div><div class="ne purple">$25.00/mo</div></div>
+              <div class="mlm-node" style="border-color:#a855f740"><div class="nn">James</div><div class="ne purple">$25.00/mo</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 2 — 9 People → 5% = $2.85 each</div>
+            <div class="mlm-row-label">Level 2 — 9 People → 5% = $2.50 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:130px"><div class="nn">9 members</div><div class="ne purple">$25.65/mo total</div></div>
+              <div class="mlm-node" style="min-width:130px"><div class="nn">9 members</div><div class="ne purple">$22.50/mo total</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 3 — 27 People → 3% = $1.71 each</div>
+            <div class="mlm-row-label">Level 3 — 27 People → 3% = $1.50 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:130px"><div class="nn">27 members</div><div class="ne purple">$46.17/mo total</div></div>
+              <div class="mlm-node" style="min-width:130px"><div class="nn">27 members</div><div class="ne purple">$40.50/mo total</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 4 — 81 People → 2% = $1.14 each</div>
+            <div class="mlm-row-label">Level 4 — 81 People → 2% = $1.00 each</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:130px"><div class="nn">81 members</div><div class="ne purple">$92.34/mo total</div></div>
+              <div class="mlm-node" style="min-width:130px"><div class="nn">81 members</div><div class="ne purple">$81.00/mo total</div></div>
             </div>
           </div>
           <div class="mlm-connector"></div>
           <div class="mlm-row">
-            <div class="mlm-row-label">Level 5 — 243 People → 1% = $0.57 each (final Elite level)</div>
+            <div class="mlm-row-label">Level 5 — 243 People → 1% = $0.50 each (final Elite level)</div>
             <div class="mlm-nodes">
-              <div class="mlm-node" style="min-width:140px"><div class="nn">243 members</div><div class="ne purple">$138.51/mo total</div></div>
+              <div class="mlm-node" style="min-width:140px"><div class="nn">243 members</div><div class="ne purple">$121.50/mo total</div></div>
             </div>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid #1f2937">
           <div style="font-size:.8rem;color:#9ca3af">Elite earns 50% direct + tiered 5/3/2/1% down to level 5</div>
-          <div style="font-size:1rem;font-weight:800;color:#a855f7">Total shown: $85.50 + $25.65 + $46.17 + $92.34 + $138.51 = <span style="font-size:1.2rem">$388.17/mo</span></div>
+          <div style="font-size:1rem;font-weight:800;color:#a855f7">Total shown: $75.00 + $22.50 + $40.50 + $81.00 + $121.50 = <span style="font-size:1.2rem">$340.50/mo</span></div>
         </div>
       </div>
 
@@ -6889,8 +6894,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <tr><td>Wholesaling Blueprint</td><td>$147</td><td style="color:#2E7BFF;font-weight:700">$73.50</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
             <tr><td>Dropshipping Fast Track</td><td>$127</td><td style="color:#2E7BFF;font-weight:700">$63.50</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
             <tr><td>Dr. Gainz Trading Signals</td><td>$79/mo</td><td style="color:#2E7BFF;font-weight:700">$39.50/mo</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
-            <tr><td>Pro Membership Referral</td><td>$57/mo</td><td style="color:#2E7BFF;font-weight:700">$28.50/mo</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
-            <tr><td>Elite Membership Referral</td><td>$97/mo</td><td style="color:#2E7BFF;font-weight:700">$48.50/mo</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
+            <tr><td>Pro Membership Referral</td><td>$50/mo</td><td style="color:#2E7BFF;font-weight:700">$25.00/mo</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
+            <tr><td>Elite Membership Referral</td><td>$99/mo</td><td style="color:#2E7BFF;font-weight:700">$49.50/mo</td><td><span style="color:#2E7BFF">Pro</span> · <span style="color:#a855f7">Elite</span></td></tr>
             <tr><td>Dropship Partner Products</td><td>Varies</td><td style="color:#a855f7;font-weight:700">50% margin</td><td><span style="color:#a855f7">Elite only</span></td></tr>
             <tr><td>Print-on-Demand Items</td><td>Varies</td><td style="color:#a855f7;font-weight:700">50% margin</td><td><span style="color:#a855f7">Elite only</span></td></tr>
           </tbody>
@@ -6917,7 +6922,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div class="comp-note" style="border-color:#a855f740;background:#120d1a">
-        <b class="p">How it works:</b> A percentage of every membership payment ($19 Basic, $57 Pro, $97 Elite) is set aside into a company-owned <b>Growth Pool</b>. The company invests that pool — the pool itself always belongs to Money Masteries — and shares the <b>profits</b> the pool earns as a monthly cash dividend, split only among <b class="p">Elite</b> members. Basic and Pro members do not participate in this program.
+        <b class="p">How it works:</b> A percentage of every membership payment ($19.99 MEH-mbership, $50 Pro, $99 Elite) is set aside into a company-owned <b>Growth Pool</b>. The company invests that pool — the pool itself always belongs to Money Masteries — and shares the <b>profits</b> the pool earns as a monthly cash dividend, split only among <b class="p">Elite</b> members. Basic and Pro members do not participate in this program.
       </div>
 
       <div class="stat-row" style="margin-bottom:20px">
@@ -7191,38 +7196,251 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-productionmaster" data-sbg="productionmaster">
       <div class="screen-title">🏭 <span>Production Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
-      <div class="fm-demo-banner">
-        <div class="fm-demo-icon">🧪</div>
-        <div>Custom domain registration and automatic website generation are in development. For now, requests below are reviewed and fulfilled by our team — you'll be contacted after purchase to get started.</div>
+
+      <div class="rei-views" style="margin:14px 0 18px">
+        <button class="rei-view active" id="prodVOverview" onclick="prodViewSwitch('overview')">🏭 Overview</button>
+        <button class="rei-view" id="prodVStudio" onclick="prodViewSwitch('studio')">🛠️ Create Product <span class="pro-tag" style="background:#a855f7;color:#fff;margin-left:4px">ELITE</span></button>
       </div>
-      <div class="payout-card" style="margin:18px 0 0">
-        <div class="po-title">🤖 Ask Production Master</div>
-        <div class="po-sub">Scope out a website, pick a domain name, or plan an AI video request before you submit it.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-productionmaster-chips"></div>
-        <div class="ai-chat-log" id="j-productionmaster-log"></div>
-        <div style="display:flex;gap:8px">
-          <input class="ai-chat-input" id="j-productionmaster-input" maxlength="300" placeholder="Ask Production Master about a website, domain, or AI video request..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('productionmaster')">
-          <button class="ai-chat-send" id="j-productionmaster-send" onclick="sendJarvisQuestion('productionmaster')">➤</button>
+
+      <div id="prodOverview">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">🧪</div>
+          <div>Custom domain registration and automatic website generation are in development. For now, requests below are reviewed and fulfilled by our team — you'll be contacted after purchase to get started.</div>
+        </div>
+        <div class="payout-card" style="margin:18px 0 0">
+          <div class="po-title">🤖 Ask Production Master</div>
+          <div class="po-sub">Scope out a website, pick a domain name, or plan an AI video request before you submit it.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-productionmaster-chips"></div>
+          <div class="ai-chat-log" id="j-productionmaster-log"></div>
+          <div style="display:flex;gap:8px">
+            <input class="ai-chat-input" id="j-productionmaster-input" maxlength="300" placeholder="Ask Production Master about a website, domain, or AI video request..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('productionmaster')">
+            <button class="ai-chat-send" id="j-productionmaster-send" onclick="sendJarvisQuestion('productionmaster')">➤</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
+          <div class="mk-card">
+            <div style="font-size:2rem">🌐</div>
+            <div class="mk-card-title">Custom Website Build</div>
+            <div class="mpm-sub">We build a custom website for your business or your client's — tell us what you need and we'll get started.</div>
+            <button class="admin-save-btn" onclick="if(typeof buyProduct==='function') buyProduct('s-prodwebsite')" style="margin-top:10px">Request a Website</button>
+          </div>
+          <div class="mk-card">
+            <div style="font-size:2rem">🔗</div>
+            <div class="mk-card-title">Domain Setup</div>
+            <div class="mpm-sub">We help you find and set up a domain for your business — registered and pointed where it needs to go.</div>
+            <button class="admin-save-btn" onclick="if(typeof buyProduct==='function') buyProduct('s-proddomain')" style="margin-top:10px">Request a Domain</button>
+          </div>
+        </div>
+        <div class="screen-title" style="font-size:1.1rem;margin-top:22px">🛠️ <span>Create Product</span></div>
+        <div id="studioEmbedWrap">
+          <button class="admin-save-btn" onclick="prodViewSwitch('studio')">Open Create Product Tool →</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
-        <div class="mk-card">
-          <div style="font-size:2rem">🌐</div>
-          <div class="mk-card-title">Custom Website Build</div>
-          <div class="mpm-sub">We build a custom website for your business or your client's — tell us what you need and we'll get started.</div>
-          <button class="admin-save-btn" onclick="if(typeof buyProduct==='function') buyProduct('s-prodwebsite')" style="margin-top:10px">Request a Website</button>
-        </div>
-        <div class="mk-card">
-          <div style="font-size:2rem">🔗</div>
-          <div class="mk-card-title">Domain Setup</div>
-          <div class="mpm-sub">We help you find and set up a domain for your business — registered and pointed where it needs to go.</div>
-          <button class="admin-save-btn" onclick="if(typeof buyProduct==='function') buyProduct('s-proddomain')" style="margin-top:10px">Request a Domain</button>
-        </div>
-      </div>
-      <div class="screen-title" style="font-size:1.1rem;margin-top:22px">🛠️ <span>Create Product</span></div>
-      <div id="studioEmbedWrap">
-        <button class="admin-save-btn" onclick="showScreen('studio')">Open Create Product Tool →</button>
-      </div>
+
+      <div id="prodStudioTab" data-sbg="studio" style="display:none">
+        <div class="psx2-shell">
+
+          <!-- ── HEADER ───────────────────────────────────────────────────── -->
+          <div class="psx2-head">
+            <h2 class="psx2-title">Select your draft product visuals</h2>
+            <p class="psx2-subtitle">you can continue to refine these after</p>
+            <span id="psxBrandCount" style="display:none">3,063</span>
+          </div>
+
+          <!-- ── 3-CARD VISUAL GRID ─────────────────────────────────────── -->
+          <div class="psx2-grid">
+
+            <!-- Card 0 — the live canvas render (always active) -->
+            <div class="psx2-card psx2-card-main" id="psx2Card0" onclick="psx2Pick(0)">
+              <div class="psx2-overlay">
+                <svg class="psx2-bolt" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>
+                Click to select
+              </div>
+              <div class="psx2-render-body" id="psRenderBody">
+                <img id="psHeroImg" class="psx-hero-img" alt="" style="display:none">
+                <div id="psHeroLoad" class="psx-hero-load psx2-load" style="display:none">
+                  <div class="psx-hero-spark">&#10024;</div>
+                  <div class="psx-hero-loadtxt">Rendering&hellip;</div>
+                </div>
+                <div class="ps-canvas" id="psCanvas">
+                  <div class="ps-print" id="psPrint">
+                    <img id="psDesignImg" alt="" style="display:none">
+                    <div id="psDesignText" class="ps-design-text"></div>
+                  </div>
+                  <div class="ps-bottle-wrap" id="psBottle" style="display:none"></div>
+                </div>
+                <!-- Brush mask canvas overlay (shown in edit mode) -->
+                <canvas id="psEditMask" class="ps-edit-mask" style="display:none" title="Paint to select region for editing"></canvas>
+                <!-- Edit mode toolbar -->
+                <div class="ps-edit-toolbar" id="psEditToolbar" style="display:none">
+                  <div class="ps-et-left">
+                    <span class="ps-et-label">Brush</span>
+                    <input type="range" id="psBrushSize" class="ps-et-slider" min="8" max="72" value="28" oninput="psBrushSizeChange(this.value)">
+                    <button class="ps-et-btn" onclick="psEditClearMask()">Clear</button>
+                  </div>
+                  <button class="ps-et-close" onclick="psExitEditMode()" title="Exit brush mode">&#10005; Done</button>
+                </div>
+              </div>
+              <div class="psx2-card-foot">
+                <span id="psBaseEmoji">&#10024;</span>&nbsp;<span id="psBaseName">Your product</span>
+              </div>
+            </div>
+
+            <!-- Card 1 — variant render -->
+            <div class="psx2-card psx2-ph psx2-var-card" id="psx2Card1" onclick="psx2Pick(1)">
+              <div class="psx2-overlay">
+                <svg class="psx2-bolt" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>
+                Click to select
+              </div>
+              <div class="psx2-var-body">
+                <img id="psVarImg1" class="psx-var-img" alt="" style="display:none">
+                <div id="psVarLoad1" class="psx-var-load" style="display:none">
+                  <div class="psx-var-spark">&#10024;</div>
+                  <div class="psx-var-txt">Generating&hellip;</div>
+                </div>
+                <div class="psx2-ph-inner" id="psVarPh1">
+                  <div class="psx2-ph-art">
+                    <div class="psx2-ph-ring"></div>
+                    <div class="psx2-ph-circle"></div>
+                  </div>
+                  <div class="psx2-ph-label">Variant 2</div>
+                </div>
+              </div>
+              <div class="psx2-card-foot">
+                <span id="psVar1Label">&#127775; Side angle</span>
+              </div>
+            </div>
+
+            <!-- Card 2 — variant render -->
+            <div class="psx2-card psx2-ph psx2-var-card" id="psx2Card2" onclick="psx2Pick(2)">
+              <div class="psx2-overlay">
+                <svg class="psx2-bolt" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>
+                Click to select
+              </div>
+              <div class="psx2-var-body">
+                <img id="psVarImg2" class="psx-var-img" alt="" style="display:none">
+                <div id="psVarLoad2" class="psx-var-load" style="display:none">
+                  <div class="psx-var-spark">&#10024;</div>
+                  <div class="psx-var-txt">Generating&hellip;</div>
+                </div>
+                <div class="psx2-ph-inner" id="psVarPh2">
+                  <div class="psx2-ph-art">
+                    <div class="psx2-ph-ring" style="width:64px;height:64px;border-radius:14px;transform:rotate(18deg)"></div>
+                    <div class="psx2-ph-circle" style="width:36px;height:36px"></div>
+                  </div>
+                  <div class="psx2-ph-label">Variant 3</div>
+                </div>
+              </div>
+              <div class="psx2-card-foot">
+                <span id="psVar2Label">&#127774; Lifestyle scene</span>
+              </div>
+            </div>
+
+          </div><!-- /psx2-grid -->
+
+          <!-- ── CHAT INPUT ─────────────────────────────────────────────── -->
+          <div class="psx2-input-zone">
+            <div class="psx2-box">
+              <textarea id="psChatInput" class="psx2-ta" rows="1" maxlength="220"
+                placeholder="Describe a product idea — or tweak the render: 'make it darker', 'add golden text', 'lifestyle beach setting'&hellip;"
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                onkeydown="if(event.key==='Enter'&amp;&amp;!event.shiftKey){event.preventDefault();psAiSend()}"></textarea>
+              <div class="psx2-box-bar">
+                <span class="psx2-sugg-hint">Suggestion: Define a visual aesthetic?</span>
+                <div class="psx2-box-acts">
+                  <button class="psx2-ico psx2-brush-ico" id="psBrushBtn" title="Brush edit — paint to select region" onclick="psToggleEditMode()" aria-label="Brush edit" style="display:none">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3z"/><path d="M9 8c-2 3-4 3.5-7 4l8 8c1-.5 3.5-2 4-7"/><line x1="2" y1="22" x2="7" y2="17"/></svg>
+                  </button>
+                  <button class="psx2-ico" title="Get ideas" onclick="psxIdeas()" aria-label="Get ideas">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                  </button>
+                  <label class="psx2-ico" for="psDesignInput" title="Upload logo" aria-label="Attach logo">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.19-8.19a4 4 0 0 1 5.66 5.66l-8.2 8.19a2 2 0 0 1-2.83-2.83l7.49-7.48"/></svg>
+                    <input type="file" id="psDesignInput" accept="image/*" style="display:none" onchange="psHandleDesign(this.files)">
+                  </label>
+                  <button class="psx2-send" onclick="psAiSend()" aria-label="Design it">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 3a1 1 0 0 1 .707.293l7 7a1 1 0 0 1-1.414 1.414L13 6.414V20a1 1 0 0 1-2 0V6.414l-5.293 5.293a1 1 0 0 1-1.414-1.414l7-7A1 1 0 0 1 12 3z"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Suggestion chips -->
+            <div class="psx2-chips" id="psChipsWrap">
+              <button class="psx2-chip" onclick="psxSetChip('Neon Cyberpunk style')">Neon Cyberpunk</button>
+              <button class="psx2-chip" onclick="psxSetChip('Vintage Comic Book look')">Vintage Comic Book</button>
+              <button class="psx2-chip" onclick="psxSetChip('Minimalist Modern aesthetic')">Minimalist Modern</button>
+              <button class="psx2-chip psx2-chip-edit" id="psChipEdit1" onclick="psxSetChip('Make the background darker and moodier')" style="display:none">Darker mood</button>
+              <button class="psx2-chip psx2-chip-edit" id="psChipEdit2" onclick="psxSetChip('Add soft studio bokeh background')" style="display:none">Studio bokeh</button>
+              <button class="psx2-chip psx2-chip-edit" id="psChipEdit3" onclick="psxSetChip('Lifestyle scene, outdoor natural light')" style="display:none">Outdoor lifestyle</button>
+              <button class="psx2-chip psx2-chip-edit" id="psChipEdit4" onclick="psxSetChip('Clean white minimalist product photo')" style="display:none">White minimal</button>
+            </div>
+          </div>
+
+          <!-- ── LEARN MORE TOGGLE ──────────────────────────────────────── -->
+          <div class="psx2-learn">
+            <button class="psx2-learn-btn" onclick="psx2Toggle(this)" aria-expanded="false">
+              Learn more
+              <svg class="psx2-learn-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <!-- ── EXPANDED DETAILS ───────────────────────────────────────── -->
+          <div class="psx2-expanded" id="psx2Expanded">
+
+            <!-- Chat log (AI conversation) -->
+            <div class="psx2-exp-section">
+              <div class="ps-chat" id="psChat"></div>
+              <div class="psx2-tipline">&#128161; Keep chatting to refine &mdash; &ldquo;make it navy&rdquo;, &ldquo;rename it Apex&rdquo;, &ldquo;add a lightning bolt&rdquo;.</div>
+            </div>
+
+            <!-- Product category cards -->
+            <div class="psx2-exp-section">
+              <div class="psx2-exp-label">Choose product category</div>
+              <div class="psx-cards" id="psxCards"></div>
+            </div>
+
+            <!-- Fine-tune panel -->
+            <div class="psx2-exp-section">
+              <div class="psx2-exp-label">Fine-tune your product</div>
+              <div class="psx2-ft">
+                <div class="ps-design-row">
+                  <label class="ps-upload" for="psDesignInput">&#128247; Upload your own logo</label>
+                  <button class="ps-clear" onclick="psClearDesign()">Clear</button>
+                </div>
+                <input class="ps-text-input" id="psText" maxlength="24" placeholder="Printed / label text (optional)" oninput="psUpdate()">
+                <div class="ps-swatches" id="psColors"></div>
+                <input class="ps-text-input" id="psName" maxlength="40" placeholder="Product name" oninput="psUpdate()">
+                <div class="ps-price-row">
+                  <div class="ps-price-field"><label>Base cost</label><div class="ps-basecost" id="psBaseCost">$9.00</div></div>
+                  <div class="ps-price-field"><label>Your price</label><input id="psPrice" type="number" min="0" step="1" value="24" oninput="psUpdate()"></div>
+                  <div class="ps-price-field"><label>Profit / sale</label><div class="ps-profit" id="psProfit">$15.00</div></div>
+                </div>
+                <div id="psPreviewNote" class="ps-preview-note">Describe an idea to see it here</div>
+                <div class="psx2-ft-btns">
+                  <button class="psx-rerender" onclick="psGenerateHero()">&#128260; Re-render photo</button>
+                  <button class="ps-publish" onclick="psPublish()">&#128640; Create &amp; Publish to My Store</button>
+                </div>
+                <div class="psx2-own">&#128274; You keep full ownership &amp; IP of everything you create.</div>
+              </div>
+            </div>
+
+            <!-- Shop section -->
+            <div class="psx2-exp-section" id="psShopSection">
+              <div class="psx2-exp-label" id="psShopHead">&#128438; Ready to scale? Start your own shop</div>
+              <div style="font-size:.82rem;color:#6b5d4c;margin-bottom:14px" id="psShopSub"></div>
+              <div id="psShopCards"></div>
+            </div>
+
+            <!-- Your creations -->
+            <div class="psx2-exp-section">
+              <div class="psx2-exp-label">Your creations</div>
+              <div id="psMyCreations" class="ps-creations"></div>
+            </div>
+
+          </div><!-- /psx2-expanded -->
+
+        </div><!-- /psx2-shell -->
+      </div><!-- /prodStudioTab -->
     </div>
 
     <!-- BUSINESS MASTER (demo) -->
@@ -7633,7 +7851,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="admin-stat"><div class="admin-stat-label">Total Members</div><div class="admin-stat-value" id="admTotal">—</div></div>
         <div class="admin-stat pay"><div class="admin-stat-label">✅ Paying Members</div><div class="admin-stat-value green" id="admPaying">—</div><div class="admin-stat-sub" id="admPayingPct">—</div></div>
         <div class="admin-stat free-tile"><div class="admin-stat-label">❌ Free Members</div><div class="admin-stat-value red" id="admFree">—</div></div>
-        <div class="admin-stat"><div class="admin-stat-label">Basic</div><div class="admin-stat-value" id="admBasic">—</div></div>
+        <div class="admin-stat"><div class="admin-stat-label">MEH-mbership</div><div class="admin-stat-value" id="admBasic">—</div></div>
         <div class="admin-stat"><div class="admin-stat-label">Pro</div><div class="admin-stat-value" id="admPro">—</div></div>
         <div class="admin-stat"><div class="admin-stat-label">Elite</div><div class="admin-stat-value" id="admElite">—</div></div>
         <div class="admin-stat"><div class="admin-stat-label">💰 Monthly Revenue (MRR)</div><div class="admin-stat-value gold" id="admRev">—</div></div>
@@ -7749,12 +7967,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <button class="mpm-add" onclick="masterSaveRevenueShare()">💾 Save Elite Dividends Config</button>
         <div id="divAdminStatus" style="font-size:.7rem;color:#6b7280;margin-top:6px"></div>
       </div>
-      <div class="mpm-card" style="border-color:#0070ba50">
-        <div class="mpm-title" style="color:#4599ff">🅿️ PayPal Pricing Sync</div>
-        <div class="mpm-sub">Right now, membership prices shown on this site are <b>not</b> automatically reflected on PayPal — the "Subscribe with PayPal" button on Plans &amp; Pricing uses a classic hosted button whose price lives entirely inside your PayPal account. Changing <code>$19 / $57 / $97</code> here does not change what PayPal actually charges until you also edit it there.</div>
-        <div class="mpm-sub">This button calls a real Cloud Function (<code>syncPayPalPricing</code>) that pushes the current prices to PayPal's REST Subscriptions API — but it only works once you've migrated the checkout to REST Subscription Plans and configured <code>PAYPAL_CLIENT_ID</code>, <code>PAYPAL_CLIENT_SECRET</code>, and a <code>PAYPAL_PLAN_ID_*</code> for each tier as Cloud Functions env vars (see the comment above <code>syncPayPalPricing</code> in <code>functions/index.js</code> for the exact steps). Until then, this will just tell you which plan IDs are missing — it won't break anything.</div>
-        <button class="mpm-add" style="background:linear-gradient(135deg,#0070ba,#003087)" onclick="masterSyncPayPalPricing()">🔄 Sync Pricing to PayPal</button>
-        <div id="paypalSyncStatus" style="font-size:.7rem;color:#6b7280;margin-top:6px"></div>
+      <div class="mpm-card" style="border-color:#635bff50">
+        <div class="mpm-title" style="color:#8b8bff">💳 Membership Billing — now via Stripe</div>
+        <div class="mpm-sub">As of 2026-08-06, the "Subscribe with PayPal" button on Plans &amp; Pricing has been replaced with real Stripe Payment Links — MEH-mbership <b>$19.99/mo</b>, Pro <b>$50/mo</b>, Elite <b>$99/mo</b>. These are live Stripe Price objects, so what's shown on the site and what actually gets charged always match — no manual sync step needed.</div>
+        <div class="mpm-sub">A Cloud Function (<code>membershipCheckoutWebhook</code>) activates the member's plan and credits their sponsor's commission automatically on signup and every renewal — same billingHistory/plan fields this Master Portal already reads. The old PayPal hosted button and <code>syncPayPalPricing</code> function are no longer used for membership charging (affiliate commission payouts to members still go out via PayPal, unchanged — those were never automated, only crediting).</div>
       </div>
       <div class="admin-table-wrap" style="margin-bottom:22px">
         <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">💵 Payouts & Bonuses — permit auto-pay, send manual bonuses, mark paid</div>
@@ -8115,212 +8331,6 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
 
-        <!-- PRODUCT STUDIO (create-your-own, print-on-demand) -->
-    <div class="screen" id="screen-studio" data-sbg="studio">
-      <div class="psx2-shell">
-
-        <!-- ── HEADER ───────────────────────────────────────────────────── -->
-        <div class="psx2-head">
-          <h2 class="psx2-title">Select your draft product visuals</h2>
-          <p class="psx2-subtitle">you can continue to refine these after</p>
-          <span id="psxBrandCount" style="display:none">3,063</span>
-        </div>
-
-        <!-- ── 3-CARD VISUAL GRID ─────────────────────────────────────── -->
-        <div class="psx2-grid">
-
-          <!-- Card 0 — the live canvas render (always active) -->
-          <div class="psx2-card psx2-card-main" id="psx2Card0" onclick="psx2Pick(0)">
-            <div class="psx2-overlay">
-              <svg class="psx2-bolt" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>
-              Click to select
-            </div>
-            <div class="psx2-render-body" id="psRenderBody">
-              <img id="psHeroImg" class="psx-hero-img" alt="" style="display:none">
-              <div id="psHeroLoad" class="psx-hero-load psx2-load" style="display:none">
-                <div class="psx-hero-spark">&#10024;</div>
-                <div class="psx-hero-loadtxt">Rendering&hellip;</div>
-              </div>
-              <div class="ps-canvas" id="psCanvas">
-                <div class="ps-print" id="psPrint">
-                  <img id="psDesignImg" alt="" style="display:none">
-                  <div id="psDesignText" class="ps-design-text"></div>
-                </div>
-                <div class="ps-bottle-wrap" id="psBottle" style="display:none"></div>
-              </div>
-              <!-- Brush mask canvas overlay (shown in edit mode) -->
-              <canvas id="psEditMask" class="ps-edit-mask" style="display:none" title="Paint to select region for editing"></canvas>
-              <!-- Edit mode toolbar -->
-              <div class="ps-edit-toolbar" id="psEditToolbar" style="display:none">
-                <div class="ps-et-left">
-                  <span class="ps-et-label">Brush</span>
-                  <input type="range" id="psBrushSize" class="ps-et-slider" min="8" max="72" value="28" oninput="psBrushSizeChange(this.value)">
-                  <button class="ps-et-btn" onclick="psEditClearMask()">Clear</button>
-                </div>
-                <button class="ps-et-close" onclick="psExitEditMode()" title="Exit brush mode">&#10005; Done</button>
-              </div>
-            </div>
-            <div class="psx2-card-foot">
-              <span id="psBaseEmoji">&#10024;</span>&nbsp;<span id="psBaseName">Your product</span>
-            </div>
-          </div>
-
-          <!-- Card 1 — variant render -->
-          <div class="psx2-card psx2-ph psx2-var-card" id="psx2Card1" onclick="psx2Pick(1)">
-            <div class="psx2-overlay">
-              <svg class="psx2-bolt" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>
-              Click to select
-            </div>
-            <div class="psx2-var-body">
-              <img id="psVarImg1" class="psx-var-img" alt="" style="display:none">
-              <div id="psVarLoad1" class="psx-var-load" style="display:none">
-                <div class="psx-var-spark">&#10024;</div>
-                <div class="psx-var-txt">Generating&hellip;</div>
-              </div>
-              <div class="psx2-ph-inner" id="psVarPh1">
-                <div class="psx2-ph-art">
-                  <div class="psx2-ph-ring"></div>
-                  <div class="psx2-ph-circle"></div>
-                </div>
-                <div class="psx2-ph-label">Variant 2</div>
-              </div>
-            </div>
-            <div class="psx2-card-foot">
-              <span id="psVar1Label">&#127775; Side angle</span>
-            </div>
-          </div>
-
-          <!-- Card 2 — variant render -->
-          <div class="psx2-card psx2-ph psx2-var-card" id="psx2Card2" onclick="psx2Pick(2)">
-            <div class="psx2-overlay">
-              <svg class="psx2-bolt" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>
-              Click to select
-            </div>
-            <div class="psx2-var-body">
-              <img id="psVarImg2" class="psx-var-img" alt="" style="display:none">
-              <div id="psVarLoad2" class="psx-var-load" style="display:none">
-                <div class="psx-var-spark">&#10024;</div>
-                <div class="psx-var-txt">Generating&hellip;</div>
-              </div>
-              <div class="psx2-ph-inner" id="psVarPh2">
-                <div class="psx2-ph-art">
-                  <div class="psx2-ph-ring" style="width:64px;height:64px;border-radius:14px;transform:rotate(18deg)"></div>
-                  <div class="psx2-ph-circle" style="width:36px;height:36px"></div>
-                </div>
-                <div class="psx2-ph-label">Variant 3</div>
-              </div>
-            </div>
-            <div class="psx2-card-foot">
-              <span id="psVar2Label">&#127774; Lifestyle scene</span>
-            </div>
-          </div>
-
-        </div><!-- /psx2-grid -->
-
-        <!-- ── CHAT INPUT ─────────────────────────────────────────────── -->
-        <div class="psx2-input-zone">
-          <div class="psx2-box">
-            <textarea id="psChatInput" class="psx2-ta" rows="1" maxlength="220"
-              placeholder="Describe a product idea — or tweak the render: 'make it darker', 'add golden text', 'lifestyle beach setting'&hellip;"
-              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-              onkeydown="if(event.key==='Enter'&amp;&amp;!event.shiftKey){event.preventDefault();psAiSend()}"></textarea>
-            <div class="psx2-box-bar">
-              <span class="psx2-sugg-hint">Suggestion: Define a visual aesthetic?</span>
-              <div class="psx2-box-acts">
-                <button class="psx2-ico psx2-brush-ico" id="psBrushBtn" title="Brush edit — paint to select region" onclick="psToggleEditMode()" aria-label="Brush edit" style="display:none">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3z"/><path d="M9 8c-2 3-4 3.5-7 4l8 8c1-.5 3.5-2 4-7"/><line x1="2" y1="22" x2="7" y2="17"/></svg>
-                </button>
-                <button class="psx2-ico" title="Get ideas" onclick="psxIdeas()" aria-label="Get ideas">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-                </button>
-                <label class="psx2-ico" for="psDesignInput" title="Upload logo" aria-label="Attach logo">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.19-8.19a4 4 0 0 1 5.66 5.66l-8.2 8.19a2 2 0 0 1-2.83-2.83l7.49-7.48"/></svg>
-                  <input type="file" id="psDesignInput" accept="image/*" style="display:none" onchange="psHandleDesign(this.files)">
-                </label>
-                <button class="psx2-send" onclick="psAiSend()" aria-label="Design it">
-                  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 3a1 1 0 0 1 .707.293l7 7a1 1 0 0 1-1.414 1.414L13 6.414V20a1 1 0 0 1-2 0V6.414l-5.293 5.293a1 1 0 0 1-1.414-1.414l7-7A1 1 0 0 1 12 3z"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          <!-- Suggestion chips -->
-          <div class="psx2-chips" id="psChipsWrap">
-            <button class="psx2-chip" onclick="psxSetChip('Neon Cyberpunk style')">Neon Cyberpunk</button>
-            <button class="psx2-chip" onclick="psxSetChip('Vintage Comic Book look')">Vintage Comic Book</button>
-            <button class="psx2-chip" onclick="psxSetChip('Minimalist Modern aesthetic')">Minimalist Modern</button>
-            <button class="psx2-chip psx2-chip-edit" id="psChipEdit1" onclick="psxSetChip('Make the background darker and moodier')" style="display:none">Darker mood</button>
-            <button class="psx2-chip psx2-chip-edit" id="psChipEdit2" onclick="psxSetChip('Add soft studio bokeh background')" style="display:none">Studio bokeh</button>
-            <button class="psx2-chip psx2-chip-edit" id="psChipEdit3" onclick="psxSetChip('Lifestyle scene, outdoor natural light')" style="display:none">Outdoor lifestyle</button>
-            <button class="psx2-chip psx2-chip-edit" id="psChipEdit4" onclick="psxSetChip('Clean white minimalist product photo')" style="display:none">White minimal</button>
-          </div>
-        </div>
-
-        <!-- ── LEARN MORE TOGGLE ──────────────────────────────────────── -->
-        <div class="psx2-learn">
-          <button class="psx2-learn-btn" onclick="psx2Toggle(this)" aria-expanded="false">
-            Learn more
-            <svg class="psx2-learn-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-        </div>
-
-        <!-- ── EXPANDED DETAILS ───────────────────────────────────────── -->
-        <div class="psx2-expanded" id="psx2Expanded">
-
-          <!-- Chat log (AI conversation) -->
-          <div class="psx2-exp-section">
-            <div class="ps-chat" id="psChat"></div>
-            <div class="psx2-tipline">&#128161; Keep chatting to refine &mdash; &ldquo;make it navy&rdquo;, &ldquo;rename it Apex&rdquo;, &ldquo;add a lightning bolt&rdquo;.</div>
-          </div>
-
-          <!-- Product category cards -->
-          <div class="psx2-exp-section">
-            <div class="psx2-exp-label">Choose product category</div>
-            <div class="psx-cards" id="psxCards"></div>
-          </div>
-
-          <!-- Fine-tune panel -->
-          <div class="psx2-exp-section">
-            <div class="psx2-exp-label">Fine-tune your product</div>
-            <div class="psx2-ft">
-              <div class="ps-design-row">
-                <label class="ps-upload" for="psDesignInput">&#128247; Upload your own logo</label>
-                <button class="ps-clear" onclick="psClearDesign()">Clear</button>
-              </div>
-              <input class="ps-text-input" id="psText" maxlength="24" placeholder="Printed / label text (optional)" oninput="psUpdate()">
-              <div class="ps-swatches" id="psColors"></div>
-              <input class="ps-text-input" id="psName" maxlength="40" placeholder="Product name" oninput="psUpdate()">
-              <div class="ps-price-row">
-                <div class="ps-price-field"><label>Base cost</label><div class="ps-basecost" id="psBaseCost">$9.00</div></div>
-                <div class="ps-price-field"><label>Your price</label><input id="psPrice" type="number" min="0" step="1" value="24" oninput="psUpdate()"></div>
-                <div class="ps-price-field"><label>Profit / sale</label><div class="ps-profit" id="psProfit">$15.00</div></div>
-              </div>
-              <div id="psPreviewNote" class="ps-preview-note">Describe an idea to see it here</div>
-              <div class="psx2-ft-btns">
-                <button class="psx-rerender" onclick="psGenerateHero()">&#128260; Re-render photo</button>
-                <button class="ps-publish" onclick="psPublish()">&#128640; Create &amp; Publish to My Store</button>
-              </div>
-              <div class="psx2-own">&#128274; You keep full ownership &amp; IP of everything you create.</div>
-            </div>
-          </div>
-
-          <!-- Shop section -->
-          <div class="psx2-exp-section" id="psShopSection">
-            <div class="psx2-exp-label" id="psShopHead">&#128438; Ready to scale? Start your own shop</div>
-            <div style="font-size:.82rem;color:#6b5d4c;margin-bottom:14px" id="psShopSub"></div>
-            <div id="psShopCards"></div>
-          </div>
-
-          <!-- Your creations -->
-          <div class="psx2-exp-section">
-            <div class="psx2-exp-label">Your creations</div>
-            <div id="psMyCreations" class="ps-creations"></div>
-          </div>
-
-        </div><!-- /psx2-expanded -->
-
-      </div><!-- /psx2-shell -->
-    </div>
-
     <!-- ABOUT -->
     <div class="screen" id="screen-about" data-sbg="about">
       <div class="screen-title">ℹ️ About <span>Money Masteries</span></div>
@@ -8507,7 +8517,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="plan-name" id="planName">Free Plan</div>
           <div class="plan-desc" id="planDesc">Upgrade to Pro to unlock all tools and features.</div>
         </div>
-        <button class="upgrade-btn" onclick="openUpgradeModal()" id="planBtn">Upgrade → $57/mo</button>
+        <button class="upgrade-btn" onclick="openUpgradeModal()" id="planBtn">Upgrade → $50/mo</button>
       </div>
       <div class="legal-links-row">
         <a onclick="openLegal('terms')">Terms of Service</a> ·
@@ -8789,27 +8799,18 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="modal-close-x" onclick="closeUpgradeModal()">✕</button>
     <img src="data:image/png;base64,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" class="modal-logo" alt="MM">
     <h2>Become a <span>Member</span></h2>
-    <p>Unlock higher commissions, the AI coach, all courses, and your own store. Pick your plan and subscribe securely with PayPal.</p>
+    <p>Unlock higher commissions, the AI coach, all courses, and your own store. Pick your plan and subscribe securely with Stripe.</p>
     <div class="pay-tiers">
-      <div class="pay-tier"><b>Basic</b> — $19/mo · 30% one-time, no Masters</div>
-      <div class="pay-tier pro"><b>Pro</b> — $57/mo · all Masters + 50% commissions + Team</div>
-      <div class="pay-tier elite"><b>Elite</b> — $97/mo · everything + revenue-sharing dividends</div>
+      <div class="pay-tier"><b>MEH-mbership</b> — $19.99/mo · 30% one-time, no Masters</div>
+      <div class="pay-tier pro"><b>Pro</b> — $50/mo · all Masters + 50% commissions + Team</div>
+      <div class="pay-tier elite"><b>Elite</b> — $99/mo · everything + revenue-sharing dividends</div>
     </div>
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" class="pay-form">
-      <input type="hidden" name="cmd" value="_s-xclick" />
-      <input type="hidden" name="hosted_button_id" value="PVSHMXY9EEP7L" />
-      <input type="hidden" name="on0" value="MEMBERSHIP OPTIONS" />
-      <input type="hidden" name="custom" id="ppCustom" value="" />
-      <label class="pay-label">Choose your membership</label>
-      <select name="os0" class="pay-select" id="ppSelect">
-        <option value="BASIC">BASIC — $19.00 USD / month</option>
-        <option value="PRO">PRO — $57.00 USD / month</option>
-        <option value="ELITE">ELITE — $97.00 USD / month</option>
-      </select>
-      <input type="hidden" name="currency_code" value="USD" />
-      <button type="submit" class="pay-submit">Subscribe with PayPal →</button>
-    </form>
-    <div class="pay-secure">🔒 Secure checkout via PayPal · Cancel anytime</div>
+    <div class="pay-form" style="display:flex;flex-direction:column;gap:10px" id="upgradeModalButtons">
+      <button type="button" class="pay-submit" onclick="openMembershipCheckout('basic')">Subscribe to Basic — $19.99/mo →</button>
+      <button type="button" class="pay-submit" onclick="openMembershipCheckout('pro')" style="background:#2E7BFF">Subscribe to Pro — $50/mo →</button>
+      <button type="button" class="pay-submit" onclick="openMembershipCheckout('elite')" style="background:#a855f7">Subscribe to Elite — $99/mo →</button>
+    </div>
+    <div class="pay-secure">🔒 Secure checkout via Stripe · Cancel anytime</div>
     <button class="modal-close" onclick="closeUpgradeModal()">Maybe later</button>
   </div>
 </div>
@@ -8963,8 +8964,6 @@ function showMembershipGate(user, data) {
   var gate = document.getElementById('membershipGateScreen');
   if (!gate) return;
   gate.style.display = 'block';
-  var cust = document.getElementById('gatePpCustom');
-  if (cust) { try { cust.value = ((user && user.uid) || 'anon') + '|ref:' + (sessionStorage.getItem('mm_ref')||'') + '|email:' + ((user && user.email)||''); } catch(e){} }
   var msg = document.getElementById('gateWelcomeMsg');
   if (msg) {
     var first = (user && user.displayName) ? user.displayName.split(' ')[0] : 'there';
@@ -9737,11 +9736,15 @@ function startCountdown() {
 
 // ── UPGRADE MODAL ────────────────────────────────────────────────────────────
 function openUpgradeModal(plan)  {
-  var sel = document.getElementById('ppSelect');
-  if (sel && plan) sel.value = String(plan).toUpperCase(); // options are BASIC/PRO/ELITE; callers pass lowercase
-  var cust = document.getElementById('ppCustom');
-  if (cust) { try { cust.value = ((window.currentUser && window.currentUser.uid) || 'anon') + '|ref:' + (sessionStorage.getItem('mm_ref')||'') + '|email:' + ((window.currentUser && window.currentUser.email)||''); } catch(e){} }
+  // Highlight the tier the caller asked for (e.g. a specific comp-plan card's
+  // "Subscribe Now" button) by briefly emphasizing its Stripe button.
   document.getElementById('upgradeModal').classList.add('open');
+  if (plan) {
+    var btns = document.querySelectorAll('#upgradeModalButtons .pay-submit');
+    btns.forEach(function(b){ b.style.outline = ''; });
+    var idx = { basic: 0, pro: 1, elite: 2 }[String(plan).toLowerCase()];
+    if (idx != null && btns[idx]) btns[idx].style.outline = '3px solid #facc15';
+  }
 }
 function closeUpgradeModal() { document.getElementById('upgradeModal').classList.remove('open'); }
 
@@ -10203,7 +10206,7 @@ function switchMLM(type) {
 function buildCompTable() {
   const el = document.getElementById('compLevelTable');
   if (!el) return;
-  const BASIC_PRICE = 19, TEAM_PRICE = 57; // Basic refers at $19 (one-time, L1 only); Pro/Elite team economics run on $57 Pro referrals
+  const BASIC_PRICE = 19.99, TEAM_PRICE = 50; // Basic refers at $19.99 (one-time, L1 only); Pro/Elite team economics run on $50 Pro referrals
   let html = '', people = 5, tb = 0, tp = 0, te = 0;
   for (let lvl = 1; lvl <= 6; lvl++) {
     const br = lvl === 1 ? 0.30 : 0;
@@ -10462,6 +10465,31 @@ let genieWelcomeTier = 'chat';
   } catch(e) {}
 })();
 
+// ── STORE ORDER RETURN — ?store_order_complete=1&session_id=... ────────────
+// A buyer lands back here after Stripe's hosted checkout for a Store
+// purchase (see payWithStripe() / storeCheckoutWebhook). Unlike the Genie
+// welcome above, this is an already-logged-in member returning to the
+// normal app, so it just waits for the session to be ready, runs the
+// unlock/confirmation UI once, then cleans the URL so a refresh doesn't
+// re-trigger it.
+(function() {
+  try {
+    const p = new URLSearchParams(location.search);
+    if ((p.get('store_order_complete') || '').trim() !== '1') return;
+    const sessionId = (p.get('session_id') || '').trim();
+    if (!sessionId) return;
+    let tries = 0;
+    const wait = setInterval(function() {
+      tries++;
+      if (window.currentUser || tries > 20) { // ~10s max, then try anyway
+        clearInterval(wait);
+        if (typeof handleStoreOrderReturn === 'function') handleStoreOrderReturn(sessionId);
+        try { window.history.replaceState({}, '', location.pathname); } catch(e) {}
+      }
+    }, 500);
+  } catch(e) {}
+})();
+
 // Posts the intake form to genieOnboardSubmit (see functions/index.js),
 // which merges it with the Stripe order genieCheckoutWebhook already
 // recorded (customer ID, tier) and forwards the complete package to the
@@ -10529,6 +10557,33 @@ function openGenieCheckout(tier) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 window.openGenieCheckout = openGenieCheckout;
+
+// Membership Plans (Basic/Pro/Elite) checkout — replaces the old "Subscribe
+// with PayPal" button. Unlike Genie (where client_reference_id carries an
+// AFFILIATE's code for a brand-new visitor), here the buyer is already a
+// logged-in member with their own account, so client_reference_id instead
+// carries THEIR OWN uid — membershipCheckoutWebhook uses it to find their
+// user doc and activate the plan; their existing referredBy field (already
+// on that doc) is what gets the sponsor's commission credited, same as
+// paypalIPN used to do.
+const MEMBERSHIP_PAYMENT_LINKS = {
+  basic: 'https://buy.stripe.com/5kQ9AS10PeFsctJ6a14Rq07',
+  pro: 'https://buy.stripe.com/fZuaEWeRF1SG3Xdbul4Rq08',
+  elite: 'https://buy.stripe.com/6oU6oGeRFfJw1P5gOF4Rq0a',
+};
+function openMembershipCheckout(plan) {
+  const tier = String(plan || '').toLowerCase();
+  const base = MEMBERSHIP_PAYMENT_LINKS[tier];
+  if (!base) return;
+  const uid = (window.currentUser && window.currentUser.uid) || null;
+  const email = (window.currentUser && window.currentUser.email) || null;
+  const params = new URLSearchParams();
+  if (uid) params.set('client_reference_id', uid);
+  if (email) params.set('prefilled_email', email);
+  const qs = params.toString();
+  window.open(qs ? (base + '?' + qs) : base, '_blank', 'noopener,noreferrer');
+}
+window.openMembershipCheckout = openMembershipCheckout;
 
 function revalPublicSetTier(tier) {
   revalPublicTier = (tier === 'premium') ? 'premium' : 'standard';
@@ -11099,7 +11154,7 @@ function initDashboardDynamics(user, data) {
     if (window.__DEMO__) {
       var items = [
         { ico:'🟢', text:'<b>Maria G.</b> just joined through your link', time:'2m ago' },
-        { ico:'💰', text:'Commission earned: <b>$48.50</b> — Elite upgrade', time:'18m ago' },
+        { ico:'💰', text:'Commission earned: <b>$50.00</b> — Elite upgrade', time:'18m ago' },
         { ico:'📈', text:'<b>James T.</b> completed Day Trading Ch. 4', time:'1h ago' },
         { ico:'🌐', text:'Your network grew to <b>' + (data && data.referrals || 0) + ' members</b>', time:'3h ago' },
         { ico:'🎥', text:'Dr. Gainz live session starts <b>tonight 7PM</b>', time:'today' }
@@ -11756,8 +11811,8 @@ function runCalc() {
   document.getElementById('calcEliteV').textContent = elite;
   document.getElementById('calcTeamV').textContent = team;
   document.getElementById('calcSalesV').textContent = sales;
-  var direct = pro * 28.5 + elite * 48.5;                     // 50% of $57 / $97
-  var avgSub = 77;                                            // avg $57/$97 mix
+  var direct = pro * 25 + elite * 49.5;                       // 50% of $50 / $99
+  var avgSub = 74.5;                                          // avg $50/$99 mix
   var rate = calcPlan === 'elite' ? 0.0275 : 0.02;  // Pro 2% flat (L2-4); Elite blended 5/3/2/1%
   var mlm = team * avgSub * rate;
   var prod = sales * 97 * 0.5;
@@ -12511,7 +12566,7 @@ function renderShowcaseButton() {
 }
 // ═══ MARKETPLACE / PRODUCTS ═══════════════════════════════════════════════════
 var DEFAULT_PRODUCTS = [
-  { id:'m-basic', type:'membership', emoji:'🔓', name:'Basic Membership', price:19,  recurring:true, commissionRecurring:false, desc:'Full course access. 30% one-time commission on every membership you sell (no Master Tools, no recurring commissions)' },
+  { id:'m-basic', type:'membership', emoji:'🔓', name:'MEH-mbership (Mostly Eyeing Hope)', price:19.99,  recurring:true, commissionRecurring:false, desc:'Full course access. 30% one-time commission on every membership you sell (no Master Tools, no recurring commissions)' },
   { id:'m-pro',   type:'membership', emoji:'⚡', name:'Pro Membership',   price:57,  recurring:true,  commissionRecurring:true, desc:'All Master Tools + 50% direct commissions + 2% team bonus across 3 levels, paid every month' },
   { id:'m-elite', type:'membership', emoji:'💎', name:'Elite Membership', price:97,  recurring:true,  commissionRecurring:true, desc:'Everything in Pro + tiered team bonus to 5 levels (5/3/2/1%) + your own branded store + monthly revenue-sharing dividends' },
   { id:'d-dt',    type:'digital',    emoji:'📊', name:'Day Trading Masterclass', price:197, desc:'Complete stocks program — brokers, charts, live strategy' },
@@ -12986,23 +13041,65 @@ function buyProduct(pid){
 function buyCustom(pid){ return buyProduct(pid); }
 function renderOrderPay(){
   var btns=document.getElementById('ordPayBtns'); var fb=document.getElementById('ordFallbackBtn');
-  if(btns) btns.innerHTML='';
-  if(!PAYPAL_CLIENT_ID){ if(fb){ fb.style.display='inline-block'; fb.textContent='Place order'; } return; }
+  if(!btns) return;
   if(fb) fb.style.display='none';
-  loadPayPalSdk(function(ok){
-    if(!ok || !window.paypal){ if(fb){ fb.style.display='inline-block'; fb.textContent='Place order'; } return; }
-    try{
-      window.paypal.Buttons({
-        style:{ layout:'vertical', color:'blue', shape:'pill', label:'pay' },
-        onClick:function(data, actions){
-          if(!orderFieldsValid()){ if(typeof showNotifToast==='function') showNotifToast('\u26a0 Missing info','Fill in your details'+(orderIsPhysical()?' and shipping address':'')+' first.'); return actions.reject(); }
-          return actions.resolve();
-        },
-        createOrder:function(data, actions){ return actions.order.create({ purchase_units:[{ amount:{ value:String(Number(_ordProduct.price).toFixed(2)) }, description:(_ordProduct.name||'Order').slice(0,120) }] }); },
-        onApprove:function(data, actions){ return actions.order.capture().then(function(){ finalizeOrder(true, data.orderID); }); }
-      }).render('#ordPayBtns');
-    }catch(e){ if(fb){ fb.style.display='inline-block'; fb.textContent='Place order'; } }
-  });
+  btns.innerHTML = '<button type="button" class="pay-submit" onclick="payWithStripe()">\ud83d\udd12 Pay with card (Stripe) \u2192</button>';
+}
+// Builds a Checkout Session for whatever's in _ordProduct + the order form,
+// then does a full-page redirect to Stripe's hosted checkout \u2014 same pattern
+// as openGenieCheckout()/openMembershipCheckout(), just with a dynamic price
+// since the Store sells everything from a $25 Master unlock to custom
+// print-on-demand goods (a fixed Payment Link can't do that).
+async function payWithStripe(){
+  if(!_ordProduct) return;
+  if(!orderFieldsValid()){ if(typeof showNotifToast==='function') showNotifToast('\u26a0 Missing info','Fill in your details'+(orderIsPhysical()?' and shipping address':'')+' first.'); return; }
+  var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  var btns=document.getElementById('ordPayBtns');
+  if (btns) btns.innerHTML = '<div style="text-align:center;padding:8px 0;color:#8ba0c4;font-size:.8rem">Opening secure checkout\u2026</div>';
+  try {
+    var res = await window.callCreateStoreCheckoutSession({
+      productId: _ordProduct.id, productName: _ordProduct.name,
+      category: _ordProduct.category || (_ordProduct.custom ? 'pod' : 'digital'),
+      provider: _ordProduct.provider || '', base: _ordProduct.base || '', baseName: _ordProduct.baseName || '',
+      design: _ordProduct.design || '', price: Number(_ordProduct.price) || 0,
+      sellerUid: _ordProduct.ownerUid || '',
+      sellerCode: _ordProduct.ownerCode || (typeof mmGetRef === 'function' ? mmGetRef() : null) || '',
+      buyerName: g('ordName'), buyerEmail: g('ordEmail'),
+      buyerAddress1: g('ordAddr'), buyerCity: g('ordCity'), buyerState: g('ordState'),
+      buyerZip: g('ordZip'), buyerCountry: g('ordCountry') || 'United States',
+      isCourse: !!(_ordProduct.isCourse && _ordProduct.courseLink), courseLink: _ordProduct.courseLink || '',
+      type: _ordProduct.type || '', screenId: _ordProduct.screenId || '',
+    });
+    if (res && res.url) { window.location.href = res.url; return; }
+    throw new Error('No checkout URL returned.');
+  } catch (e) {
+    if (btns) btns.innerHTML = '<button type="button" class="pay-submit" onclick="payWithStripe()">\ud83d\udd12 Pay with card (Stripe) \u2192</button>';
+    if (typeof showNotifToast === 'function') showNotifToast('\u26a0 Checkout error', e.message || 'Could not start checkout \u2014 please try again.');
+  }
+}
+window.payWithStripe = payWithStripe;
+
+// Handles the return from Stripe (?store_order_complete=1&session_id=...) \u2014
+// storeCheckoutWebhook already wrote the paid `orders` doc server-side by
+// the time the buyer lands back here; this just fetches it and runs the
+// same "unlock the Master / show course access / say thanks" UI the old
+// PayPal onApprove callback used to run inline.
+async function handleStoreOrderReturn(sessionId){
+  try {
+    var order = await window.callGetStoreOrder(sessionId);
+    if (order.type === 'master' && order.screenId) {
+      if (typeof showNotifToast === 'function') showNotifToast('\u2705 Unlocked!', (order.productName || 'Master').replace(' \u2014 Individual Access','') + ' is unlocked \u2014 opening it now.');
+      if (typeof showScreen === 'function') setTimeout(function(){ showScreen(order.screenId); }, 500);
+    } else if (order.isCourse && order.courseLink) {
+      showCourseAccessModal({ name: order.productName, courseLink: order.courseLink, id: order.productId }, true);
+    } else {
+      if (typeof showNotifToast === 'function') showNotifToast('\u2705 Payment received!', (order.productName || 'Your order') + ' is paid \u2014 heading to production and shipping automatically.');
+    }
+    if (typeof recordPurchase === 'function') recordPurchase({ id: order.productId, name: order.productName, courseLink: order.courseLink });
+  } catch (e) {
+    console.log('handleStoreOrderReturn:', e);
+    if (typeof showNotifToast === 'function') showNotifToast('Payment received', 'We\'re still finalizing your order \u2014 refresh in a moment if it\'s not showing yet.');
+  }
 }
 function finalizeOrder(paid, paypalOrderId){
   if(!_ordProduct) return;
@@ -13336,8 +13433,8 @@ function tickerItems() {
     ['MM:REFS',   (d.referrals || 0) + ' members', '+3', 1],
     ['MM:MLM',    '$' + mlm.toLocaleString(),    '+8.7%', 1],
     ['MM:STORE',  '$' + store.toLocaleString(),  '+15.2%', 1],
-    ['PRO',       '$57/mo',  '50% comm', 1],
-    ['ELITE',     '$97/mo',  '5/3/2/1%', 1],
+    ['PRO',       '$50/mo',  '50% comm', 1],
+    ['ELITE',     '$99/mo',  '5/3/2/1%', 1],
     ['MM:RANK',   'Top 12%', '▲2 spots', 1],
     ['NETWORK',   'LIVE',    '24/7', 1]
   ];
@@ -16451,6 +16548,27 @@ async function reiSearch(){
        <button class="rei-btn" onclick="reiOpenSettings()">Open setup</button></div>`;
   }
 }
+
+/* ── Production Master: Overview vs Create Product tab ── */
+function prodViewSwitch(which){
+  if (which === 'studio' && typeof studioEligible === 'function' && !studioEligible()) {
+    if (typeof openUpgradeModal === 'function') openUpgradeModal('elite');
+    if (typeof showNotifToast === 'function') showNotifToast('💎 Elite feature', 'The Product Creator is an Elite perk. Upgrade to invent and sell your own products.');
+    return;
+  }
+  document.getElementById('prodOverview').style.display = which === 'overview' ? 'block' : 'none';
+  document.getElementById('prodStudioTab').style.display = which === 'studio' ? 'block' : 'none';
+  document.getElementById('prodVOverview').classList.toggle('active', which === 'overview');
+  document.getElementById('prodVStudio').classList.toggle('active', which === 'studio');
+  if (which === 'studio' && typeof renderStudio === 'function') renderStudio();
+}
+window.prodViewSwitch = prodViewSwitch;
+
+function openProductStudio(){
+  showScreen('productionmaster');
+  setTimeout(function(){ prodViewSwitch('studio'); }, 30);
+}
+window.openProductStudio = openProductStudio;
 
 /* ── feed rendering ── */
 function reiViewSwitch(which){
