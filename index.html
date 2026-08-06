@@ -8643,85 +8643,94 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
-  <!-- Jarvis AI chat -->
-  <div class="payout-card" style="margin-bottom:20px">
-    <div class="po-title">🤖 Ask REI Master</div>
-    <div class="po-sub">Deal analysis, offer strategy, and REI concepts — grounded in your business profile. Try: "Should I take this deal?" · "What's my next best move?"</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-reimaster-chips"></div>
-    <div class="ai-chat-log" id="j-reimaster-log"></div>
-    <div style="display:flex;gap:8px">
-      <input class="ai-chat-input" id="j-reimaster-input" maxlength="300" placeholder="Ask REI Master anything about your deals or investing..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('reimaster')">
-      <button class="ai-chat-send" id="j-reimaster-send" onclick="sendJarvisQuestion('reimaster')">➤</button>
-    </div>
+  <!-- Views — one thing on screen at a time, so it's clear what each tab is
+       for instead of stacking every tool vertically. -->
+  <div class="rei-views" style="flex-wrap:wrap">
+    <button class="rei-view active" id="reiVCoach" onclick="reiViewSwitch('coach')">🤖 Coach</button>
+    <button class="rei-view" id="reiVListings" onclick="reiViewSwitch('listings')">🏠 Live Listings</button>
+    <button class="rei-view" id="reiVFeed" onclick="reiViewSwitch('feed')">📋 Leads</button>
+    <button class="rei-view" id="reiVMap" onclick="reiViewSwitch('map')">🗺️ Map</button>
+    <button class="rei-view" id="reiVAnlz" onclick="reiViewSwitch('anlz')">🧮 Deal Analyzer</button>
+    <button class="rei-view" id="reiVLookup" onclick="reiViewSwitch('lookup')">📍 Public Records</button>
   </div>
 
-  <!-- Property Lookup (Zillow, via HasData) — a separate tool from the lead
-       feed below. Active listings + Zestimate/comps/agent info, not
-       distressed-lead data (that still needs the Haven Intelligence backend
-       connected via Setup). -->
-  <div class="payout-card" style="margin-bottom:20px">
-    <div class="po-title">🔎 Property Lookup <span style="font-weight:600;color:var(--myst-muted);font-size:.75rem">— live Zillow data</span></div>
-    <div class="po-sub">Search active listings by city, state, or address — pricing, Zestimate, beds/baths, and agent contact. For distressed leads (pre-foreclosure, tax delinquent, probate, absentee owner), connect a data source under ⚙ Setup instead — this tool only covers live Zillow listings.</div>
-    <div style="display:flex;gap:8px;margin:12px 0">
-      <input class="ai-chat-input" id="reiZillowKeyword" placeholder="City, state, or address — e.g. Tampa, FL" onkeydown="if(event.key==='Enter')reiZillowDoSearch()">
-      <button class="ai-chat-send" onclick="reiZillowDoSearch()">Search</button>
-    </div>
-    <div id="reiZillowResults" style="font-size:.8rem;color:var(--myst-muted)"></div>
-  </div>
-
-  <!-- Location search -->
-  <div class="rei-locbar">
-    <select id="reiState" aria-label="State"></select>
-    <input id="reiCountyIn" placeholder="County (optional)" aria-label="County">
-    <input id="reiCityIn" placeholder="City (optional)" aria-label="City">
-    <button class="rei-go" onclick="reiSearch()">Search</button>
-  </div>
-
-  <!-- Views -->
-  <div class="rei-views">
-    <button class="rei-view active" id="reiVFeed" onclick="reiViewSwitch('feed')">Leads</button>
-    <button class="rei-view" id="reiVMap" onclick="reiViewSwitch('map')">Map</button>
-    <button class="rei-view" id="reiVAnlz" onclick="reiViewSwitch('anlz')">Deal Analyzer</button>
-    <button class="rei-view" id="reiVLookup" onclick="reiViewSwitch('lookup')">Property Lookup</button>
-  </div>
-
-  <!-- Demo banner -->
-  <div class="rei-demoband" id="reiDemoBand">
-    ⚠ DEMO PREVIEW — these are fictional sample leads, not real properties. Connect a data source to see real leads.
-    <button onclick="reiDemoOff()">Exit demo</button>
-  </div>
-
-  <!-- FEED -->
-  <div id="reiFeed">
-    <div class="rei-filterrow" id="reiFilterRow" style="display:none">
-      <div class="rei-seg" id="reiSeg">
-        <button class="active" data-strat="" onclick="reiSetStrat(this)">All</button>
-        <button data-strat="wholesale" onclick="reiSetStrat(this)">Wholesale</button>
-        <button data-strat="flip_candidate" onclick="reiSetStrat(this)">Flips</button>
-        <button data-strat="rental_candidate" onclick="reiSetStrat(this)">Rentals</button>
-        <button data-strat="distress" onclick="reiSetStrat(this)">Distressed</button>
+  <!-- COACH -->
+  <div id="reiCoach">
+    <div class="payout-card">
+      <div class="po-title">🤖 Ask REI Master</div>
+      <div class="po-sub">Deal analysis, offer strategy, and REI concepts — grounded in your business profile. Try: "Should I take this deal?" · "What's my next best move?"</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-reimaster-chips"></div>
+      <div class="ai-chat-log" id="j-reimaster-log"></div>
+      <div style="display:flex;gap:8px">
+        <input class="ai-chat-input" id="j-reimaster-input" maxlength="300" placeholder="Ask REI Master anything about your deals or investing..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('reimaster')">
+        <button class="ai-chat-send" id="j-reimaster-send" onclick="sendJarvisQuestion('reimaster')">➤</button>
       </div>
-      <select class="rei-select" id="reiSort" onchange="reiRender()">
-        <option value="score">AI score</option>
-        <option value="equity">Equity</option>
-        <option value="flip">Flip profit</option>
-        <option value="wholesale">Wholesale fee</option>
-      </select>
-      <span class="rei-count" id="reiCount"></span>
     </div>
-    <div id="reiFeedBody"></div>
   </div>
 
-  <!-- MAP -->
-  <div id="reiMapWrap" style="display:none">
-    <div id="reiMapMsg"></div>
-    <div id="reiMapEl" style="height:560px;border-radius:16px;border:1px solid var(--myst-border);display:none"></div>
-    <div id="reiMapLegend" style="display:none;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.68rem;color:var(--myst-muted)">
-      <span><i class="rei-dot" style="background:#10b981"></i> Profit play</span>
-      <span><i class="rei-dot" style="background:#ef4444"></i> Distressed</span>
-      <span><i class="rei-dot" style="background:#f59e0b"></i> Motivated seller</span>
-      <span><i class="rei-dot" style="background:#2E7BFF"></i> Other opportunity</span>
-      <span id="reiMapCount" style="margin-left:auto"></span>
+  <!-- LIVE LISTINGS (Zillow, via HasData) — separate from Leads below. Real
+       active listings + Zestimate/comps/agent info, not distressed-lead
+       data (that's the Leads tab, once a data source is connected under
+       ⚙ Setup). -->
+  <div id="reiListings" style="display:none">
+    <div class="payout-card">
+      <div class="po-title">🏠 Live Listings <span style="font-weight:600;color:var(--myst-muted);font-size:.75rem">— real Zillow data</span></div>
+      <div class="po-sub">Search active listings by city, state, or address — pricing, Zestimate, beds/baths, and agent contact. For distressed leads (pre-foreclosure, tax delinquent, probate, absentee owner), use the Leads tab instead — this only covers live Zillow listings.</div>
+      <div style="display:flex;gap:8px;margin:12px 0">
+        <input class="ai-chat-input" id="reiZillowKeyword" placeholder="City, state, or address — e.g. Tampa, FL" onkeydown="if(event.key==='Enter')reiZillowDoSearch()">
+        <button class="ai-chat-send" onclick="reiZillowDoSearch()">Search</button>
+      </div>
+      <div id="reiZillowResults" style="font-size:.8rem;color:var(--myst-muted)"></div>
+    </div>
+  </div>
+
+  <!-- LEADS + MAP share the same location search and underlying data -->
+  <div id="reiLeadsAndMap" style="display:none">
+    <div class="rei-locbar">
+      <select id="reiState" aria-label="State"></select>
+      <input id="reiCountyIn" placeholder="County (optional)" aria-label="County">
+      <input id="reiCityIn" placeholder="City (optional)" aria-label="City">
+      <button class="rei-go" onclick="reiSearch()">Search</button>
+    </div>
+
+    <!-- Demo banner -->
+    <div class="rei-demoband" id="reiDemoBand">
+      ⚠ DEMO PREVIEW — these are fictional sample leads, not real properties. Connect a data source to see real leads.
+      <button onclick="reiDemoOff()">Exit demo</button>
+    </div>
+
+    <!-- FEED -->
+    <div id="reiFeed">
+      <div class="rei-filterrow" id="reiFilterRow" style="display:none">
+        <div class="rei-seg" id="reiSeg">
+          <button class="active" data-strat="" onclick="reiSetStrat(this)">All</button>
+          <button data-strat="wholesale" onclick="reiSetStrat(this)">Wholesale</button>
+          <button data-strat="flip_candidate" onclick="reiSetStrat(this)">Flips</button>
+          <button data-strat="rental_candidate" onclick="reiSetStrat(this)">Rentals</button>
+          <button data-strat="distress" onclick="reiSetStrat(this)">Distressed</button>
+        </div>
+        <select class="rei-select" id="reiSort" onchange="reiRender()">
+          <option value="score">AI score</option>
+          <option value="equity">Equity</option>
+          <option value="flip">Flip profit</option>
+          <option value="wholesale">Wholesale fee</option>
+        </select>
+        <span class="rei-count" id="reiCount"></span>
+      </div>
+      <div id="reiFeedBody"></div>
+    </div>
+
+    <!-- MAP -->
+    <div id="reiMapWrap" style="display:none">
+      <div id="reiMapMsg"></div>
+      <div id="reiMapEl" style="height:560px;border-radius:16px;border:1px solid var(--myst-border);display:none"></div>
+      <div id="reiMapLegend" style="display:none;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.68rem;color:var(--myst-muted)">
+        <span><i class="rei-dot" style="background:#10b981"></i> Profit play</span>
+        <span><i class="rei-dot" style="background:#ef4444"></i> Distressed</span>
+        <span><i class="rei-dot" style="background:#f59e0b"></i> Motivated seller</span>
+        <span><i class="rei-dot" style="background:#2E7BFF"></i> Other opportunity</span>
+        <span id="reiMapCount" style="margin-left:auto"></span>
+      </div>
     </div>
   </div>
 
@@ -8751,10 +8760,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <!-- PUBLIC RECORDS — free government data (FEMA/Census/FRED), unrelated
+       to the Live Listings tab above (that's Zillow). -->
   <div id="reiLookup" style="display:none">
     <div class="rei-panel" style="max-width:640px;margin:0 auto 16px">
-      <div style="font-weight:800;font-size:.92rem;margin-bottom:6px">🔎 Public Property Lookup</div>
-      <div style="font-size:.68rem;color:var(--myst-muted);margin-bottom:14px">Free, live government data for any address — no backend required. Flood zone (FEMA), county income &amp; home values (U.S. Census), and current mortgage rates (FRED).</div>
+      <div style="font-weight:800;font-size:.92rem;margin-bottom:6px">📍 Public Records Lookup</div>
+      <div style="font-size:.68rem;color:var(--myst-muted);margin-bottom:14px">Free, live government data for any address — no data source needed. Flood zone (FEMA), county income &amp; home values (U.S. Census), and current mortgage rates (FRED).</div>
       <div class="rei-locbar" style="padding:0">
         <input id="reiLookupAddr" placeholder="123 Main St, Salt Lake City, UT 84101" aria-label="Address" style="flex:1">
         <button class="rei-go" onclick="reiLookupRun()">Look up</button>
@@ -16443,10 +16454,16 @@ async function reiSearch(){
 
 /* ── feed rendering ── */
 function reiViewSwitch(which){
+  const isFeedOrMap = which==="feed" || which==="map";
+  document.getElementById("reiCoach").style.display = which==="coach"?"block":"none";
+  document.getElementById("reiListings").style.display = which==="listings"?"block":"none";
+  document.getElementById("reiLeadsAndMap").style.display = isFeedOrMap?"block":"none";
   document.getElementById("reiFeed").style.display = which==="feed"?"block":"none";
   document.getElementById("reiMapWrap").style.display = which==="map"?"block":"none";
   document.getElementById("reiAnlz").style.display = which==="anlz"?"block":"none";
   document.getElementById("reiLookup").style.display = which==="lookup"?"block":"none";
+  document.getElementById("reiVCoach").classList.toggle("active",which==="coach");
+  document.getElementById("reiVListings").classList.toggle("active",which==="listings");
   document.getElementById("reiVFeed").classList.toggle("active",which==="feed");
   document.getElementById("reiVMap").classList.toggle("active",which==="map");
   document.getElementById("reiVAnlz").classList.toggle("active",which==="anlz");
