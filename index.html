@@ -61,6 +61,56 @@
     return res.data;
   };
 
+  // Generic AI call for any Master's AI feature — routes through the askAI
+  // Cloud Function so every request is token-metered and billed with markup
+  // (see functions/index.js). Never calls Anthropic directly from the browser
+  // (that would expose the API key). Returns { reply, inputTokens, outputTokens, billedCost }.
+  const AI_FUNCTION_URL = 'https://us-central1-money-masteries-2cc76.cloudfunctions.net/askAI';
+  window.askAI = async (prompt, masterId, model) => {
+    if (!auth.currentUser) throw new Error('Must be logged in to use AI features.');
+    const idToken = await auth.currentUser.getIdToken();
+    const resp = await fetch(AI_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+      body: JSON.stringify({ prompt, masterId: masterId || 'unknown', model: model || undefined }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'AI request failed');
+    return data;
+  };
+
+  // Master Portal → AI Usage & Billing panel data (see functions/index.js
+  // getAiUsageSummary). Master-account-only; the Cloud Function itself
+  // re-checks the caller's email server-side.
+  window.callGetAiUsageSummary = async () => {
+    const fn = httpsCallable(functionsClient, 'getAiUsageSummary');
+    const res = await fn();
+    return res.data;
+  };
+
+  // Master Portal → Genie Orders panel data (see functions/index.js
+  // getGenieOrders). Master-account-only; the Cloud Function itself
+  // re-checks the caller's email server-side.
+  window.callGetGenieOrders = async () => {
+    const fn = httpsCallable(functionsClient, 'getGenieOrders');
+    const res = await fn();
+    return res.data;
+  };
+
+  // REI Master → Property Lookup (Zillow, via HasData). See
+  // functions/index.js reiZillowSearch/reiZillowPropertyDetail — the
+  // HasData key stays server-side, never reaches the browser.
+  window.callReiZillowSearch = async (keyword, opts) => {
+    const fn = httpsCallable(functionsClient, 'reiZillowSearch');
+    const res = await fn({ keyword, type: (opts && opts.type) || 'forSale', filters: (opts && opts.filters) || {}, page: opts && opts.page });
+    return res.data;
+  };
+  window.callReiZillowPropertyDetail = async (url) => {
+    const fn = httpsCallable(functionsClient, 'reiZillowPropertyDetail');
+    const res = await fn({ url });
+    return res.data;
+  };
+
   // Generate a unique affiliate code from uid
   function makeAffCode(uid) {
     return "MM" + uid.substring(0,6).toUpperCase();
@@ -5956,6 +6006,78 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
+<!-- GENIE WELCOME / SETUP INTAKE — shown after a Stripe Payment Link purchase
+     redirects back here with ?genie_welcome=1&session_id={CHECKOUT_SESSION_ID}.
+     No login required. Collects the details needed to provision the buyer's
+     Genie and forwards them (plus the Stripe session/customer) to the
+     onboarding queue via genieOnboardSubmit. -->
+<div id="genieWelcomeScreen" style="display:none;min-height:100vh;background:#0b0f19;color:#e5e7eb;padding:32px 16px;font-family:inherit">
+  <div style="max-width:520px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:2.4rem">🧞</div>
+      <div style="font-size:1.3rem;font-weight:800;color:#34d399">You're in!</div>
+      <div style="color:#8ba0c4;font-size:.9rem;margin-top:6px">Your Genie subscription is confirmed. Tell us about your business below so we can set your agent up right — most Genies are live within one business day.</div>
+    </div>
+    <div id="genieWelcomeForm" style="background:#111827;border:1px solid #1f2937;border-radius:14px;padding:20px">
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Business name *</label>
+        <input id="gwBusiness" type="text" placeholder="Acme Plumbing" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Your name (contact) *</label>
+        <input id="gwContact" type="text" placeholder="Sarah" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Email *</label>
+        <input id="gwEmail" type="email" placeholder="sarah@acmeplumbing.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Phone</label>
+        <input id="gwPhone" type="tel" placeholder="555-0100" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">What should your Genie be named?</label>
+        <input id="gwAgent" type="text" placeholder="Wally" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Wake word (if used)</label>
+        <input id="gwWakeWord" type="text" placeholder="hey wally" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Personality</label>
+        <select id="gwPersonality" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">
+          <option value="1">Friendly &amp; professional</option>
+          <option value="2">Upbeat &amp; energetic</option>
+          <option value="3">Calm &amp; reassuring</option>
+          <option value="4">Direct &amp; efficient</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Short blurb about your business</label>
+        <textarea id="gwBlurb" rows="3" placeholder="Fast, reliable plumbing repair and installation." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb;resize:vertical"></textarea>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Tools/integrations you use (optional)</label>
+        <input id="gwIntegrations" type="text" placeholder="Gmail, QuickBooks" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div id="gwSocialRow" style="display:none;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:#e5e7eb"><input id="gwAddonSocial" type="checkbox" /> Also set up social posting for me</label>
+      </div>
+      <div id="gwAdBudgetRow" style="display:none;margin-bottom:12px">
+        <label style="display:block;font-size:.75rem;color:#8ba0c4;margin-bottom:4px">Monthly ad budget (if using ad management)</label>
+        <input id="gwAdBudget" type="text" placeholder="$500/mo" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb" />
+      </div>
+      <div id="gwError" style="display:none;color:#f87171;font-size:.8rem;margin-bottom:12px"></div>
+      <button onclick="submitGenieOnboard()" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#34d399,#059669);color:#04150c;font-weight:800;cursor:pointer">Submit &amp; Get Started</button>
+    </div>
+    <div id="genieWelcomeThanks" style="display:none;text-align:center;background:#0d2118;border:1px solid #34d39950;border-radius:14px;padding:28px">
+      <div style="font-size:2rem">✅</div>
+      <div style="font-weight:800;color:#34d399;margin-top:6px">Thanks — you're all set!</div>
+      <div style="color:#8ba0c4;font-size:.9rem;margin-top:6px">We've got everything we need. Your Genie will be ready within one business day, and we'll email your login to the address you gave us.</div>
+    </div>
+  </div>
+</div>
+
 <!-- MEMBERSHIP GATE — shown to any logged-in user who hasn't paid yet. There is
      no free tier: everyone who creates an account must choose and subscribe to
      a paid plan before the dashboard unlocks. -->
@@ -6175,9 +6297,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon">🏘️</span> REI Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon">🚀</span> Marketing Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon">📈</span> Markets Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('businessmaster')" id="nav-businessmaster"><span class="nav-item-icon">🏢</span> Business Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('financialmaster')" id="nav-financialmaster"><span class="nav-item-icon">💰</span> Financial Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('proshub')" id="nav-proshub"><span class="nav-item-icon">🧰</span> Pros Hub</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('administrativemaster')" id="nav-administrativemaster"><span class="nav-item-icon">🏛️</span> Administrative Master</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('productionmaster')" id="nav-productionmaster"><span class="nav-item-icon">🏭</span> Production Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('geniemaster')" id="nav-geniemaster"><span class="nav-item-icon">🧞</span> Genie Agent Master</div>
     <div class="sidebar-section-label">Community</div>
     <div class="nav-item" onclick="showScreen('community')" id="nav-community"><span class="nav-item-icon">💬</span> Community</div>
@@ -7008,6 +7129,59 @@ document.addEventListener('DOMContentLoaded', function() {
       <div id="eliteToolsGate"></div>
     </div>
 
+    <!-- ADMINISTRATIVE MASTER (Business + Financial + Pros Hub combined) -->
+    <div class="screen" id="screen-administrativemaster" data-sbg="administrativemaster">
+      <div class="screen-title">🏛️ <span>Administrative Master</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
+      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations, bookkeeping & financial coaching, and the Pros Hub tools, combined under a single Administrative Master.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+        <div class="mk-card" onclick="showScreen('businessmaster')" style="cursor:pointer">
+          <div style="font-size:2rem">🏢</div>
+          <div class="mk-card-title">Business Tools</div>
+          <div class="mpm-sub">Your AI-run back office — operations, planning, and business tools.</div>
+        </div>
+        <div class="mk-card" onclick="showScreen('financialmaster')" style="cursor:pointer">
+          <div style="font-size:2rem">💰</div>
+          <div class="mk-card-title">Financial Tools</div>
+          <div class="mpm-sub">Bookkeeping, financial coaching, and money-management tools.</div>
+        </div>
+        <div class="mk-card" onclick="showScreen('proshub')" style="cursor:pointer">
+          <div style="font-size:2rem">🧰</div>
+          <div class="mk-card-title">Pros Hub</div>
+          <div class="mpm-sub">Professional-grade tools for running your business day to day.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTION MASTER (service page — clients request, fulfillment is manual for now; -->
+    <!-- automated domain registration + website generation is a future phase, see chat) -->
+    <div class="screen" id="screen-productionmaster" data-sbg="productionmaster">
+      <div class="screen-title">🏭 <span>Production Master</span></div>
+      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
+      <div class="fm-demo-banner">
+        <div class="fm-demo-icon">🧪</div>
+        <div>Custom domain registration and automatic website generation are in development. For now, requests below are reviewed and fulfilled by our team — you'll be contacted after purchase to get started.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
+        <div class="mk-card">
+          <div style="font-size:2rem">🌐</div>
+          <div class="mk-card-title">Custom Website Build</div>
+          <div class="mpm-sub">We build a custom website for your business or your client's — tell us what you need and we'll get started.</div>
+          <button class="admin-save-btn" onclick="if(typeof buyProduct==='function') buyProduct('s-prodwebsite')" style="margin-top:10px">Request a Website</button>
+        </div>
+        <div class="mk-card">
+          <div style="font-size:2rem">🔗</div>
+          <div class="mk-card-title">Domain Setup</div>
+          <div class="mpm-sub">We help you find and set up a domain for your business — registered and pointed where it needs to go.</div>
+          <button class="admin-save-btn" onclick="if(typeof buyProduct==='function') buyProduct('s-proddomain')" style="margin-top:10px">Request a Domain</button>
+        </div>
+      </div>
+      <div class="screen-title" style="font-size:1.1rem;margin-top:22px">🛠️ <span>Create Product</span></div>
+      <div id="studioEmbedWrap">
+        <button class="admin-save-btn" onclick="showScreen('studio')">Open Create Product Tool →</button>
+      </div>
+    </div>
+
     <!-- BUSINESS MASTER (demo) -->
     <div class="screen" id="screen-businessmaster" data-sbg="businessmaster">
       <div class="screen-title">🏢 <span>Business Master</span></div>
@@ -7317,21 +7491,47 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- GENIE AGENT MASTER (buy page — always open, no plan gate) -->
     <div class="screen" id="screen-geniemaster" data-sbg="geniemaster">
       <div class="screen-title">🧞 Genie Agent <span>Master</span></div>
-      <div class="comp-note" style="margin-bottom:20px">Done-for-you AI and marketing help — pick what you need below. Each is a one-time purchase; our team reaches out to get you set up right after checkout.</div>
+      <div class="comp-note" style="margin-bottom:20px">Your own AI agent, billed monthly plus actual usage. Pick a tier below — checkout opens in a new tab, then brings you back here to tell us about your business.</div>
       <div class="mk-grid">
         <div class="mk-card">
-          <span class="mk-badge purple">PRO SERVICE</span>
+          <span class="mk-badge purple">SUBSCRIPTION</span>
           <div class="mk-emoji">🧞</div>
-          <div class="mk-name">Genie AI Agent</div>
-          <div class="mk-desc">Your own AI agent, set up and configured for your business — automations, lead follow-up, and 24/7 responses handled for you.</div>
-          <div class="mk-price-row"><span class="mk-price">$50</span></div>
+          <div class="mk-name">Chat Genie</div>
+          <div class="mk-desc">Your own AI agent, text chat only — automations, lead follow-up, and 24/7 responses handled for you. Billed monthly + actual usage.</div>
+          <div class="mk-price-row"><span class="mk-price">$50/mo</span></div>
           <div class="mk-actions">
-            <button class="mk-share" onclick="shareProduct('s-genie', this)">🔗 Share &amp; Earn</button>
-            <button class="mk-buy" onclick="buyProduct('s-genie')">Buy</button>
+            <button class="mk-buy" style="width:100%" onclick="openGenieCheckout('chat')">Subscribe</button>
           </div>
-          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1f2937">
-            <div style="font-size:.72rem;color:#8ba0c4;margin-bottom:8px">Optional add-on — give this Genie the ability to run ads and manage ad spend:</div>
-            <button class="mk-buy" style="width:100%" onclick="buyProduct('s-adsaccess')">📣 Add Ads &amp; Ad Spend Access — $25</button>
+        </div>
+        <div class="mk-card">
+          <span class="mk-badge purple">SUBSCRIPTION</span>
+          <div class="mk-emoji">🧞</div>
+          <div class="mk-name">Master Genie</div>
+          <div class="mk-desc">Everything in Chat Genie, tuned for higher volume — text chat only. Billed monthly + actual usage.</div>
+          <div class="mk-price-row"><span class="mk-price">$99/mo</span></div>
+          <div class="mk-actions">
+            <button class="mk-buy" style="width:100%" onclick="openGenieCheckout('master')">Subscribe</button>
+          </div>
+        </div>
+        <div class="mk-card">
+          <span class="mk-badge purple">SUBSCRIPTION</span>
+          <div class="mk-emoji">🧞</div>
+          <div class="mk-name">Super Genie</div>
+          <div class="mk-desc">Text chat + a live visible desktop your Genie can work in front of you. Billed monthly + actual usage.</div>
+          <div class="mk-price-row"><span class="mk-price">$297/mo</span></div>
+          <div class="mk-actions">
+            <button class="mk-buy" style="width:100%" onclick="openGenieCheckout('super')">Subscribe</button>
+          </div>
+        </div>
+        <div class="mk-card">
+          <span class="mk-badge purple">PRO SERVICE</span>
+          <div class="mk-emoji">📣</div>
+          <div class="mk-name">Ads &amp; Ad Spend Access</div>
+          <div class="mk-desc">Push and manage paid ads and ad spend — add this on to any Genie tier, or get it included free with Marketing Expert below.</div>
+          <div class="mk-price-row"><span class="mk-price">$25</span></div>
+          <div class="mk-actions">
+            <button class="mk-share" onclick="shareProduct('s-adsaccess', this)">🔗 Share &amp; Earn</button>
+            <button class="mk-buy" onclick="buyProduct('s-adsaccess')">Buy</button>
           </div>
         </div>
         <div class="mk-card">
@@ -7363,6 +7563,16 @@ document.addEventListener('DOMContentLoaded', function() {
         <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🔔 Payout Requests</div>
         <div class="mpm-sub" style="padding:0 16px 12px">Members who've asked to be paid — verified commissions only (see each member's Total Earned / Pending Payout below for the full picture). Mark paid once you've actually sent it.</div>
         <div id="admPayoutReqWrap"><div style="padding:16px;color:#6b7280;text-align:center">Loading…</div></div>
+      </div>
+      <div class="admin-table-wrap" style="margin-bottom:22px">
+        <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🤖 AI Usage &amp; Billing</div>
+        <div class="mpm-sub" style="padding:0 16px 12px">Every AI request across Genie and all AI-powered Masters, per client — what Anthropic actually charged you vs. what the client was billed. The gap is your profit.</div>
+        <div id="admAiUsageWrap"><div style="padding:16px;color:#6b7280;text-align:center">Loading…</div></div>
+      </div>
+      <div class="admin-table-wrap" style="margin-bottom:22px">
+        <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🧞 Genie Orders — Pending Provisioning</div>
+        <div class="mpm-sub" style="padding:0 16px 12px">Every Genie subscription purchased through Stripe, in order — tier, business info, and the Stripe customer ID you need to register the client and turn on daily usage billing (report_usage_to_stripe.py --markup 2.5). "Onboarded" means the buyer's info reached the setup queue at 138.197.22.223:8877. Commission (initial signup + every monthly renewal) is added to that affiliate's Pending Payout below — nothing here ever pays anyone automatically; you still send every payout yourself.</div>
+        <div id="admGenieOrdersWrap"><div style="padding:16px;color:#6b7280;text-align:center">Loading…</div></div>
       </div>
       <div class="mpm-card" id="genieServiceCard" style="border-color:#34d39950;background:linear-gradient(135deg,#0d2118,#111827)">
         <div class="mpm-title" style="color:#34d399">🧞 Genie Service — Client Site Builder</div>
@@ -8402,6 +8612,20 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
+  <!-- Property Lookup (Zillow, via HasData) — a separate tool from the lead
+       feed below. Active listings + Zestimate/comps/agent info, not
+       distressed-lead data (that still needs the Haven Intelligence backend
+       connected via Setup). -->
+  <div class="payout-card" style="margin-bottom:20px">
+    <div class="po-title">🔎 Property Lookup <span style="font-weight:600;color:var(--myst-muted);font-size:.75rem">— live Zillow data</span></div>
+    <div class="po-sub">Search active listings by city, state, or address — pricing, Zestimate, beds/baths, and agent contact. For distressed leads (pre-foreclosure, tax delinquent, probate, absentee owner), connect a data source under ⚙ Setup instead — this tool only covers live Zillow listings.</div>
+    <div style="display:flex;gap:8px;margin:12px 0">
+      <input class="ai-chat-input" id="reiZillowKeyword" placeholder="City, state, or address — e.g. Tampa, FL" onkeydown="if(event.key==='Enter')reiZillowDoSearch()">
+      <button class="ai-chat-send" onclick="reiZillowDoSearch()">Search</button>
+    </div>
+    <div id="reiZillowResults" style="font-size:.8rem;color:var(--myst-muted)"></div>
+  </div>
+
   <!-- Location search -->
   <div class="rei-locbar">
     <select id="reiState" aria-label="State"></select>
@@ -8557,7 +8781,7 @@ function showScreen(id) {
   if (id === 'mystore')      setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
   if (id === 'revalidation') setTimeout(function(){ if (typeof buildRevalLink === 'function') buildRevalLink(); }, 30);
   if (id === 'community')    setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
-  if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); }, 80);
+  if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); if (typeof loadAiUsageSummary === 'function') loadAiUsageSummary(); if (typeof loadGenieOrders === 'function') loadGenieOrders(); }, 80);
   if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); }, 30);
   if (id === 'businessmaster') setTimeout(function(){ if (typeof renderBusinessMaster === 'function') renderBusinessMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('businessmaster'); }, 30);
   if (id === 'financialmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('financialmaster'); }, 30);
@@ -8579,7 +8803,7 @@ function fmtUSD(n) {
   return '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function showLoggedIn(user, data) {
-  if (window.__revalPublicMode) return; // don't clobber the public revalidation landing
+  if (window.__revalPublicMode || window.__genieWelcomeMode) return; // don't clobber the public revalidation/genie landing
   document.getElementById('landingScreen').style.display = 'none';
   document.getElementById('mainNav').style.display = 'flex';
   document.getElementById('appLayout').style.display = 'flex';
@@ -8650,7 +8874,7 @@ function showLoggedIn(user, data) {
 }
 
 function showLoggedOut() {
-  if (window.__revalPublicMode) return; // don't clobber the public revalidation landing
+  if (window.__revalPublicMode || window.__genieWelcomeMode) return; // don't clobber the public revalidation/genie landing
   document.getElementById('landingScreen').style.display = 'block';
   document.getElementById('mainNav').style.display = 'none';
   document.getElementById('appLayout').style.display = 'none';
@@ -8884,6 +9108,78 @@ async function adminFulfillPayoutRequest(reqId, uid){
   } catch(e) { console.error('adminFulfillPayoutRequest:', e); if (typeof showNotifToast==='function') showNotifToast('⚠ Error','Could not mark this paid — try again.'); }
 }
 window.adminFulfillPayoutRequest = adminFulfillPayoutRequest;
+
+// ── MASTER PORTAL: AI Usage & Billing (token metering, per client) ─────────
+async function loadAiUsageSummary(){
+  var wrap = document.getElementById('admAiUsageWrap');
+  if (!wrap || typeof window.callGetAiUsageSummary !== 'function') return;
+  wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Loading…</div>';
+  try {
+    var res = await window.callGetAiUsageSummary();
+    renderAiUsageSummary((res && res.clients) || []);
+  } catch(e) {
+    console.log('loadAiUsageSummary:', e);
+    wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Could not load AI usage — make sure the askAI/getAiUsageSummary functions are deployed.</div>';
+  }
+}
+window.loadAiUsageSummary = loadAiUsageSummary;
+
+function renderAiUsageSummary(clients){
+  var wrap = document.getElementById('admAiUsageWrap');
+  if (!wrap) return;
+  if (!clients.length) { wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">No AI usage recorded yet.</div>'; return; }
+  var totalRaw = 0, totalBilled = 0, totalProfit = 0;
+  clients.forEach(function(c){ totalRaw += Number(c.rawCost)||0; totalBilled += Number(c.billedCost)||0; totalProfit += Number(c.profit)||0; });
+  var header = '<div style="display:flex;gap:18px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid #1f2937;font-size:.8rem">' +
+    '<span>Your real cost: <b style="color:#f3f4f6">$'+totalRaw.toFixed(2)+'</b></span>' +
+    '<span>Billed to clients: <b style="color:#2E7BFF">$'+totalBilled.toFixed(2)+'</b></span>' +
+    '<span>Your profit: <b style="color:#34d399">$'+totalProfit.toFixed(2)+'</b></span></div>';
+  var rows = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Client</th><th>Requests</th><th>Your Cost</th><th>Billed</th><th>Profit</th></tr></thead><tbody>' +
+    clients.map(function(c){
+      return '<tr><td>'+(c.name||c.email||c.uid)+'</td><td>'+c.requests+'</td>' +
+        '<td>$'+Number(c.rawCost||0).toFixed(2)+'</td>' +
+        '<td style="color:#2E7BFF;font-weight:700">$'+Number(c.billedCost||0).toFixed(2)+'</td>' +
+        '<td style="color:#34d399;font-weight:700">$'+Number(c.profit||0).toFixed(2)+'</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  wrap.innerHTML = header + rows;
+}
+
+async function loadGenieOrders(){
+  var wrap = document.getElementById('admGenieOrdersWrap');
+  if (!wrap || typeof window.callGetGenieOrders !== 'function') return;
+  wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Loading…</div>';
+  try {
+    var res = await window.callGetGenieOrders();
+    renderGenieOrders((res && res.orders) || []);
+  } catch(e) {
+    console.log('loadGenieOrders:', e);
+    wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Could not load Genie orders — make sure genieCheckoutWebhook/getGenieOrders are deployed.</div>';
+  }
+}
+window.loadGenieOrders = loadGenieOrders;
+
+function renderGenieOrders(orders){
+  var wrap = document.getElementById('admGenieOrdersWrap');
+  if (!wrap) return;
+  if (!orders.length) { wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">No Genie orders yet.</div>'; return; }
+  var tierLabel = { chat: 'Chat ($50)', master: 'Master ($99)', super: 'Super ($297)' };
+  var rows = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Tier</th><th>Business</th><th>Email</th><th>Stripe Customer</th><th>Metered Price</th><th>Referred By</th><th>Commission Earned (lifetime)</th><th>Onboarded</th></tr></thead><tbody>' +
+    orders.map(function(o){
+      var payload = o.onboardPayload || {};
+      var business = payload.business || '—';
+      var email = payload.email || o.email || '—';
+      var cust = o.stripeCustomerId || '—';
+      var metered = o.meteredPriceAttached ? '<span style="color:#34d399">✓ attached</span>' : '<span style="color:#f87171">✗ missing</span>';
+      var onboarded = o.onboarded ? '<span style="color:#34d399">✓ sent</span>' : '<span style="color:#facc15">⏳ pending</span>';
+      var referredBy = o.commissionCreditedTo || o.referredByCode || '—';
+      var totalComm = Number(o.totalCommissionCredited || o.commissionAmount || 0);
+      var commission = (totalComm > 0) ? ('<span style="color:#34d399;font-weight:700">$'+totalComm.toFixed(2)+'</span> <span style="color:#6b7280;font-size:.7rem">(unpaid — pay manually)</span>') : '—';
+      return '<tr><td>'+(tierLabel[o.tier]||o.tier||'—')+'</td><td>'+business+'</td><td>'+email+'</td>' +
+        '<td style="font-family:monospace;font-size:.75rem">'+cust+'</td><td>'+metered+'</td>' +
+        '<td>'+referredBy+'</td><td>'+commission+'</td><td>'+onboarded+'</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  wrap.innerHTML = rows;
+}
 
 // ── COPY & SHARE ──────────────────────────────────────────────────────────────
 function copyAffLink(textId, btnId) {
@@ -10044,6 +10340,109 @@ let revalPublicTier = 'standard';
   } catch(e) {}
 })();
 
+// ── GENIE WELCOME (post-purchase intake) — ?genie_welcome=1&session_id=...&tier=... ─
+// A buyer lands here right after their Stripe Payment Link checkout redirects
+// back to the site. No login needed. Takes over the whole page until reloaded.
+window.__genieWelcomeMode = false;
+let genieWelcomeSessionId = '';
+let genieWelcomeTier = 'chat';
+(function() {
+  try {
+    const p = new URLSearchParams(location.search);
+    if ((p.get('genie_welcome') || '').trim() === '1') {
+      window.__genieWelcomeMode = true;
+      genieWelcomeSessionId = (p.get('session_id') || '').trim();
+      const tier = (p.get('tier') || '').trim().toLowerCase();
+      if (['chat', 'master', 'super'].includes(tier)) genieWelcomeTier = tier;
+      document.addEventListener('DOMContentLoaded', function() {
+        const scr = document.getElementById('genieWelcomeScreen');
+        const landing = document.getElementById('landingScreen');
+        const nav = document.getElementById('mainNav');
+        const app = document.getElementById('appLayout');
+        if (scr) scr.style.display = 'block';
+        if (landing) landing.style.display = 'none';
+        if (nav) nav.style.display = 'none';
+        if (app) app.style.display = 'none';
+        // Super Genie includes the live desktop add-on — show the extra fields
+        // for tiers where they're relevant (ad budget only matters if they
+        // also bought/mentioned ad management; social add-on offered to all).
+        const socialRow = document.getElementById('gwSocialRow');
+        if (socialRow) socialRow.style.display = 'block';
+        const adRow = document.getElementById('gwAdBudgetRow');
+        if (adRow && genieWelcomeTier !== 'chat') adRow.style.display = 'block';
+      });
+    }
+  } catch(e) {}
+})();
+
+// Posts the intake form to genieOnboardSubmit (see functions/index.js),
+// which merges it with the Stripe order genieCheckoutWebhook already
+// recorded (customer ID, tier) and forwards the complete package to the
+// Genie server's onboarding queue.
+const GENIE_ONBOARD_SUBMIT_URL = 'https://us-central1-money-masteries-2cc76.cloudfunctions.net/genieOnboardSubmit';
+async function submitGenieOnboard() {
+  const errEl = document.getElementById('gwError');
+  if (errEl) errEl.style.display = 'none';
+  const business = (document.getElementById('gwBusiness')?.value || '').trim();
+  const email = (document.getElementById('gwEmail')?.value || '').trim();
+  if (!business || !email) {
+    if (errEl) { errEl.textContent = 'Please enter your business name and email.'; errEl.style.display = 'block'; }
+    return;
+  }
+  const payload = {
+    session_id: genieWelcomeSessionId || undefined,
+    business: business,
+    contact: (document.getElementById('gwContact')?.value || '').trim(),
+    email: email,
+    phone: (document.getElementById('gwPhone')?.value || '').trim(),
+    agent: (document.getElementById('gwAgent')?.value || '').trim(),
+    wake_word: (document.getElementById('gwWakeWord')?.value || '').trim(),
+    personality: document.getElementById('gwPersonality')?.value || '1',
+    blurb: (document.getElementById('gwBlurb')?.value || '').trim(),
+    integrations: (document.getElementById('gwIntegrations')?.value || '').trim(),
+    tier: genieWelcomeTier,
+    addon_social: !!document.getElementById('gwAddonSocial')?.checked,
+    ad_budget: (document.getElementById('gwAdBudget')?.value || '').trim(),
+  };
+  try {
+    const resp = await fetch(GENIE_ONBOARD_SUBMIT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || 'Could not submit — please try again.');
+    const form = document.getElementById('genieWelcomeForm');
+    const thanks = document.getElementById('genieWelcomeThanks');
+    if (form) form.style.display = 'none';
+    if (thanks) thanks.style.display = 'block';
+  } catch (e) {
+    if (errEl) { errEl.textContent = e.message || 'Something went wrong — please try again, or email support@havenhomesdesignbuild.com.'; errEl.style.display = 'block'; }
+  }
+}
+window.submitGenieOnboard = submitGenieOnboard;
+
+// Opens the right Stripe Payment Link for a Genie tier, appending
+// ?client_reference_id=<affiliate code> when this visitor arrived via a
+// referral link (mmGetRef() reads the code stashed by the ?ref= handler
+// above). Stripe copies client_reference_id onto the Checkout Session, and
+// genieCheckoutWebhook reads it to credit that affiliate — same as every
+// other purchase on the site, just via Stripe's own hosted checkout instead
+// of buyProduct().
+const GENIE_PAYMENT_LINKS = {
+  chat: 'https://buy.stripe.com/9B6dR810P54S8dt1TL4Rq04',
+  master: 'https://buy.stripe.com/00weVcgZN9l8eBR55X4Rq05',
+  super: 'https://buy.stripe.com/eVqeVcgZN7d08dtbul4Rq06',
+};
+function openGenieCheckout(tier) {
+  const base = GENIE_PAYMENT_LINKS[tier];
+  if (!base) return;
+  const ref = (typeof mmGetRef === 'function') ? mmGetRef() : null;
+  const url = ref ? (base + '?client_reference_id=' + encodeURIComponent(ref)) : base;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+window.openGenieCheckout = openGenieCheckout;
+
 function revalPublicSetTier(tier) {
   revalPublicTier = (tier === 'premium') ? 'premium' : 'standard';
 }
@@ -10512,7 +10911,7 @@ setTimeout(() => document.getElementById('pwaBanner')?.classList.add('show'), 40
 // ── HOOK showLoggedIn to run new features ─────────────────────────────────────
 const _origShowLoggedIn = showLoggedIn;
 window.showLoggedIn = function(user, data) {
-  if (window.__revalPublicMode) return; // don't clobber the public revalidation landing
+  if (window.__revalPublicMode || window.__genieWelcomeMode) return; // don't clobber the public revalidation/genie landing
   if (!hasPaidAccess(user, data)) { showMembershipGate(user, data); return; }
   hideMembershipGate();
   _origShowLoggedIn(user, data);
@@ -10534,11 +10933,10 @@ window.showLoggedIn = function(user, data) {
   // badge on whichever ones they haven't unlocked yet. Pros Hub alone stays a
   // straight Pro/Elite perk, hidden until upgrade, since it isn't sold à la carte.
   var mastersUnlocked = (data && (data.plan === 'pro' || data.plan === 'elite')) || window.isMaster === true;
-  var proshubNav = document.getElementById('nav-proshub');
-  if (proshubNav) proshubNav.style.display = mastersUnlocked ? 'flex' : 'none';
+  var prodNav = document.getElementById('nav-productionmaster');
+  if (prodNav) prodNav.style.display = 'flex'; // Production Master is a demo/service page — visible to everyone for now
   [['nav-reimaster','reimaster','🏘️ REI Master'],['nav-marketingmaster','marketingmaster','🚀 Marketing Master'],
-   ['nav-marketsmaster','marketsmaster','📈 Markets Master'],['nav-businessmaster','businessmaster','🏢 Business Master'],
-   ['nav-financialmaster','financialmaster','💰 Financial Master']].forEach(function(row){
+   ['nav-marketsmaster','marketsmaster','📈 Markets Master'],['nav-administrativemaster','administrativemaster','🏛️ Administrative Master']].forEach(function(row){
     var el = document.getElementById(row[0]);
     if (!el) return;
     el.style.display = 'flex';
@@ -12009,7 +12407,9 @@ var DEFAULT_PRODUCTS = [
     desc:'A licensed professional revalidates your degree and education credentials for your country of origin — document review, translation coordination, and official submission handled for you. Pay as you go: just $50/month until your $3,000 total is complete, then it ends.' },
   { id:'s-genie',      type:'service', emoji:'🧞', name:'Genie AI Agent',    price:50, desc:'Your own AI agent, set up and configured for your business — automations, lead follow-up, and 24/7 responses handled for you.' },
   { id:'s-mktexpert',  type:'service', emoji:'📢', name:'Marketing Expert',  price:99, desc:'A dedicated marketing expert works with you directly — content, campaigns, and getting your offer in front of the right people. Includes Ads & Ad Spend access free.' },
-  { id:'s-adsaccess',  type:'service', emoji:'📣', name:'Ads & Ad Spend Access', price:25, desc:'Push and manage paid ads and ad spend — sold on its own (via Marketing Master) or as an add-on to the $50 Genie AI Agent. Included free with the $99 Marketing Expert.' }
+  { id:'s-adsaccess',  type:'service', emoji:'📣', name:'Ads & Ad Spend Access', price:25, desc:'Push and manage paid ads and ad spend — sold on its own (via Marketing Master) or as an add-on to the $50 Genie AI Agent. Included free with the $99 Marketing Expert.' },
+  { id:'s-prodwebsite', type:'service', emoji:'🌐', name:'Custom Website Build (Production Master)', price:250, desc:'We build you a custom website — you tell us what you need after purchase and our team gets started. (Fully automated self-serve website generation is coming soon.)' },
+  { id:'s-proddomain',  type:'service', emoji:'🔗', name:'Domain Setup (Production Master)', price:50, desc:'We help you find and register a domain and point it where it needs to go. (Fully automated self-serve domain registration is coming soon.)' }
 ];
 window.UPLOADED_PRODUCTS = window.UPLOADED_PRODUCTS || [];
 
@@ -12023,8 +12423,7 @@ var MASTER_PRODUCTS = [
   { id:'master-reimaster',        screenId:'reimaster',        type:'master', emoji:'🏘️', name:'REI Master — Individual Access',        price:25, desc:'One-time unlock for REI Master — real-estate deal analysis, lead tools & AI investing coach. Included free with Pro or Elite.' },
   { id:'master-marketingmaster',  screenId:'marketingmaster',  type:'master', emoji:'🚀', name:'Marketing Master — Individual Access',  price:25, desc:'One-time unlock for Marketing Master — the full marketing tool suite. Included free with Pro or Elite.' },
   { id:'master-marketsmaster',    screenId:'marketsmaster',    type:'master', emoji:'📈', name:'Markets Master — Individual Access',    price:25, desc:'One-time unlock for Markets Master — live market data & AI market assistant. Included free with Pro or Elite.' },
-  { id:'master-businessmaster',   screenId:'businessmaster',   type:'master', emoji:'🏢', name:'Business Master — Individual Access',   price:25, desc:'One-time unlock for Business Master — your AI-run back office. Included free with Pro or Elite.' },
-  { id:'master-financialmaster',  screenId:'financialmaster',  type:'master', emoji:'💰', name:'Financial Master — Individual Access',  price:25, desc:'One-time unlock for Financial Master — bookkeeping & financial coaching. Included free with Pro or Elite.' }
+  { id:'master-administrativemaster', screenId:'administrativemaster', type:'master', emoji:'🏛️', name:'Administrative Master — Individual Access', price:25, desc:'One-time unlock for Administrative Master — Business, Financial & Pros Hub tools combined in one place. Included free with Pro or Elite.' }
 ];
 window.MASTER_PRODUCTS = MASTER_PRODUCTS;
 function getAllProducts() { return DEFAULT_PRODUCTS.concat(MASTER_PRODUCTS).concat(window.UPLOADED_PRODUCTS); }
@@ -15795,6 +16194,70 @@ function reiDemoOn(){
   reiRender();
 }
 function reiDemoOff(){ reiShowConnectState(); }
+
+/* ── Property Lookup (Zillow via HasData) — separate from the lead-feed
+   backend above. See functions/index.js reiZillowSearch. ── */
+function reiZillowEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+async function reiZillowDoSearch(){
+  const input = document.getElementById('reiZillowKeyword');
+  const wrap = document.getElementById('reiZillowResults');
+  const keyword = (input && input.value || '').trim();
+  if (!keyword) { if (wrap) wrap.innerHTML = '<div style="padding:8px 0">Enter a city, state, or address to search.</div>'; return; }
+  if (!window.callReiZillowSearch) { if (wrap) wrap.innerHTML = '<div style="padding:8px 0;color:#f87171">Property lookup isn\'t available right now.</div>'; return; }
+  if (wrap) wrap.innerHTML = '<div style="padding:8px 0">Searching live Zillow listings…</div>';
+  try {
+    const data = await window.callReiZillowSearch(keyword);
+    const listings = (data && (data.properties || data.listings || data.results || data.data)) || [];
+    if (!Array.isArray(listings) || !listings.length) {
+      wrap.innerHTML = '<div style="padding:8px 0">No active listings found for "' + reiZillowEsc(keyword) + '".</div>';
+      return;
+    }
+    wrap.innerHTML = '<div class="rei-grid" style="margin-top:6px">' + listings.slice(0, 24).map(function(p, i){
+      const addr = p.address || p.streetAddress || p.title || 'Listing';
+      const price = p.price || p.unformattedPrice || p.priceLabel || '';
+      const beds = p.beds != null ? p.beds : (p.bedrooms != null ? p.bedrooms : '—');
+      const baths = p.baths != null ? p.baths : (p.bathrooms != null ? p.bathrooms : '—');
+      const sqft = p.livingArea || p.area || p.sqft || '—';
+      const img = p.imgSrc || p.image || p.photo || '';
+      const url = p.detailUrl || p.url || p.zillowUrl || '';
+      return '<div class="rei-card" onclick="reiZillowViewDetail(' + i + ')" data-rei-zurl="' + reiZillowEsc(url) + '">' +
+        (img ? '<img class="rei-cardimg" src="' + reiZillowEsc(img) + '" alt="">' : '') +
+        '<h4>' + reiZillowEsc(addr) + '</h4>' +
+        '<div class="rei-sub">' + beds + ' bd · ' + baths + ' ba · ' + reiZillowEsc(String(sqft)) + ' sqft</div>' +
+        '<div class="rei-cardfoot"><span></span><span class="val g">' + reiZillowEsc(String(price)) + '</span></div>' +
+        '</div>';
+    }).join('') + '</div>';
+    window._reiZillowLastResults = listings;
+  } catch (e) {
+    console.log('reiZillowDoSearch:', e);
+    wrap.innerHTML = '<div style="padding:8px 0;color:#f87171">' + reiZillowEsc(e.message || 'Search failed — please try again.') + '</div>';
+  }
+}
+window.reiZillowDoSearch = reiZillowDoSearch;
+
+async function reiZillowViewDetail(i){
+  const listing = (window._reiZillowLastResults || [])[i];
+  const url = listing && (listing.detailUrl || listing.url || listing.zillowUrl);
+  if (!url) { alert('No Zillow listing URL available for this property.'); return; }
+  if (!window.callReiZillowPropertyDetail) return;
+  try {
+    const detail = await window.callReiZillowPropertyDetail(url);
+    const d = (detail && (detail.property || detail.data)) || detail || {};
+    const lines = [
+      'Address: ' + (d.address || listing.address || '—'),
+      'Price: ' + (d.price || listing.price || '—'),
+      'Beds/Baths: ' + (d.bedrooms != null ? d.bedrooms : '—') + ' / ' + (d.bathrooms != null ? d.bathrooms : '—'),
+      'Zestimate: ' + (d.zestimate || '—'),
+      'Agent: ' + (d.agentName || d.agent || '—'),
+      '', 'Full listing: ' + url,
+    ];
+    alert(lines.join('\n'));
+  } catch (e) {
+    alert('Could not load property detail: ' + (e.message || e));
+  }
+}
+window.reiZillowViewDetail = reiZillowViewDetail;
 
 /* ── live connection ── */
 async function reiTestConnection(url, silent){
