@@ -97,11 +97,13 @@
     return res.data;
   };
 
-  // Share Points — see functions/index.js recordShare. Server enforces the
-  // cap (2 credited shares/day, 1 point each); this is just the callable.
-  window.callRecordShare = async () => {
+  // Share Points — see functions/index.js recordShare. No daily cap on
+  // total points; server just makes sure each share CHANNEL only credits
+  // once per day per member, so the same button can't be spam-clicked for
+  // unlimited points.
+  window.callRecordShare = async (channel) => {
     const fn = httpsCallable(functionsClient, 'recordShare');
-    const res = await fn();
+    const res = await fn({ channel: channel || 'native' });
     return res.data;
   };
 
@@ -6333,7 +6335,7 @@ document.addEventListener('DOMContentLoaded', function() {
            shares/day, 1 point each, $0.05/point redeemable. -->
       <div style="text-align:center;margin:22px 0 26px">
         <button onclick="openShareModal()" style="width:100%;max-width:520px;padding:20px;border:none;border-radius:18px;background:linear-gradient(135deg,#2E7BFF,#8A2BE2);color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer;box-shadow:0 10px 30px -10px rgba(46,123,255,.5)">📢 Share &amp; Earn Points</button>
-        <div style="font-size:.72rem;color:var(--myst-muted,#8ba0c4);margin-top:8px" id="dashSharePointsSummary">Sharing keeps you active and earns points — up to 2 a day, worth $0.05 each.</div>
+        <div style="font-size:.72rem;color:var(--myst-muted,#8ba0c4);margin-top:8px" id="dashSharePointsSummary">Sharing keeps you active and earns points every day — $0.05 in redeemable value each, no penalty for sitting out a day.</div>
       </div>
 
       <!-- STAT CARDS -->
@@ -9670,33 +9672,36 @@ function copyShareLink(){
     b.textContent='\u2713 Copied!'; b.classList.add('copied');
     setTimeout(function(){ b.textContent='Copy'; b.classList.remove('copied'); },1800);
   });
-  mmRecordShare();
+  mmRecordShare('copy');
 }
 function shareNative(){
   var link = shareUrl();
   if(navigator.share){
     navigator.share({ title:'Money Masteries', text: SHARE_MSG, url: link }).catch(function(){});
-    mmRecordShare();
+    mmRecordShare('native');
   } else {
     copyShareLink();
     if(typeof showNotifToast==='function') showNotifToast('\uD83D\uDD17 Link copied!','Now paste it into any app, chat, or post to share.');
   }
 }
 
-// \u2500\u2500 SHARE POINTS \u2014 active-member requirement + compensation points \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-// Up to 2 credited shares per day, 1 point each, each point worth $0.05 \u2014
-// see functions/index.js recordShare for the actual cap/award logic (this
-// client call is fire-and-forget; the server is the source of truth so a
-// user spamming the share buttons can't rack up unlimited points).
-async function mmRecordShare(){
+// \u2500\u2500 SHARE POINTS \u2014 reward-only, no penalty of any kind \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Members can share every day with no overall cap on total points \u2014 each of
+// the 7 share channels (native, copy-link, WhatsApp, text, email, Facebook,
+// X) just credits at most once per calendar day per member, so a member
+// sharing everywhere earns a point per channel rather than unlimited points
+// from spam-clicking one button. Each point = $0.05. See
+// functions/index.js recordShare for the real enforcement \u2014 this client
+// call is just the trigger; the server decides what actually counts.
+async function mmRecordShare(channel){
   try {
     if (typeof window.callRecordShare !== 'function') return;
-    var d = await window.callRecordShare();
+    var d = await window.callRecordShare(channel);
     var note = document.getElementById('mmSharePointsNote');
     if (d && note) {
       note.textContent = d.awarded
         ? ('+1 point earned! You have ' + d.points + ' points ($' + (d.points*0.05).toFixed(2) + ' in redeemable value).')
-        : (d.reason === 'limit' ? 'You\u2019ve earned your 2 share points for today \u2014 come back tomorrow.' : '');
+        : (d.reason === 'already-credited-today' ? 'You already earned a point for that today \u2014 try another way to share for another point!' : '');
     }
   } catch (e) {
     console.log('mmRecordShare:', e.message || e);
@@ -13520,11 +13525,11 @@ document.addEventListener('DOMContentLoaded', function(){
     <button class="share-native" onclick="shareNative()">📲 Share to anyone →</button>
     <div class="share-quick-label">or send it straight to someone:</div>
     <div class="share-quick">
-      <a class="sq" id="sqWhats" target="_blank" rel="noopener" onclick="mmRecordShare()">💬<span>WhatsApp</span></a>
-      <a class="sq" id="sqSms" target="_blank" rel="noopener" onclick="mmRecordShare()">📱<span>Text</span></a>
-      <a class="sq" id="sqEmail" target="_blank" rel="noopener" onclick="mmRecordShare()">✉️<span>Email</span></a>
-      <a class="sq" id="sqFb" target="_blank" rel="noopener" onclick="mmRecordShare()">📘<span>Facebook</span></a>
-      <a class="sq" id="sqX" target="_blank" rel="noopener" onclick="mmRecordShare()">✖️<span>X</span></a>
+      <a class="sq" id="sqWhats" target="_blank" rel="noopener" onclick="mmRecordShare('whatsapp')">💬<span>WhatsApp</span></a>
+      <a class="sq" id="sqSms" target="_blank" rel="noopener" onclick="mmRecordShare('sms')">📱<span>Text</span></a>
+      <a class="sq" id="sqEmail" target="_blank" rel="noopener" onclick="mmRecordShare('email')">✉️<span>Email</span></a>
+      <a class="sq" id="sqFb" target="_blank" rel="noopener" onclick="mmRecordShare('facebook')">📘<span>Facebook</span></a>
+      <a class="sq" id="sqX" target="_blank" rel="noopener" onclick="mmRecordShare('x')">✖️<span>X</span></a>
     </div>
     <div class="share-qr-wrap">
       <img class="share-qr" id="shareQr" alt="Scan to join">
