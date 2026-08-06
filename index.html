@@ -97,6 +97,14 @@
     return res.data;
   };
 
+  // Share Points — see functions/index.js recordShare. Server enforces the
+  // cap (2 credited shares/day, 1 point each); this is just the callable.
+  window.callRecordShare = async () => {
+    const fn = httpsCallable(functionsClient, 'recordShare');
+    const res = await fn();
+    return res.data;
+  };
+
   // REI Master → Property Lookup (Zillow, via HasData). See
   // functions/index.js reiZillowSearch/reiZillowPropertyDetail — the
   // HasData key stays server-side, never reaches the browser.
@@ -6320,6 +6328,14 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="dash-datetime" id="dashDateTime"></div>
       </div>
 
+      <!-- BIG CENTRAL SHARE BUTTON — sharing is required to count as an
+           "active" member for commission eligibility; up to 2 credited
+           shares/day, 1 point each, $0.05/point redeemable. -->
+      <div style="text-align:center;margin:22px 0 26px">
+        <button onclick="openShareModal()" style="width:100%;max-width:520px;padding:20px;border:none;border-radius:18px;background:linear-gradient(135deg,#2E7BFF,#8A2BE2);color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer;box-shadow:0 10px 30px -10px rgba(46,123,255,.5)">📢 Share &amp; Earn Points</button>
+        <div style="font-size:.72rem;color:var(--myst-muted,#8ba0c4);margin-top:8px" id="dashSharePointsSummary">Sharing keeps you active and earns points — up to 2 a day, worth $0.05 each.</div>
+      </div>
+
       <!-- STAT CARDS -->
       <div class="dash-section-label">📊 Your Snapshot</div>
       <div class="stat-row">
@@ -6342,6 +6358,11 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="stat-label">Chapters Done</div>
           <div class="stat-value" id="statChapters">0</div>
           <div class="stat-sub">Keep going 🔥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Points</div>
+          <div class="stat-value gold" id="statPoints">0</div>
+          <div class="stat-sub" id="statPointsValue">Redeemable value: $0.00</div>
         </div>
       </div>
 
@@ -7098,6 +7119,16 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       </div>
+      <div class="payout-card" style="margin-bottom:20px">
+        <div class="po-title">🤖 Ask Marketing Master</div>
+        <div class="po-sub">Content plans, captions, ad copy, and posting strategy — your marketing coach, on demand.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-marketingmaster-chips"></div>
+        <div class="ai-chat-log" id="j-marketingmaster-log"></div>
+        <div style="display:flex;gap:8px">
+          <input class="ai-chat-input" id="j-marketingmaster-input" maxlength="300" placeholder="Ask Marketing Master anything about content, ads, or promotion..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('marketingmaster')">
+          <button class="ai-chat-send" id="j-marketingmaster-send" onclick="sendJarvisQuestion('marketingmaster')">➤</button>
+        </div>
+      </div>
       <div style="border:1px solid #1f2937;border-radius:14px;overflow:hidden;height:calc(100vh - 170px);min-height:520px;background:#0A0E1A">
         <iframe src="marketing-master.html" title="Marketing Master" style="width:100%;height:100%;border:none;display:block"></iframe>
       </div>
@@ -7161,6 +7192,16 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="fm-demo-banner">
         <div class="fm-demo-icon">🧪</div>
         <div>Custom domain registration and automatic website generation are in development. For now, requests below are reviewed and fulfilled by our team — you'll be contacted after purchase to get started.</div>
+      </div>
+      <div class="payout-card" style="margin:18px 0 0">
+        <div class="po-title">🤖 Ask Production Master</div>
+        <div class="po-sub">Scope out a website, pick a domain name, or plan an AI video request before you submit it.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-productionmaster-chips"></div>
+        <div class="ai-chat-log" id="j-productionmaster-log"></div>
+        <div style="display:flex;gap:8px">
+          <input class="ai-chat-input" id="j-productionmaster-input" maxlength="300" placeholder="Ask Production Master about a website, domain, or AI video request..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('productionmaster')">
+          <button class="ai-chat-send" id="j-productionmaster-send" onclick="sendJarvisQuestion('productionmaster')">➤</button>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
         <div class="mk-card">
@@ -8776,6 +8817,8 @@ function showScreen(id) {
   if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); if (typeof renderPayoutRequestStatus === 'function') renderPayoutRequestStatus(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
   if (id === 'marketsmaster') setTimeout(function(){ if (typeof renderEliteTools === 'function') renderEliteTools(); if (typeof renderMarketsMaster === 'function') renderMarketsMaster(); }, 30);
+  if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); }, 30);
+  if (id === 'productionmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('productionmaster'); }, 30);
   if (id === 'marketplace')  setTimeout(function(){ if (typeof renderMarketplace === 'function') renderMarketplace(); }, 30);
   if (id === 'studio')       setTimeout(function(){ if (typeof renderStudio === 'function') renderStudio(); }, 30);
   if (id === 'mystore')      setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
@@ -8836,6 +8879,11 @@ function showLoggedIn(user, data) {
   document.getElementById('statEarned').textContent = fmtUSD(data.totalEarned || 0);
   document.getElementById('statPending').textContent = fmtUSD(data.pendingPayout || 0);
   document.getElementById('statReferrals').textContent = data.referrals || 0;
+  const pts = Number(data.points) || 0;
+  const statPointsEl = document.getElementById('statPoints');
+  const statPointsValEl = document.getElementById('statPointsValue');
+  if (statPointsEl) statPointsEl.textContent = pts;
+  if (statPointsValEl) statPointsValEl.textContent = 'Redeemable value: ' + fmtUSD(pts * 0.05);
 
   // Affiliate links
   ['dashAffLink','affPageLink','accountAffLink'].forEach(id => {
@@ -9622,16 +9670,39 @@ function copyShareLink(){
     b.textContent='\u2713 Copied!'; b.classList.add('copied');
     setTimeout(function(){ b.textContent='Copy'; b.classList.remove('copied'); },1800);
   });
+  mmRecordShare();
 }
 function shareNative(){
   var link = shareUrl();
   if(navigator.share){
     navigator.share({ title:'Money Masteries', text: SHARE_MSG, url: link }).catch(function(){});
+    mmRecordShare();
   } else {
     copyShareLink();
     if(typeof showNotifToast==='function') showNotifToast('\uD83D\uDD17 Link copied!','Now paste it into any app, chat, or post to share.');
   }
 }
+
+// \u2500\u2500 SHARE POINTS \u2014 active-member requirement + compensation points \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Up to 2 credited shares per day, 1 point each, each point worth $0.05 \u2014
+// see functions/index.js recordShare for the actual cap/award logic (this
+// client call is fire-and-forget; the server is the source of truth so a
+// user spamming the share buttons can't rack up unlimited points).
+async function mmRecordShare(){
+  try {
+    if (typeof window.callRecordShare !== 'function') return;
+    var d = await window.callRecordShare();
+    var note = document.getElementById('mmSharePointsNote');
+    if (d && note) {
+      note.textContent = d.awarded
+        ? ('+1 point earned! You have ' + d.points + ' points ($' + (d.points*0.05).toFixed(2) + ' in redeemable value).')
+        : (d.reason === 'limit' ? 'You\u2019ve earned your 2 share points for today \u2014 come back tomorrow.' : '');
+    }
+  } catch (e) {
+    console.log('mmRecordShare:', e.message || e);
+  }
+}
+window.mmRecordShare = mmRecordShare;
 
 // ── COUNTDOWN ────────────────────────────────────────────────────────────────
 function startCountdown() {
@@ -11851,7 +11922,15 @@ window.askMarketsMaster = async function(question, lang){
     "When live data is provided below, lead with it and cite the source and timestamp. " +
     "Never give personalized investment advice or tell the user to buy or sell — explain what the data shows and general concepts, and remind them markets are volatile and this isn't financial advice.\n\n" +
     dataBlock + "\n\nUSER QUESTION: " + question;
-  var answer = await genText(prompt);
+  // Same real-billing routing as the other Masters' coach chats — see
+  // askMasterJarvis above for why (askAI first, genText only as a
+  // logged-out/offline demo fallback).
+  var answer;
+  if (typeof window.askAI === 'function') {
+    try { answer = (await window.askAI(prompt, 'marketsmaster')).reply; }
+    catch (e) { console.log('askMarketsMaster: askAI unavailable, falling back to demo:', e.message || e); }
+  }
+  if (!answer) answer = await genText(prompt);
   return { answer: answer, chips: ctx.chips };
 };
 
@@ -12017,24 +12096,43 @@ var JARVIS_PERSONAS = {
   reimaster: "You are the REI Master AI assistant inside the Money Masteries platform — a sharp, practical real-estate investing analyst and deal coach. Help with deal analysis, lead evaluation, offer strategy, and general REI investing concepts.",
   businessmaster: "You are Jarvis, the AI mentor and butler running inside Business Master on the Money Masteries platform. You act like a combination COO, HR manager, and business coach for a small business owner: you know their entity setup, licenses, team, and customers, and you help them run day-to-day operations, decide what to prioritize, and think through hiring, compliance, and growth.",
   financialmaster: "You are the Financial Master AI assistant inside the Money Masteries platform — a sharp, encouraging financial analyst and bookkeeper for a small business owner. Help with understanding cash flow, expenses, tax prep, and what it takes to make the business more sellable.",
-  proshub: "You are the Pros Hub AI assistant inside the Money Masteries platform — a sharp CRM and operations coach for a contractor/service-business owner. You know their clients, active projects, and invoices, and you help them decide who to follow up with, what's overdue, how to price/scope a job, and how to keep their pipeline moving."
+  proshub: "You are the Pros Hub AI assistant inside the Money Masteries platform — a sharp CRM and operations coach for a contractor/service-business owner. You know their clients, active projects, and invoices, and you help them decide who to follow up with, what's overdue, how to price/scope a job, and how to keep their pipeline moving.",
+  marketingmaster: "You are the Marketing Master AI coach inside the Money Masteries platform — a sharp, energetic marketing strategist and copywriter for a small business owner. Help them plan content, write ad copy and captions, decide which platforms to post on, and think through what to run ads on and how to budget for it.",
+  productionmaster: "You are the Production Master AI coach inside the Money Masteries platform — a practical build-and-launch specialist who helps members figure out what to build next: a website, a domain name, hosting setup, an AI video, or promotional content. Help them scope the request clearly before they submit it, and explain what to expect from the process."
 };
+// Routes through the real, token-metered askAI Cloud Function (see
+// functions/index.js) so every one of these "coach" conversations is billed
+// the same way as everything else — real Anthropic cost + markup, logged to
+// aiUsage, visible in the Master Portal's AI Usage & Billing panel. Falls
+// back to the free client-side Gemini call (genText) only when askAI isn't
+// reachable (e.g. logged out, or the function isn't deployed yet), purely
+// so the demo/preview experience still works — that fallback path is never
+// billed and shouldn't be relied on in production.
 window.askMasterJarvis = async function(masterKey, question, lang){
   var langName = lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Brazilian Portuguese' : 'English';
   var persona = JARVIS_PERSONAS[masterKey] || JARVIS_PERSONAS.businessmaster;
   var prompt =
-    persona + " Answer in " + langName + ", under 170 words, in a warm but efficient tone. " +
+    persona + " Answer in " + langName + ", under 170 words, in a warm but efficient, encouraging coach tone — like a real mentor who knows this member's business, not a generic chatbot. " +
     "Ground your answer in the business details below when relevant — refer to it naturally, don't just repeat it back. " +
     "Never give personalized legal, tax, or investment advice — you can explain options and best practices, but tell them to confirm anything binding (licensing, contracts, filings, tax positions) with a licensed professional.\n\n" +
     "THIS MEMBER'S BUSINESS (demo data — in the live product this comes from their connected accounts and CRM):\n" + mmBusinessContextText() +
     "\n\nQUESTION: " + question;
-  var answer = await genText(prompt);
-  return answer;
+  if (typeof window.askAI === 'function') {
+    try {
+      var res = await window.askAI(prompt, masterKey);
+      return res.reply;
+    } catch (e) {
+      // Not logged in, or askAI unreachable — fall through to the free
+      // demo path below rather than surface a hard error mid-conversation.
+      console.log('askMasterJarvis: askAI unavailable, falling back to demo:', e.message || e);
+    }
+  }
+  return await genText(prompt);
 };
 function jarvisBubble(masterKey, text, who){
   var log = document.getElementById('j-' + masterKey + '-log');
   if(!log) return null;
-  var tag = { reimaster:'🏘️ REI Master', businessmaster:'🤵 Jarvis', financialmaster:'💰 Financial Master', proshub:'🧰 Pros Hub' }[masterKey] || '🤖 Assistant';
+  var tag = { reimaster:'🏘️ REI Master', businessmaster:'🤵 Jarvis', financialmaster:'💰 Financial Master', proshub:'🧰 Pros Hub', marketingmaster:'🚀 Marketing Master', productionmaster:'🏭 Production Master' }[masterKey] || '🤖 Assistant';
   var d = document.createElement('div');
   d.className = 'ai-msg ' + who;
   d.innerHTML = (who==='bot' ? '<span class="ai-msg-tag">'+tag+'</span>' : '') + '<div>' + text + '</div>';
@@ -12050,7 +12148,7 @@ async function sendJarvisQuestion(masterKey){
   var thinking = jarvisBubble(masterKey, 'Thinking…', 'bot');
   if(btn) btn.disabled = true;
   try {
-    if(typeof window.genText !== 'function') throw new Error('demo-offline');
+    if(typeof window.genText !== 'function' && typeof window.askAI !== 'function') throw new Error('demo-offline');
     var answer = await window.askMasterJarvis(masterKey, q, (typeof courseLang !== 'undefined' ? courseLang : 'en'));
     thinking.querySelector('div').innerHTML = answer.replace(/</g,'&lt;').replace(/\n/g,'<br>');
   } catch(e){
@@ -12067,7 +12165,9 @@ var JARVIS_QUICK_QUESTIONS = {
   reimaster: [["What's my next best move?","🎯 Next move"], ["How do I evaluate a wholesale deal?","🧮 Evaluate a deal"], ["What should I offer on a distressed property?","💬 Offer strategy"]],
   businessmaster: [["What licenses am I missing or close to expiring?","📋 Licenses"], ["Who on my team should I check in with?","👥 Team check-in"], ["What should I focus on this week?","🗓️ This week's priorities"]],
   financialmaster: [["How much should I set aside for taxes?","🧾 Tax reserve"], ["What's dragging down my margin?","📉 Margin check"], ["What would make my business more sellable?","🤝 Sellability"]],
-  proshub: [["Which clients need a follow-up?","📞 Follow-ups"], ["What invoices are overdue?","🧾 Overdue invoices"], ["What should I prioritize on my active projects this week?","🗓️ This week's priorities"]]
+  proshub: [["Which clients need a follow-up?","📞 Follow-ups"], ["What invoices are overdue?","🧾 Overdue invoices"], ["What should I prioritize on my active projects this week?","🗓️ This week's priorities"]],
+  marketingmaster: [["Write me 3 social captions for this week","✍️ Captions"], ["What should I post about this week?","🗓️ Content ideas"], ["Help me plan a small ad budget","📣 Ad budget"]],
+  productionmaster: [["Help me scope a website I want built","🌐 Scope a website"], ["What domain name should I get?","🔤 Domain ideas"], ["What should I include in an AI video request?","🎬 AI video"]]
 };
 function renderJarvisChips(masterKey){
   var wrap = document.getElementById('j-' + masterKey + '-chips');
@@ -13420,16 +13520,17 @@ document.addEventListener('DOMContentLoaded', function(){
     <button class="share-native" onclick="shareNative()">📲 Share to anyone →</button>
     <div class="share-quick-label">or send it straight to someone:</div>
     <div class="share-quick">
-      <a class="sq" id="sqWhats" target="_blank" rel="noopener">💬<span>WhatsApp</span></a>
-      <a class="sq" id="sqSms" target="_blank" rel="noopener">📱<span>Text</span></a>
-      <a class="sq" id="sqEmail" target="_blank" rel="noopener">✉️<span>Email</span></a>
-      <a class="sq" id="sqFb" target="_blank" rel="noopener">📘<span>Facebook</span></a>
-      <a class="sq" id="sqX" target="_blank" rel="noopener">✖️<span>X</span></a>
+      <a class="sq" id="sqWhats" target="_blank" rel="noopener" onclick="mmRecordShare()">💬<span>WhatsApp</span></a>
+      <a class="sq" id="sqSms" target="_blank" rel="noopener" onclick="mmRecordShare()">📱<span>Text</span></a>
+      <a class="sq" id="sqEmail" target="_blank" rel="noopener" onclick="mmRecordShare()">✉️<span>Email</span></a>
+      <a class="sq" id="sqFb" target="_blank" rel="noopener" onclick="mmRecordShare()">📘<span>Facebook</span></a>
+      <a class="sq" id="sqX" target="_blank" rel="noopener" onclick="mmRecordShare()">✖️<span>X</span></a>
     </div>
     <div class="share-qr-wrap">
       <img class="share-qr" id="shareQr" alt="Scan to join">
       <div class="share-qr-note">In person? Have them <b>scan this code</b> to join under you.</div>
     </div>
+    <div id="mmSharePointsNote" style="margin-top:12px;text-align:center;font-size:.72rem;color:#8ba0c4"></div>
   </div>
 </div>
 
