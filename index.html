@@ -7165,6 +7165,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div class="screen-title" style="font-size:1.1rem;margin-top:6px">⚡ <span>Elite Tools</span></div>
       <div id="eliteToolsGate"></div>
+
+      <div class="mk-card" style="margin-top:14px">
+        <div style="font-size:2rem">🧮</div>
+        <div class="mk-card-title">Daily Compound Interest Calculator</div>
+        <div class="mpm-sub">Model how your money (or your dividends) compound over time — set a starting balance, daily/weekly/monthly contributions, and interest rate.</div>
+        <a class="admin-save-btn" style="display:inline-block;margin-top:10px;text-decoration:none;text-align:center" href="https://www.thecalculatorsite.com/finance/calculators/daily-compound-interest.php" target="_blank" rel="noopener noreferrer">Open Calculator →</a>
+      </div>
     </div>
 
     <!-- ADMINISTRATIVE MASTER (Business + Financial + Pros Hub combined) -->
@@ -7197,9 +7204,12 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="screen-title">🏭 <span>Production Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
-      <div class="rei-views" style="margin:14px 0 18px">
+      <div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
         <button class="rei-view active" id="prodVOverview" onclick="prodViewSwitch('overview')">🏭 Overview</button>
         <button class="rei-view" id="prodVStudio" onclick="prodViewSwitch('studio')">🛠️ Create Product <span class="pro-tag" style="background:#a855f7;color:#fff;margin-left:4px">ELITE</span></button>
+        <button class="rei-view" id="prodVVideo" onclick="prodViewSwitch('video')">🎬 Video &amp; Ads <span class="pro-tag" style="background:#f59e0b;color:#fff;margin-left:4px">DEMO</span></button>
+        <button class="rei-view" id="prodVSoftware" onclick="prodViewSwitch('software')">💻 Create Software <span class="pro-tag" style="background:#f59e0b;color:#fff;margin-left:4px">DEMO</span></button>
+        <button class="rei-view" id="prodVWebsite" onclick="prodViewSwitch('website')">🌐 Build Website <span class="pro-tag" style="background:#f59e0b;color:#fff;margin-left:4px">DEMO</span></button>
       </div>
 
       <div id="prodOverview">
@@ -7441,6 +7451,81 @@ document.addEventListener('DOMContentLoaded', function() {
 
         </div><!-- /psx2-shell -->
       </div><!-- /prodStudioTab -->
+
+      <!-- VIDEO & ADS CREATION (demo) -->
+      <div id="prodVideoTab" style="display:none">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">🧪</div>
+          <div><b>Demo preview</b> — describe a video or ad idea below and see what the finished tool will feel like. Nothing is actually rendered yet; this shows sample output only.</div>
+        </div>
+        <div class="payout-card">
+          <div class="po-title">🎬 Describe your video or ad</div>
+          <div class="po-sub">e.g. "15-second Instagram ad for a real estate coaching offer, upbeat energy, call to action at the end"</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="ai-chat-input" id="prodVideoPrompt" maxlength="200" placeholder="Describe the video or ad you want...">
+            <button class="ai-chat-send" onclick="prodDemoGenerate('video')">➤</button>
+          </div>
+        </div>
+        <div id="prodVideoResult" style="display:none;margin-top:16px">
+          <div class="mk-card">
+            <div style="font-size:2rem">🎞️</div>
+            <div class="mk-card-title" id="prodVideoResultTitle">Your Ad Concept</div>
+            <div class="mpm-sub" id="prodVideoResultBody"></div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <button class="admin-save-btn" onclick="if(typeof showNotifToast==='function')showNotifToast('🎬 Coming soon','Real video/ad rendering isn\'t built yet — this is a showcase preview.')">▶️ Preview (demo)</button>
+              <button class="admin-save-btn" style="background:#a855f7" onclick="showScreen('marketingmaster'); if(typeof showNotifToast==='function')showNotifToast('🚀 Exported (demo)','This concept would be sent to Marketing Master to publish once the real pipeline is built.')">🚀 Export to Marketing Master</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE SOFTWARE (demo) -->
+      <div id="prodSoftwareTab" style="display:none">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">🧪</div>
+          <div><b>Demo preview</b> — describe an app or tool idea below to see what this feature will look like. No real code is generated yet.</div>
+        </div>
+        <div class="payout-card">
+          <div class="po-title">💻 Describe the software you want built</div>
+          <div class="po-sub">e.g. "A simple habit tracker app for iOS" or "A booking calendar widget for my website"</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="ai-chat-input" id="prodSoftwarePrompt" maxlength="200" placeholder="Describe the software you want...">
+            <button class="ai-chat-send" onclick="prodDemoGenerate('software')">➤</button>
+          </div>
+        </div>
+        <div id="prodSoftwareResult" style="display:none;margin-top:16px">
+          <div class="mk-card">
+            <div style="font-size:2rem">🧩</div>
+            <div class="mk-card-title" id="prodSoftwareResultTitle">Project Scope (demo)</div>
+            <div class="mpm-sub" id="prodSoftwareResultBody"></div>
+            <button class="admin-save-btn" style="margin-top:12px" onclick="if(typeof buyProduct==='function') buyProduct('s-prodwebsite')">Request This Build →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUILD WEBSITE (demo) -->
+      <div id="prodWebsiteTab" style="display:none">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">🧪</div>
+          <div><b>Demo preview</b> — describe a website idea below to see what this feature will look like. No real website is generated yet.</div>
+        </div>
+        <div class="payout-card">
+          <div class="po-title">🌐 Describe the website you want built</div>
+          <div class="po-sub">e.g. "A clean landing page for my real estate coaching business with a booking button"</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="ai-chat-input" id="prodWebsitePrompt" maxlength="200" placeholder="Describe the website you want...">
+            <button class="ai-chat-send" onclick="prodDemoGenerate('website')">➤</button>
+          </div>
+        </div>
+        <div id="prodWebsiteResult" style="display:none;margin-top:16px">
+          <div class="mk-card">
+            <div style="font-size:2rem">🖥️</div>
+            <div class="mk-card-title" id="prodWebsiteResultTitle">Site Plan (demo)</div>
+            <div class="mpm-sub" id="prodWebsiteResultBody"></div>
+            <button class="admin-save-btn" style="margin-top:12px" onclick="if(typeof buyProduct==='function') buyProduct('s-prodwebsite')">Request This Build →</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- BUSINESS MASTER (demo) -->
@@ -7820,6 +7905,21 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-banner-sub">Full platform control — only this account can see this portal. Change any member's plan, grant free upgrades, or set custom discounts.</div>
         </div>
       </div>
+
+      <div class="admin-table-wrap" style="margin-bottom:22px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:8px">🎭 Showcase Mode <span id="mmDemoStatusPill" class="rei-pill off">LIVE</span></div>
+          <div class="mpm-sub" style="margin-top:4px">Turn on to fill every Master and tool with realistic made-up numbers and content — safe to screen-share with prospects. Turn off to go back to real data.</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;white-space:nowrap">
+          <span style="font-size:.78rem;font-weight:700;color:#8ba0c4">Live</span>
+          <span id="mmDemoToggleTrack" onclick="mmToggleDemoMode()" style="width:46px;height:26px;border-radius:14px;background:#1f2937;position:relative;cursor:pointer;transition:background .2s">
+            <span id="mmDemoToggleKnob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s"></span>
+          </span>
+          <span style="font-size:.78rem;font-weight:700;color:#8ba0c4">Demo</span>
+        </label>
+      </div>
+
       <div class="admin-table-wrap" style="margin-bottom:22px">
         <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🔔 Payout Requests</div>
         <div class="mpm-sub" style="padding:0 16px 12px">Members who've asked to be paid — verified commissions only (see each member's Total Earned / Pending Payout below for the full picture). Mark paid once you've actually sent it.</div>
@@ -8851,7 +8951,77 @@ function showScreen(id) {
   if (screen) screen.classList.add('active');
   if (navEl)  navEl.classList.add('active');
   if (id === 'commissions') loadCommissions();
+  if (typeof mmApplyDemoToScreen === 'function') mmApplyDemoToScreen(id);
 }
+
+// ── SHOWCASE / DEMO MODE ─────────────────────────────────────────────────────
+// A single global toggle (Master Portal only) that fills every Master and
+// tool with realistic made-up numbers/content, so David can screen-share the
+// whole platform's capabilities without needing real backend data connected.
+// Persisted in localStorage so it survives refreshes; does not touch any
+// real Firestore data.
+window.mmDemoMode = (function(){ try { return localStorage.getItem('mmDemoMode') === 'true'; } catch(e){ return false; } })();
+
+const MM_DEMO_TICKERS = [
+  { sym: 'BTC',  price: '$67,234.50', chg: '+2.31%', up: true },
+  { sym: 'ETH',  price: '$3,412.80',  chg: '+1.14%', up: true },
+  { sym: 'AAPL', price: '$228.54',    chg: '-0.42%', up: false },
+  { sym: 'TSLA', price: '$261.09',    chg: '+3.02%', up: true },
+  { sym: 'EUR/USD', price: '1.0872',  chg: '+0.08%', up: true },
+  { sym: 'GOLD', price: '$2,412.30',  chg: '-0.15%', up: false },
+];
+
+function mmSyncDemoUI(){
+  const pill = document.getElementById('mmDemoStatusPill');
+  const track = document.getElementById('mmDemoToggleTrack');
+  const knob = document.getElementById('mmDemoToggleKnob');
+  if (pill) { pill.textContent = window.mmDemoMode ? 'DEMO' : 'LIVE'; pill.className = window.mmDemoMode ? 'rei-pill' : 'rei-pill off'; if (window.mmDemoMode) pill.style.background = '#a855f7'; else pill.style.removeProperty('background'); }
+  if (track) track.style.background = window.mmDemoMode ? '#a855f7' : '#1f2937';
+  if (knob) knob.style.left = window.mmDemoMode ? '23px' : '3px';
+  document.querySelectorAll('.mm-demo-ribbon').forEach(function(r){ r.style.display = window.mmDemoMode ? 'flex' : 'none'; });
+}
+
+function mmToggleDemoMode(){
+  window.mmDemoMode = !window.mmDemoMode;
+  try { localStorage.setItem('mmDemoMode', window.mmDemoMode ? 'true' : 'false'); } catch(e){}
+  mmSyncDemoUI();
+  if (typeof showNotifToast === 'function') showNotifToast(window.mmDemoMode ? '🎭 Showcase Mode ON' : '📡 Live Mode ON', window.mmDemoMode ? 'Every Master now shows realistic sample content — safe to demo.' : 'Back to real, live data everywhere.');
+  // Re-apply to whichever screen is currently open.
+  const active = document.querySelector('.screen.active');
+  if (active && active.id && active.id.indexOf('screen-') === 0) mmApplyDemoToScreen(active.id.slice(7));
+}
+window.mmToggleDemoMode = mmToggleDemoMode;
+
+// Injects/refreshes a small "DEMO" corner ribbon on a screen, and pushes
+// sample content into the couple of tools that have a real empty/connect
+// state (REI Master's lead feed, Markets Master's live ticker strip).
+function mmApplyDemoToScreen(id){
+  const screenEl = document.getElementById('screen-' + id);
+  if (screenEl && !screenEl.querySelector(':scope > .mm-demo-ribbon')) {
+    const ribbon = document.createElement('div');
+    ribbon.className = 'mm-demo-ribbon';
+    ribbon.style.cssText = 'display:none;align-items:center;gap:6px;background:#a855f7;color:#fff;font-size:.7rem;font-weight:800;padding:5px 10px;border-radius:8px;width:fit-content;margin-bottom:12px';
+    ribbon.textContent = '🎭 SHOWCASE MODE — sample content, not real data';
+    screenEl.insertBefore(ribbon, screenEl.firstChild);
+  }
+  mmSyncDemoUI();
+
+  if (id === 'reimaster') {
+    if (window.mmDemoMode) { if (typeof reiDemoOn === 'function') reiDemoOn(); }
+    else if (typeof reiShowConnectState === 'function' && typeof reiCfg === 'function' && !reiCfg().api) { reiShowConnectState(); }
+  }
+  if (id === 'marketsmaster') {
+    const strip = document.getElementById('mmTickerStrip');
+    if (strip && window.mmDemoMode) {
+      strip.innerHTML = MM_DEMO_TICKERS.map(function(t){
+        return '<div style="background:var(--myst-chip-bg);border:1px solid var(--myst-border);border-radius:10px;padding:8px 12px;font-size:.75rem"><b>' + t.sym + '</b> ' + t.price + ' <span style="color:' + (t.up ? '#10b981' : '#ef4444') + '">' + t.chg + '</span></div>';
+      }).join('');
+      const note = document.getElementById('mmTickerNote');
+      if (note) note.textContent = 'Showcase Mode — sample prices, not live market data.';
+    }
+  }
+}
+window.mmApplyDemoToScreen = mmApplyDemoToScreen;
 
 // ── AUTH UI ──────────────────────────────────────────────────────────────────
 // Format a number as USD with thousands separators, e.g. 12424.87 -> "$12,424.87".
@@ -16558,11 +16728,39 @@ function prodViewSwitch(which){
   }
   document.getElementById('prodOverview').style.display = which === 'overview' ? 'block' : 'none';
   document.getElementById('prodStudioTab').style.display = which === 'studio' ? 'block' : 'none';
+  document.getElementById('prodVideoTab').style.display = which === 'video' ? 'block' : 'none';
+  document.getElementById('prodSoftwareTab').style.display = which === 'software' ? 'block' : 'none';
+  document.getElementById('prodWebsiteTab').style.display = which === 'website' ? 'block' : 'none';
   document.getElementById('prodVOverview').classList.toggle('active', which === 'overview');
   document.getElementById('prodVStudio').classList.toggle('active', which === 'studio');
+  document.getElementById('prodVVideo').classList.toggle('active', which === 'video');
+  document.getElementById('prodVSoftware').classList.toggle('active', which === 'software');
+  document.getElementById('prodVWebsite').classList.toggle('active', which === 'website');
   if (which === 'studio' && typeof renderStudio === 'function') renderStudio();
 }
 window.prodViewSwitch = prodViewSwitch;
+
+// Fake, instant "generation" for the Production Master demo tabs (video/ads,
+// software, website) — nothing real is built yet, this just shows what the
+// finished tool will feel like so David can showcase it.
+const PROD_DEMO_COPY = {
+  video: { title: 'Your Ad Concept', body: function(p){ return '"' + p + '"\n\nHook (0-3s): Bold on-screen text grabs attention.\nBody (3-11s): Quick cuts showing the offer in action, upbeat music bed.\nCTA (11-15s): "Tap to get started" with your logo and link.\n\nFormat: 9:16 vertical, captions burned in, 3 variant thumbnails.' } },
+  software: { title: 'Project Scope (demo)', body: function(p){ return '"' + p + '"\n\nEstimated build: 2-4 weeks\nStack: React/React Native front-end, Firebase backend, Stripe if payments are needed\nPhase 1: Core screens + auth\nPhase 2: Main feature set\nPhase 3: Polish, testing, launch\n\nA real dev would review this scope before any work starts.' } },
+  website: { title: 'Site Plan (demo)', body: function(p){ return '"' + p + '"\n\nPages: Home, About, Services/Offer, Contact\nSections: Hero with headline + CTA, social proof, offer breakdown, booking/contact form\nStyle: Clean, mobile-first, matches your brand colors\nEstimated build: 3-7 business days once details are confirmed.' } },
+};
+function prodDemoGenerate(which){
+  const promptEl = document.getElementById('prod' + which.charAt(0).toUpperCase() + which.slice(1) + 'Prompt');
+  const prompt = (promptEl && promptEl.value || '').trim();
+  if (!prompt) { if (typeof showNotifToast === 'function') showNotifToast('Describe your idea first', 'Type a quick description above, then hit send.'); return; }
+  const copy = PROD_DEMO_COPY[which];
+  if (!copy) return;
+  const resultWrap = document.getElementById('prod' + which.charAt(0).toUpperCase() + which.slice(1) + 'Result');
+  const bodyEl = document.getElementById('prod' + which.charAt(0).toUpperCase() + which.slice(1) + 'ResultBody');
+  if (bodyEl) bodyEl.style.whiteSpace = 'pre-line';
+  if (bodyEl) bodyEl.textContent = copy.body(prompt);
+  if (resultWrap) resultWrap.style.display = 'block';
+}
+window.prodDemoGenerate = prodDemoGenerate;
 
 function openProductStudio(){
   showScreen('productionmaster');
