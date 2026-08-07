@@ -135,6 +135,23 @@
     return res.data;
   };
 
+  // Self-serve membership upgrade/downgrade — see functions/index.js
+  // changeMembershipPlan. Stripe handles proration automatically.
+  window.callChangeMembershipPlan = async (newTier) => {
+    const fn = httpsCallable(functionsClient, 'changeMembershipPlan');
+    const res = await fn({ newTier });
+    return res.data;
+  };
+
+  // Small generic helper so plain (non-module) scripts further down the
+  // page can patch the logged-in member's own Firestore doc without each
+  // needing their own Firebase import wiring.
+  window.updateMyUserDoc = async (patch) => {
+    if (!window.currentUser) throw new Error('Not logged in');
+    await updateDoc(doc(db, 'users', window.currentUser.uid), patch);
+    window.userData = Object.assign({}, window.userData, patch);
+  };
+
   // Generate a unique affiliate code from uid
   function makeAffCode(uid) {
     return "MM" + uid.substring(0,6).toUpperCase();
@@ -546,6 +563,34 @@
       eliteCount: Number(cfg.eliteCount) || 0,
     };
   };
+
+  // Admin-controlled "Share Campaign" — what the big site-wide Share button
+  // promotes (a specific video/product David picks), same config/site doc
+  // and read/write pattern as the revenue-share settings above.
+  window.loadShareCampaign = async () => {
+    try {
+      const snap = await getDoc(doc(db, 'config', 'site'));
+      if (snap.exists()) {
+        const d = snap.data();
+        window.SHARE_CAMPAIGN = {
+          title: d.shareCampaignTitle || '',
+          desc: d.shareCampaignDesc || '',
+          link: d.shareCampaignLink || '',
+          image: d.shareCampaignImage || '',
+        };
+      }
+    } catch(e) { console.warn('loadShareCampaign:', e); }
+  };
+  window.saveShareCampaign = async (cfg) => {
+    await setDoc(doc(db, 'config', 'site'), {
+      shareCampaignTitle: cfg.title || '',
+      shareCampaignDesc: cfg.desc || '',
+      shareCampaignLink: cfg.link || '',
+      shareCampaignImage: cfg.image || '',
+    }, { merge: true });
+    window.SHARE_CAMPAIGN = { title: cfg.title || '', desc: cfg.desc || '', link: cfg.link || '', image: cfg.image || '' };
+  };
+
   window.createOrder = async (order) => {
     order.paid = !!order.paid;
     order.status = order.paid ? "paid" : "pending";
@@ -584,6 +629,7 @@
   try { window.loadIntroVideos(); } catch(e) {}
   try { window.loadMarketsMasterConfig(); } catch(e) {}
   try { window.loadRevenueShareConfig(); } catch(e) {}
+  try { window.loadShareCampaign(); } catch(e) {}
   (function(){ var s = document.getElementById('sysBadge'); if (s) { s.textContent = 'SYS: Firebase connected ✓ (build v8)'; s.style.color = '#2E7BFF'; } })();
 
   // ── ADMIN BROADCASTS (announcements to all members) ─────────────────────────
@@ -7127,6 +7173,12 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
       <div class="payout-card" style="margin-bottom:20px">
+        <div class="po-title">🔗 Connect Your Social Accounts</div>
+        <div class="po-sub">Link your accounts so Marketing Master (and the site-wide Share button) can post straight to your feeds instead of just opening the app for you.</div>
+        <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#f59e0b;margin:6px 0 12px">🧪 Connecting is a preview right now — full auto-posting needs each platform's developer approval, which is in progress. Click Connect to see how it'll work.</div>
+        <div id="mmSocialConnectGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
+      </div>
+      <div class="payout-card" style="margin-bottom:20px">
         <div class="po-title">🤖 Ask Marketing Master</div>
         <div class="po-sub">Content plans, captions, ad copy, and posting strategy — your marketing coach, on demand.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-marketingmaster-chips"></div>
@@ -7920,6 +7972,21 @@ document.addEventListener('DOMContentLoaded', function() {
         </label>
       </div>
 
+      <div class="admin-table-wrap" style="margin-bottom:22px;padding:16px 18px">
+        <div style="font-weight:800;font-size:.95rem;margin-bottom:4px">📢 Share Campaign</div>
+        <div class="mpm-sub" style="margin-bottom:12px">Pick what the big "Share &amp; Earn" button pushes site-wide — a video, a product, a promo. Every member's share link/message uses this instead of the plain homepage until you clear it.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <input class="auth-field" id="shareCampTitle" placeholder="Title (e.g. \"New: AI Genie Assistant\")" style="margin:0">
+          <input class="auth-field" id="shareCampLink" placeholder="Link to share (video, product, or landing page URL)" style="margin:0">
+        </div>
+        <textarea class="auth-field" id="shareCampDesc" placeholder="Short description shown alongside the link" style="margin:10px 0 0;width:100%;min-height:60px;resize:vertical"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+          <button class="admin-save-btn" onclick="adminSaveShareCampaign()">Save Campaign</button>
+          <button class="admin-save-btn" style="background:#374151" onclick="adminClearShareCampaign()">Clear (back to homepage)</button>
+          <span id="shareCampStatus" style="font-size:.75rem"></span>
+        </div>
+      </div>
+
       <div class="admin-table-wrap" style="margin-bottom:22px">
         <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🔔 Payout Requests</div>
         <div class="mpm-sub" style="padding:0 16px 12px">Members who've asked to be paid — verified commissions only (see each member's Total Earned / Pending Payout below for the full picture). Mark paid once you've actually sent it.</div>
@@ -8511,6 +8578,18 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
 
+      <!-- MEMBERSHIP: view + self-serve upgrade/downgrade, prorated by Stripe -->
+      <div class="payout-card" id="acctMembershipCard">
+        <div class="po-title">💳 Your Membership</div>
+        <div class="po-sub">Switch plans anytime — Stripe automatically prorates the change, crediting whatever's left of what you already paid this month against your new plan, so an upgrade never double-charges you.</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:14px 0">
+          <span style="font-size:.7rem;font-weight:800;letter-spacing:.05em;color:#8ba0c4">CURRENT PLAN</span>
+          <span id="acctCurrentPlanPill" class="rei-pill on" style="font-size:.78rem">—</span>
+        </div>
+        <div id="acctPlanCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
+        <div id="acctPlanChangeStatus" style="font-size:.78rem;margin-top:10px"></div>
+      </div>
+
       <!-- GIVE CREDIT TO WHOEVER REFERRED YOU (only shown until a sponsor is set) -->
       <div class="payout-card" id="applyRefNumCard" style="display:none">
         <div class="po-title">🤝 Give Credit to Whoever Referred You</div>
@@ -8931,19 +9010,19 @@ function showScreen(id) {
   if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); if (typeof renderPayoutRequestStatus === 'function') renderPayoutRequestStatus(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
   if (id === 'marketsmaster') setTimeout(function(){ if (typeof renderEliteTools === 'function') renderEliteTools(); if (typeof renderMarketsMaster === 'function') renderMarketsMaster(); }, 30);
-  if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); }, 30);
+  if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid(); }, 30);
   if (id === 'productionmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('productionmaster'); }, 30);
   if (id === 'marketplace')  setTimeout(function(){ if (typeof renderMarketplace === 'function') renderMarketplace(); }, 30);
   if (id === 'studio')       setTimeout(function(){ if (typeof renderStudio === 'function') renderStudio(); }, 30);
   if (id === 'mystore')      setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
   if (id === 'revalidation') setTimeout(function(){ if (typeof buildRevalLink === 'function') buildRevalLink(); }, 30);
   if (id === 'community')    setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
-  if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); if (typeof loadAiUsageSummary === 'function') loadAiUsageSummary(); if (typeof loadGenieOrders === 'function') loadGenieOrders(); }, 80);
+  if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); if (typeof loadAiUsageSummary === 'function') loadAiUsageSummary(); if (typeof loadGenieOrders === 'function') loadGenieOrders(); if (typeof adminFillShareCampaignForm === 'function') adminFillShareCampaignForm(); }, 80);
   if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); }, 30);
   if (id === 'businessmaster') setTimeout(function(){ if (typeof renderBusinessMaster === 'function') renderBusinessMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('businessmaster'); }, 30);
   if (id === 'financialmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('financialmaster'); }, 30);
   if (id === 'proshub')      setTimeout(function(){ if (typeof renderProsHub === 'function') renderProsHub(); if (typeof renderJarvisChips === 'function') renderJarvisChips('proshub'); }, 30);
-  if (id === 'account')      setTimeout(function(){ if (typeof fillPayout === 'function') fillPayout(window.userData); if (typeof renderMyPurchases === 'function') renderMyPurchases(); if (typeof loadRevalClients === 'function') loadRevalClients(); if (typeof renderShareKit === 'function') renderShareKit(); }, 30);
+  if (id === 'account')      setTimeout(function(){ if (typeof fillPayout === 'function') fillPayout(window.userData); if (typeof renderMyPurchases === 'function') renderMyPurchases(); if (typeof loadRevalClients === 'function') loadRevalClients(); if (typeof renderShareKit === 'function') renderShareKit(); if (typeof renderAcctMembership === 'function') renderAcctMembership(); }, 30);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const screen = document.getElementById('screen-' + id);
@@ -9828,13 +9907,32 @@ function likeCommunity(btn){
 
 // ── VIRAL SHARE SYSTEM ────────────────────────────────────────────────────────
 var SHARE_MSG = "\uD83D\uDE80 I'm learning how to make money from home with Money Masteries \u2014 day trading, real estate & e-commerce \u2014 and it PAYS you while you learn. Join FREE with my link:";
-function shareUrl(){ return window.affLink || 'https://www.moneymasteries.com'; }
+function shareUrl(){
+  // If David's set a Share Campaign in the Master Portal (a specific video
+  // or product he wants pushed), share that link instead of the plain
+  // homepage \u2014 but keep the member's own referral tag on it so they still
+  // get credit for whoever clicks through.
+  var campaign = window.SHARE_CAMPAIGN;
+  if (campaign && campaign.link) {
+    var sep = campaign.link.indexOf('?') === -1 ? '?' : '&';
+    var code = (window.affCode || '').trim();
+    return code ? (campaign.link + sep + 'ref=' + encodeURIComponent(code)) : campaign.link;
+  }
+  return window.affLink || 'https://www.moneymasteries.com';
+}
+function shareMessage(){
+  var campaign = window.SHARE_CAMPAIGN;
+  if (campaign && campaign.title) {
+    return '\uD83D\uDE80 ' + campaign.title + (campaign.desc ? (' \u2014 ' + campaign.desc) : '') + ' ';
+  }
+  return SHARE_MSG + ' ';
+}
 function openShareModal(){
   var link = shareUrl();
   var el = document.getElementById('shareLinkText');
   if(el) el.textContent = link;
   var encLink = encodeURIComponent(link);
-  var encMsg = encodeURIComponent(SHARE_MSG + ' ');
+  var encMsg = encodeURIComponent(shareMessage());
   var set = function(id, href){ var a=document.getElementById(id); if(a) a.href=href; };
   set('sqWhats','https://wa.me/?text=' + encMsg + encLink);
   set('sqSms','sms:?&body=' + encMsg + encLink);
@@ -9857,7 +9955,7 @@ function copyShareLink(){
 function shareNative(){
   var link = shareUrl();
   if(navigator.share){
-    navigator.share({ title:'Money Masteries', text: SHARE_MSG, url: link }).catch(function(){});
+    navigator.share({ title: (window.SHARE_CAMPAIGN && window.SHARE_CAMPAIGN.title) || 'Money Masteries', text: shareMessage(), url: link }).catch(function(){});
     mmRecordShare('native');
   } else {
     copyShareLink();
@@ -9888,6 +9986,18 @@ async function mmRecordShare(channel){
   }
 }
 window.mmRecordShare = mmRecordShare;
+
+// Instagram/TikTok don't support a web "share this link" intent like
+// WhatsApp/Facebook/X do — the closest real equivalent is copying the link
+// so it can be pasted into a bio/story/caption, then opening the app.
+function mmShareCopyThenOpen(channel, appUrl){
+  var link = shareUrl();
+  try { navigator.clipboard && navigator.clipboard.writeText(link); } catch(e){}
+  if (typeof showNotifToast === 'function') showNotifToast('🔗 Link copied', 'Paste it into your ' + (channel === 'instagram' ? 'Instagram bio/story' : 'TikTok caption') + ', then post — opening ' + channel + ' now.');
+  mmRecordShare(channel);
+  window.open(appUrl, '_blank', 'noopener,noreferrer');
+}
+window.mmShareCopyThenOpen = mmShareCopyThenOpen;
 
 // ── COUNTDOWN ────────────────────────────────────────────────────────────────
 function startCountdown() {
@@ -12152,6 +12262,11 @@ async function mmGatherLiveContext(question){
 }
 
 window.askMarketsMaster = async function(question, lang){
+  if (window.mmDemoMode) {
+    await new Promise(function(r){ setTimeout(r, 350 + Math.random() * 350); });
+    var t = MM_DEMO_TICKERS[Math.floor(Math.random() * MM_DEMO_TICKERS.length)];
+    return t.sym + " is trading around " + t.price + ", " + t.chg + " today (sample data — Showcase Mode is on). Markets move fast, so always check a live source before acting — this isn't financial advice.";
+  }
   var langName = lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Brazilian Portuguese' : 'English';
   var ctx = await mmGatherLiveContext(question);
   var dataBlock = ctx.text
@@ -12349,7 +12464,21 @@ var JARVIS_PERSONAS = {
 // reachable (e.g. logged out, or the function isn't deployed yet), purely
 // so the demo/preview experience still works — that fallback path is never
 // billed and shouldn't be relied on in production.
+const JARVIS_DEMO_REPLIES = [
+  "Great question — based on what I'm seeing, the fastest win here is tightening up your current numbers before scaling further. I'd focus your next 2 weeks there, then reassess.",
+  "Here's the short version: you're in a solid spot, but there's a gap between where your data says you are and where your plan assumes you'll be by next quarter. Let's close that first.",
+  "I'd break that into three moves: quick fix this week, structural fix this month, and a bigger bet next quarter once the fundamentals are locked in.",
+  "That's very doable. The main risk isn't the idea itself, it's underestimating the ramp time — budget 2-3x longer than feels comfortable and you'll be in good shape.",
+];
+function jarvisDemoReply(){ return JARVIS_DEMO_REPLIES[Math.floor(Math.random() * JARVIS_DEMO_REPLIES.length)]; }
+
 window.askMasterJarvis = async function(masterKey, question, lang){
+  if (window.mmDemoMode) {
+    // Showcase mode: instant, realistic-sounding canned reply — no real API
+    // call, no token cost, so demos never stall waiting on a network round trip.
+    await new Promise(function(r){ setTimeout(r, 350 + Math.random() * 350); });
+    return jarvisDemoReply();
+  }
   var langName = lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Brazilian Portuguese' : 'English';
   var persona = JARVIS_PERSONAS[masterKey] || JARVIS_PERSONAS.businessmaster;
   var prompt =
@@ -13803,11 +13932,13 @@ document.addEventListener('DOMContentLoaded', function(){
     <button class="share-native" onclick="shareNative()">📲 Share to anyone →</button>
     <div class="share-quick-label">or send it straight to someone:</div>
     <div class="share-quick">
-      <a class="sq" id="sqWhats" target="_blank" rel="noopener" onclick="mmRecordShare('whatsapp')">💬<span>WhatsApp</span></a>
-      <a class="sq" id="sqSms" target="_blank" rel="noopener" onclick="mmRecordShare('sms')">📱<span>Text</span></a>
-      <a class="sq" id="sqEmail" target="_blank" rel="noopener" onclick="mmRecordShare('email')">✉️<span>Email</span></a>
-      <a class="sq" id="sqFb" target="_blank" rel="noopener" onclick="mmRecordShare('facebook')">📘<span>Facebook</span></a>
-      <a class="sq" id="sqX" target="_blank" rel="noopener" onclick="mmRecordShare('x')">✖️<span>X</span></a>
+      <a class="sq" id="sqWhats" target="_blank" rel="noopener" onclick="mmRecordShare('whatsapp')"><svg viewBox="0 0 24 24" width="22" height="22" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.2h.01c5.46 0 9.9-4.45 9.9-9.91S17.5 2 12.04 2zm5.8 14.03c-.24.68-1.4 1.3-1.93 1.35-.5.05-1.14.07-1.84-.12-.42-.12-.96-.3-1.65-.6-2.9-1.25-4.79-4.17-4.94-4.36-.14-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.83 2 .9 2.14.07.14.12.31.02.5-.1.2-.15.31-.3.48-.15.17-.31.38-.44.5-.15.15-.3.31-.13.6.17.3.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.68-.15.28.1 1.77.84 2.08 1 .31.15.51.23.59.36.08.13.08.75-.16 1.43z"/></svg><span>WhatsApp</span></a>
+      <a class="sq" id="sqSms" target="_blank" rel="noopener" onclick="mmRecordShare('sms')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Text</span></a>
+      <a class="sq" id="sqEmail" target="_blank" rel="noopener" onclick="mmRecordShare('email')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#8ba0c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg><span>Email</span></a>
+      <a class="sq" id="sqFb" target="_blank" rel="noopener" onclick="mmRecordShare('facebook')"><svg viewBox="0 0 24 24" width="22" height="22" fill="#1877F2"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z"/></svg><span>Facebook</span></a>
+      <a class="sq" id="sqX" target="_blank" rel="noopener" onclick="mmRecordShare('x')"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="color:#fff"><path d="M18.9 2H22l-7.3 8.3L23.3 22H16.7l-5.2-6.8L5.6 22H2.5l7.8-8.9L1.7 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.7L7.4 3.9H5.6L17.7 20z"/></svg><span>X</span></a>
+      <a class="sq" id="sqInstagram" href="javascript:void(0)" onclick="mmShareCopyThenOpen('instagram','https://www.instagram.com/')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#E1306C" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg><span>Instagram</span></a>
+      <a class="sq" id="sqTiktok" href="javascript:void(0)" onclick="mmShareCopyThenOpen('tiktok','https://www.tiktok.com/upload')"><svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><path d="M16.6 3c.3 2 1.6 3.6 3.9 3.9v3.1c-1.4 0-2.7-.4-3.9-1.2v6.4a5.6 5.6 0 1 1-4.8-5.6v3.2a2.5 2.5 0 1 0 1.8 2.4V3z"/></svg><span>TikTok</span></a>
     </div>
     <div class="share-qr-wrap">
       <img class="share-qr" id="shareQr" alt="Scan to join">
@@ -16761,6 +16892,136 @@ function prodDemoGenerate(which){
   if (resultWrap) resultWrap.style.display = 'block';
 }
 window.prodDemoGenerate = prodDemoGenerate;
+
+// ── My Account: self-serve membership upgrade/downgrade ──────────────────
+const ACCT_PLAN_META = {
+  basic: { label: 'MEH-mbership', price: '$19.99/mo', color: '#6b7280' },
+  pro:   { label: 'Pro',          price: '$50/mo',    color: '#2E7BFF' },
+  elite: { label: 'Elite',        price: '$99/mo',    color: '#a855f7' },
+};
+function renderAcctMembership(){
+  const data = window.userData || {};
+  const plan = (data.plan || 'free').toLowerCase();
+  const pill = document.getElementById('acctCurrentPlanPill');
+  if (pill) {
+    const meta = ACCT_PLAN_META[plan];
+    pill.textContent = meta ? (meta.label + ' — ' + meta.price) : 'Free';
+    pill.style.background = meta ? meta.color : '';
+  }
+  const wrap = document.getElementById('acctPlanCards');
+  if (!wrap) return;
+  const hasStripeSub = !!data.stripeSubscriptionId;
+  wrap.innerHTML = Object.keys(ACCT_PLAN_META).map(function(tier){
+    const meta = ACCT_PLAN_META[tier];
+    const isCurrent = tier === plan;
+    return '<div style="background:var(--myst-chip-bg,#111827);border:1px solid ' + (isCurrent ? meta.color : 'var(--myst-border,#1f2937)') + ';border-radius:12px;padding:14px;text-align:center">' +
+      '<div style="font-weight:800;color:' + meta.color + '">' + meta.label + '</div>' +
+      '<div style="font-size:.85rem;margin:4px 0 10px">' + meta.price + '</div>' +
+      (isCurrent
+        ? '<div style="font-size:.7rem;font-weight:800;color:' + meta.color + '">CURRENT PLAN</div>'
+        : '<button class="admin-save-btn" style="width:100%;padding:8px" onclick="acctChangePlan(\'' + tier + '\')">' + (hasStripeSub ? 'Switch' : 'Subscribe') + '</button>')
+      + '</div>';
+  }).join('');
+}
+window.renderAcctMembership = renderAcctMembership;
+
+async function acctChangePlan(newTier){
+  const data = window.userData || {};
+  const statusEl = document.getElementById('acctPlanChangeStatus');
+  // No Stripe subscription yet — this is a fresh signup, not a plan switch.
+  if (!data.stripeSubscriptionId) {
+    if (typeof openUpgradeModal === 'function') { openUpgradeModal(newTier); return; }
+    if (typeof openMembershipCheckout === 'function') { openMembershipCheckout(newTier); return; }
+    return;
+  }
+  if (!window.callChangeMembershipPlan) { if (statusEl) statusEl.textContent = 'Not connected — try again on the live site.'; return; }
+  if (statusEl) { statusEl.style.color = '#8ba0c4'; statusEl.textContent = 'Switching plans — Stripe is calculating your prorated credit…'; }
+  try {
+    const res = await window.callChangeMembershipPlan(newTier);
+    if (statusEl) { statusEl.style.color = '#10b981'; statusEl.textContent = '✓ Switched to ' + (ACCT_PLAN_META[newTier] ? ACCT_PLAN_META[newTier].label : newTier) + '. Your next invoice reflects the prorated credit for the switch.'; }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Plan updated', 'Your membership is now ' + (ACCT_PLAN_META[newTier] ? ACCT_PLAN_META[newTier].label : newTier) + '.');
+    window.userData = Object.assign({}, data, { plan: newTier });
+    renderAcctMembership();
+  } catch (e) {
+    if (statusEl) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Couldn\'t switch plans: ' + (e && e.message ? e.message : 'please try again.'); }
+  }
+}
+window.acctChangePlan = acctChangePlan;
+
+// ── Master Portal: Share Campaign editor ──────────────────────────────────
+function adminFillShareCampaignForm(){
+  var c = window.SHARE_CAMPAIGN || {};
+  var t = document.getElementById('shareCampTitle'); if (t) t.value = c.title || '';
+  var l = document.getElementById('shareCampLink'); if (l) l.value = c.link || '';
+  var d = document.getElementById('shareCampDesc'); if (d) d.value = c.desc || '';
+}
+window.adminFillShareCampaignForm = adminFillShareCampaignForm;
+async function adminSaveShareCampaign(){
+  var status = document.getElementById('shareCampStatus');
+  var cfg = {
+    title: (document.getElementById('shareCampTitle').value || '').trim(),
+    link: (document.getElementById('shareCampLink').value || '').trim(),
+    desc: (document.getElementById('shareCampDesc').value || '').trim(),
+  };
+  if (!cfg.link) { if (status) { status.style.color = '#ef4444'; status.textContent = 'Add a link first.'; } return; }
+  if (typeof window.saveShareCampaign !== 'function') { if (status) status.textContent = 'Not connected — try again on the live site.'; return; }
+  try {
+    await window.saveShareCampaign(cfg);
+    if (status) { status.style.color = '#10b981'; status.textContent = '✓ Saved — every member\'s Share button now pushes this.'; }
+  } catch(e) {
+    if (status) { status.style.color = '#ef4444'; status.textContent = 'Failed to save: ' + (e.message || e); }
+  }
+}
+window.adminSaveShareCampaign = adminSaveShareCampaign;
+async function adminClearShareCampaign(){
+  document.getElementById('shareCampTitle').value = '';
+  document.getElementById('shareCampLink').value = '';
+  document.getElementById('shareCampDesc').value = '';
+  await adminSaveShareCampaign();
+}
+window.adminClearShareCampaign = adminClearShareCampaign;
+
+// ── Marketing Master: Connect Your Social Accounts ────────────────────────
+const MM_SOCIAL_PLATFORMS = [
+  { key: 'facebook',  label: 'Facebook',  color: '#1877F2', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#1877F2"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z"/></svg>' },
+  { key: 'instagram', label: 'Instagram', color: '#E1306C', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#E1306C" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg>' },
+  { key: 'tiktok',    label: 'TikTok',    color: '#25F4EE', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#e5e7eb"><path d="M16.6 3c.3 2 1.6 3.6 3.9 3.9v3.1c-1.4 0-2.7-.4-3.9-1.2v6.4a5.6 5.6 0 1 1-4.8-5.6v3.2a2.5 2.5 0 1 0 1.8 2.4V3z"/></svg>' },
+  { key: 'x',         label: 'X',         color: '#e5e7eb',  icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#e5e7eb"><path d="M18.9 2H22l-7.3 8.3L23.3 22H16.7l-5.2-6.8L5.6 22H2.5l7.8-8.9L1.7 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.7L7.4 3.9H5.6L17.7 20z"/></svg>' },
+  { key: 'linkedin',  label: 'LinkedIn',  color: '#0A66C2', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#0A66C2"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.11 20.45H3.56V9h3.55z"/></svg>' },
+  { key: 'youtube',   label: 'YouTube',   color: '#FF0000',  icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#FF0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12z"/></svg>' },
+];
+function renderSocialConnectGrid(){
+  const wrap = document.getElementById('mmSocialConnectGrid');
+  if (!wrap) return;
+  const connected = (window.userData && window.userData.connectedSocials) || {};
+  wrap.innerHTML = MM_SOCIAL_PLATFORMS.map(function(p){
+    const isOn = !!connected[p.key];
+    return '<div style="background:var(--myst-chip-bg,#111827);border:1px solid ' + (isOn ? p.color : 'var(--myst-border,#1f2937)') + ';border-radius:12px;padding:14px;text-align:center">' +
+      '<div style="display:flex;justify-content:center;margin-bottom:8px">' + p.icon + '</div>' +
+      '<div style="font-weight:700;font-size:.82rem;margin-bottom:8px">' + p.label + '</div>' +
+      '<button class="admin-save-btn" style="width:100%;padding:7px;background:' + (isOn ? '#10b981' : '#374151') + '" onclick="mmToggleSocialConnect(\'' + p.key + '\')">' + (isOn ? '✓ Connected' : 'Connect') + '</button>' +
+      '</div>';
+  }).join('');
+}
+window.renderSocialConnectGrid = renderSocialConnectGrid;
+async function mmToggleSocialConnect(key){
+  const connected = Object.assign({}, (window.userData && window.userData.connectedSocials) || {});
+  const turningOn = !connected[key];
+  connected[key] = turningOn;
+  try {
+    if (window.updateMyUserDoc) await window.updateMyUserDoc({ connectedSocials: connected });
+    renderSocialConnectGrid();
+    if (typeof showNotifToast === 'function') {
+      showNotifToast(
+        turningOn ? '🔗 Connected (preview)' : 'Disconnected',
+        turningOn ? 'This is a preview of the connected state — real posting to ' + key + ' goes live once its developer app is approved.' : 'Removed from your connected accounts.'
+      );
+    }
+  } catch(e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Couldn\'t update', e.message || 'Please try again.');
+  }
+}
+window.mmToggleSocialConnect = mmToggleSocialConnect;
 
 function openProductStudio(){
   showScreen('productionmaster');
