@@ -88,6 +88,75 @@
     return res.data;
   };
 
+  // AI markup pricing controls (see functions/index.js setAiMarkupConfig /
+  // getAiMarkupConfig / setUserAiMarkupOverride / setUserBillingMode) — the
+  // global default multiplier, per-client overrides, and each client's
+  // billing arrangement (flat monthly membership vs. pure usage billing).
+  // Master-account-only; each Cloud Function re-checks the caller server-side.
+  window.callGetAiMarkupConfig = async () => {
+    const fn = httpsCallable(functionsClient, 'getAiMarkupConfig');
+    const res = await fn();
+    return res.data;
+  };
+  window.callSetAiMarkupConfig = async (defaultMultiplier) => {
+    const fn = httpsCallable(functionsClient, 'setAiMarkupConfig');
+    const res = await fn({ defaultMultiplier });
+    return res.data;
+  };
+  window.callSetUserAiMarkupOverride = async (uid, multiplier) => {
+    const fn = httpsCallable(functionsClient, 'setUserAiMarkupOverride');
+    const res = await fn({ uid, multiplier });
+    return res.data;
+  };
+  window.callSetUserBillingMode = async (uid, billingMode, billingCadence) => {
+    const fn = httpsCallable(functionsClient, 'setUserBillingMode');
+    const res = await fn({ uid, billingMode, billingCadence });
+    return res.data;
+  };
+
+  // ProsHub/CRM Master — real Firestore-backed CRM (see functions/index.js
+  // crmList / crmSave / crmDelete / crmGenerateApiKey / crmGetApiKey).
+  // Logged-in-member-only; each callable re-checks request.auth server-side.
+  window.callCrmList = async (kind) => {
+    const fn = httpsCallable(functionsClient, 'crmList');
+    const res = await fn({ kind });
+    return res.data;
+  };
+  window.callCrmSave = async (kind, fields, id) => {
+    const fn = httpsCallable(functionsClient, 'crmSave');
+    const res = await fn({ kind, fields, id: id || null });
+    return res.data;
+  };
+  window.callCrmDelete = async (kind, id) => {
+    const fn = httpsCallable(functionsClient, 'crmDelete');
+    const res = await fn({ kind, id });
+    return res.data;
+  };
+  window.callCrmGenerateApiKey = async () => {
+    const fn = httpsCallable(functionsClient, 'crmGenerateApiKey');
+    const res = await fn();
+    return res.data;
+  };
+  window.callCrmGetApiKey = async () => {
+    const fn = httpsCallable(functionsClient, 'crmGetApiKey');
+    const res = await fn();
+    return res.data;
+  };
+
+  // Business Master's own per-member profile (see functions/index.js
+  // bmGetProfile / bmSaveProfile) — company profile, licenses, employee
+  // roster. Logged-in-member-only.
+  window.callBmGetProfile = async () => {
+    const fn = httpsCallable(functionsClient, 'bmGetProfile');
+    const res = await fn();
+    return res.data;
+  };
+  window.callBmSaveProfile = async (businessProfile) => {
+    const fn = httpsCallable(functionsClient, 'bmSaveProfile');
+    const res = await fn({ businessProfile });
+    return res.data;
+  };
+
   // Master Portal → Genie Orders panel data (see functions/index.js
   // getGenieOrders). Master-account-only; the Cloud Function itself
   // re-checks the caller's email server-side.
@@ -107,17 +176,18 @@
     return res.data;
   };
 
-  // REI Master → Property Lookup (Zillow, via HasData). See
-  // functions/index.js reiZillowSearch/reiZillowPropertyDetail — the
-  // HasData key stays server-side, never reaches the browser.
+  // REI Master → Property Lookup (RentCast, primary; HasData/Zillow as an
+  // automatic fallback). See functions/index.js reiZillowSearch/
+  // reiZillowPropertyDetail — both API keys stay server-side, never reach
+  // the browser.
   window.callReiZillowSearch = async (keyword, opts) => {
     const fn = httpsCallable(functionsClient, 'reiZillowSearch');
     const res = await fn({ keyword, type: (opts && opts.type) || 'forSale', filters: (opts && opts.filters) || {}, page: opts && opts.page });
     return res.data;
   };
-  window.callReiZillowPropertyDetail = async (url) => {
+  window.callReiZillowPropertyDetail = async (url, address) => {
     const fn = httpsCallable(functionsClient, 'reiZillowPropertyDetail');
-    const res = await fn({ url });
+    const res = await fn({ url, address });
     return res.data;
   };
 
@@ -6649,6 +6719,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon">🚀</span> Marketing Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon">📈</span> Markets Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('administrativemaster')" id="nav-administrativemaster"><span class="nav-item-icon">🏛️</span> Administrative Master</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('proshub')" id="nav-proshub"><span class="nav-item-icon">🧰</span> ProsHub/CRM Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('productionmaster')" id="nav-productionmaster"><span class="nav-item-icon">🏭</span> Production Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('geniemaster')" id="nav-geniemaster"><span class="nav-item-icon">🧞</span> Genie Agent Master</div>
     <div class="sidebar-section-label">Community</div>
@@ -7541,11 +7612,12 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
 
-    <!-- ADMINISTRATIVE MASTER (Business + Financial + Pros Hub combined) -->
+    <!-- ADMINISTRATIVE MASTER (Business + Financial — Pros Hub moved out to its -->
+    <!-- own standalone ProsHub/CRM Master, see screen-proshub below) -->
     <div class="screen" id="screen-administrativemaster" data-sbg="administrativemaster">
       <div class="screen-title">🏛️ <span>Administrative Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
-      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations, bookkeeping & financial coaching, and the Pros Hub tools, combined under a single Administrative Master.</div>
+      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations and bookkeeping & financial coaching, combined under a single Administrative Master.</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
         <div class="mk-card" onclick="showScreen('businessmaster')" style="cursor:pointer">
           <div style="font-size:2rem">🏢</div>
@@ -7556,11 +7628,6 @@ document.addEventListener('DOMContentLoaded', function() {
           <div style="font-size:2rem">💰</div>
           <div class="mk-card-title">Financial Tools</div>
           <div class="mpm-sub">Bookkeeping, financial coaching, and money-management tools.</div>
-        </div>
-        <div class="mk-card" onclick="showScreen('proshub')" style="cursor:pointer">
-          <div style="font-size:2rem">🧰</div>
-          <div class="mk-card-title">Pros Hub</div>
-          <div class="mpm-sub">Professional-grade tools for running your business day to day.</div>
         </div>
       </div>
     </div>
@@ -8126,15 +8193,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- PROS HUB (native CRM tab — fulfills the CRM needs of every member, right inside Money Masteries) -->
     <div class="screen" id="screen-proshub" data-sbg="proshub">
-      <div class="screen-title">🧰 <span>Pros Hub</span></div>
+      <div class="screen-title">🧰 <span>ProsHub/CRM Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="fm-demo-banner">
-        <div class="fm-demo-icon">🧪</div>
+        <div class="fm-demo-icon">🧰</div>
         <div>
-          <b>Demo Mode</b> — a working preview of Pros Hub's CRM layout (clients, projects, invoices), populated with sample data, same as Business Master and Financial Master.
-          <p>Pros Hub runs entirely inside Money Masteries — there's no separate app to deploy or connect. Add/edit clients, projects, and invoices below and they persist for your session; the AI assistant is real and grounded in this data.</p>
+          <b>Your real CRM</b> — clients, projects, and invoices below are saved to your account for real (not a demo), the moment you add them.
+          <p>ProsHub/CRM Master runs entirely inside Money Masteries — there's no separate app to deploy or connect. The AI assistant is grounded in this same data, and your own AI agents/automations can read and write it too — see "API Access for AI Agents" below.</p>
         </div>
+      </div>
+
+      <div class="fm-section-label" style="margin-top:4px">🔑 API Access for AI Agents</div>
+      <div class="fm-card">
+        <div class="mpm-sub" style="margin-bottom:12px">Generate a key so your own AI agents/automations can read and write your CRM directly — nobody else's key can ever see or touch your data.</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <input id="crmApiKeyDisplay" readonly placeholder="No API key yet — click Generate" style="flex:1;min-width:220px;padding:9px 12px;border-radius:8px;border:1px solid #374151;background:#0d1220;color:#f3f4f6;font-family:monospace;font-size:.8rem">
+          <button class="bm-add-btn" onclick="crmCopyApiKey()">Copy</button>
+          <button class="bm-add-btn" onclick="crmGenerateApiKeyClick()">🔄 Generate / Regenerate</button>
+        </div>
+        <div id="crmApiKeyStatus" style="font-size:.75rem;margin-bottom:10px"></div>
+        <details>
+          <summary style="cursor:pointer;color:#8ba0c4;font-size:.8rem">How your AI agent calls this API ▾</summary>
+          <div style="margin-top:10px;font-size:.78rem;color:#8ba0c4;line-height:1.6">
+            Base URL: <code>https://us-central1-money-masteries-2cc76.cloudfunctions.net/crmApi</code><br>
+            Header on every request: <code>X-API-Key: &lt;your key above&gt;</code><br><br>
+            <code>GET  ?resource=clients|projects|invoices[&amp;id=xxx]</code> — list, or get one<br>
+            <code>POST ?resource=clients|projects|invoices</code> — create (JSON body = fields)<br>
+            <code>PATCH ?resource=clients|projects|invoices&amp;id=xxx</code> — update (JSON body = fields to merge)<br>
+            <code>DELETE ?resource=clients|projects|invoices&amp;id=xxx</code> — delete<br><br>
+            Example: <code>curl -H "X-API-Key: YOUR_KEY" "https://us-central1-money-masteries-2cc76.cloudfunctions.net/crmApi?resource=clients"</code>
+          </div>
+        </details>
       </div>
 
       <div class="fm-section-label" style="margin-top:4px">🧰 Ask Pros Hub — your AI CRM assistant</div>
@@ -8528,18 +8618,25 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="bank-panel" id="admpanel-genie">
       <div class="admin-table-wrap" style="margin-bottom:22px">
         <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🧞 Genie Orders — Pending Provisioning</div>
-        <div class="mpm-sub" style="padding:0 16px 12px">Every Genie subscription purchased through Stripe, in order — tier, business info, and the Stripe customer ID you need to register the client and turn on daily usage billing (report_usage_to_stripe.py --markup 2.5). "Onboarded" means the buyer's info reached the setup queue at 138.197.22.223:8877. Commission (initial signup + every monthly renewal) is added to that affiliate's Pending Payout below — nothing here ever pays anyone automatically; you still send every payout yourself.</div>
+        <div class="mpm-sub" style="padding:0 16px 12px">Every Genie subscription purchased through Stripe, in order — tier, business info, and the Stripe customer ID you need to register the client and turn on daily usage billing. Markup on that usage is set in "🤖 AI Usage &amp; Billing" below (5x by default, adjustable globally or per-client). "Onboarded" means the buyer's info reached Genie's private setup queue. Commission (initial signup + every monthly renewal) is added to that affiliate's Pending Payout below — nothing here ever pays anyone automatically; you still send every payout yourself. Use "Open Portal" on a row to launch that specific client's own Genie chat URL.</div>
         <div id="admGenieOrdersWrap"><div style="padding:16px;color:#6b7280;text-align:center">Loading…</div></div>
       </div>
       <div class="mpm-card" id="genieServiceCard" style="border-color:#34d39950;background:linear-gradient(135deg,#0d2118,#111827)">
         <div class="mpm-title" style="color:#34d399">🧞 Genie Service — Client Site Builder</div>
-        <div class="mpm-sub">Opens the Genie admin portal in a new tab, where you build sites/funnels for clients. This is a separate internal tool — not visible to members, master-only.</div>
-        <a class="mpm-add" href="http://138.197.22.223:8877/" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none">🧞 Open Genie Portal ↗</a>
+        <div class="mpm-sub">138.197.22.223:8877 is Genie's PRIVATE admin panel (locked to a private network, not reachable from the public internet) — it is never shown to members or clients. Each client has their own separate Genie droplet with their own chat URL; use the "🧞 Open Portal" button on that client's row in the table above to open their specific URL (looked up live via the admin API). This raw link below only works if your device is on Genie's private network.</div>
+        <a class="mpm-add" href="http://138.197.22.223:8877/" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none">🧞 Open Genie Admin Panel ↗</a>
         <div style="font-size:.7rem;color:#6b7280;margin-top:6px">Heads up: this link is plain HTTP (not HTTPS), so your browser may flag it as "Not Secure" — that's expected for this internal tool, not an error with Money Masteries.</div>
       </div>
       <div class="admin-table-wrap" style="margin-bottom:22px">
         <div style="padding:14px 16px;border-bottom:1px solid #1f2937;font-weight:800;font-size:.9rem;color:#c4b5fd">🤖 AI Usage &amp; Billing</div>
         <div class="mpm-sub" style="padding:0 16px 12px">Every AI request across Genie and all AI-powered Masters, per client — what Anthropic actually charged you vs. what the client was billed. The gap is your profit.</div>
+        <div style="padding:0 16px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:.8rem;color:#8ba0c4">Default markup for every client (unless overridden below):</label>
+          <input id="aiDefaultMultiplierInput" type="number" min="0.1" step="0.1" value="5" style="width:80px;padding:6px 8px;border-radius:8px;border:1px solid #374151;background:#0d1220;color:#f3f4f6">
+          <span style="color:#8ba0c4">x</span>
+          <button class="admin-save-btn" onclick="adminSaveDefaultMultiplier()">Save Default</button>
+          <span id="aiDefaultMultiplierStatus" style="font-size:.78rem"></span>
+        </div>
         <div id="admAiUsageWrap"><div style="padding:16px;color:#6b7280;text-align:center">Loading…</div></div>
       </div>
       </div>
@@ -9323,6 +9420,12 @@ document.addEventListener('DOMContentLoaded', function() {
       <div id="reiFeedBody"></div>
     </div>
 
+    <details class="fm-card" style="margin:16px 0" ontoggle="if(this.open && typeof reiLoadSavedLeads==='function') reiLoadSavedLeads()">
+      <summary style="cursor:pointer;font-weight:800;color:#c4b5fd">📌 My Saved Leads</summary>
+      <div class="mpm-sub" style="margin:8px 0 12px">Leads you've saved with notes — open any lead and click "💾 Save Lead" to add it here. Yours only, never shared with other members.</div>
+      <div class="rei-grid" id="reiSavedLeadsBody"></div>
+    </details>
+
     <!-- MAP -->
     <div id="reiMapWrap" style="display:none">
       <div id="reiMapMsg"></div>
@@ -9452,7 +9555,7 @@ function showScreen(id) {
   if (id === 'community')    setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
   if (id === 'admin')        { if (typeof switchAdminTab === 'function') switchAdminTab('overview'); }
   if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); if (typeof loadAiUsageSummary === 'function') loadAiUsageSummary(); if (typeof loadGenieOrders === 'function') loadGenieOrders(); if (typeof adminFillShareCampaignForm === 'function') adminFillShareCampaignForm(); if (typeof adminLoadDiscountCodes === 'function') adminLoadDiscountCodes(); }, 80);
-  if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); }, 30);
+  if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); if (typeof reiLoadSavedLeads === 'function') reiLoadSavedLeads(); }, 30);
   if (id === 'businessmaster') setTimeout(function(){ if (typeof renderBusinessMaster === 'function') renderBusinessMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('businessmaster'); }, 30);
   if (id === 'financialmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('financialmaster'); }, 30);
   if (id === 'proshub')      setTimeout(function(){ if (typeof renderProsHub === 'function') renderProsHub(); if (typeof renderJarvisChips === 'function') renderJarvisChips('proshub'); }, 30);
@@ -9858,6 +9961,13 @@ async function loadAiUsageSummary(){
   if (!wrap || typeof window.callGetAiUsageSummary !== 'function') return;
   wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">Loading…</div>';
   try {
+    if (typeof window.callGetAiMarkupConfig === 'function') {
+      try {
+        var cfg = await window.callGetAiMarkupConfig();
+        var input = document.getElementById('aiDefaultMultiplierInput');
+        if (input && cfg && cfg.defaultMultiplier != null) input.value = cfg.defaultMultiplier;
+      } catch(e) { console.log('callGetAiMarkupConfig:', e); }
+    }
     var res = await window.callGetAiUsageSummary();
     renderAiUsageSummary((res && res.clients) || []);
   } catch(e) {
@@ -9866,6 +9976,49 @@ async function loadAiUsageSummary(){
   }
 }
 window.loadAiUsageSummary = loadAiUsageSummary;
+
+async function adminSaveDefaultMultiplier(){
+  var input = document.getElementById('aiDefaultMultiplierInput');
+  var status = document.getElementById('aiDefaultMultiplierStatus');
+  var val = Number(input && input.value);
+  if (!(val > 0)) { if (status) { status.style.color = '#ef4444'; status.textContent = 'Enter a number greater than 0.'; } return; }
+  if (typeof window.callSetAiMarkupConfig !== 'function') { if (status) status.textContent = 'Not connected — try again on the live site.'; return; }
+  if (status) { status.style.color = '#8ba0c4'; status.textContent = 'Saving…'; }
+  try {
+    await window.callSetAiMarkupConfig(val);
+    if (status) { status.style.color = '#10b981'; status.textContent = '✓ Saved — every client without their own override now bills at ' + val + 'x.'; }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Default AI markup saved', val + 'x applies to every client without a per-client override.');
+  } catch(e) {
+    if (status) { status.style.color = '#ef4444'; status.textContent = 'Failed to save: ' + ((e && e.message) || 'error'); }
+  }
+}
+window.adminSaveDefaultMultiplier = adminSaveDefaultMultiplier;
+
+async function adminSaveClientPricing(uid, btn){
+  var multEl = document.getElementById('aiMult_' + uid);
+  var modeEl = document.getElementById('aiMode_' + uid);
+  var cadEl = document.getElementById('aiCad_' + uid);
+  var statusEl = document.getElementById('aiStatus_' + uid);
+  var multRaw = multEl ? String(multEl.value || '').trim() : '';
+  var multiplier = multRaw === '' ? null : Number(multRaw);
+  if (multRaw !== '' && !(multiplier > 0)) {
+    if (statusEl) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Multiplier must be > 0, or blank to use the default.'; }
+    return;
+  }
+  var orig = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    if (typeof window.callSetUserAiMarkupOverride === 'function') await window.callSetUserAiMarkupOverride(uid, multiplier);
+    if (typeof window.callSetUserBillingMode === 'function') await window.callSetUserBillingMode(uid, modeEl ? modeEl.value : 'premium', cadEl ? cadEl.value : 'monthly');
+    if (statusEl) { statusEl.style.color = '#10b981'; statusEl.textContent = '✓ Saved'; }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Client pricing saved', (multiplier ? multiplier + 'x override' : 'Using default markup') + ' · ' + (modeEl ? modeEl.value : 'premium') + (modeEl && modeEl.value === 'usage' ? ' (' + (cadEl ? cadEl.value : 'monthly') + ')' : ''));
+  } catch(e) {
+    if (statusEl) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Failed: ' + ((e && e.message) || 'error'); }
+  } finally {
+    if (btn) { btn.textContent = orig; btn.disabled = false; }
+  }
+}
+window.adminSaveClientPricing = adminSaveClientPricing;
 
 function renderAiUsageSummary(clients){
   var wrap = document.getElementById('admAiUsageWrap');
@@ -9877,12 +10030,35 @@ function renderAiUsageSummary(clients){
     '<span>Your real cost: <b style="color:#f3f4f6">$'+totalRaw.toFixed(2)+'</b></span>' +
     '<span>Billed to clients: <b style="color:#2E7BFF">$'+totalBilled.toFixed(2)+'</b></span>' +
     '<span>Your profit: <b style="color:#34d399">$'+totalProfit.toFixed(2)+'</b></span></div>';
-  var rows = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Client</th><th>Requests</th><th>Your Cost</th><th>Billed</th><th>Profit</th></tr></thead><tbody>' +
+  // Per-client: an optional markup override (blank = use the global
+  // default above), and a billing mode/cadence — some clients pay a flat
+  // monthly membership fee ("premium"), others are billed purely on their
+  // metered usage ("usage"), weekly or monthly. Weekly cadence is stored
+  // here as intent; it only actually changes Stripe's billing frequency
+  // once corresponding weekly-interval metered Prices exist (Stripe can't
+  // mix billing intervals on one subscription) — see functions/index.js.
+  var rows = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Client</th><th>Requests</th><th>Your Cost</th><th>Billed</th><th>Profit</th><th>Markup Override</th><th>Billing</th><th></th></tr></thead><tbody>' +
     clients.map(function(c){
+      var uid = c.uid;
+      var override = c.aiMarkupOverride != null ? c.aiMarkupOverride : '';
+      var mode = c.billingMode === 'usage' ? 'usage' : 'premium';
+      var cadence = c.billingCadence === 'weekly' ? 'weekly' : 'monthly';
+      var multInput = '<input id="aiMult_'+uid+'" type="number" min="0.1" step="0.1" value="'+override+'" placeholder="default" style="width:70px;padding:5px 6px;border-radius:6px;border:1px solid #374151;background:#0d1220;color:#f3f4f6;font-size:.75rem">';
+      var modeSel = '<select id="aiMode_'+uid+'" onchange="var c=document.getElementById(\'aiCad_'+uid+'\'); if(c) c.style.display = this.value===\'usage\'?\'\':\'none\';" style="padding:5px 6px;border-radius:6px;border:1px solid #374151;background:#0d1220;color:#f3f4f6;font-size:.75rem">' +
+        '<option value="premium"'+(mode==='premium'?' selected':'')+'>Monthly premium</option>' +
+        '<option value="usage"'+(mode==='usage'?' selected':'')+'>Usage-only</option></select>';
+      var cadSel = '<select id="aiCad_'+uid+'" style="padding:5px 6px;border-radius:6px;border:1px solid #374151;background:#0d1220;color:#f3f4f6;font-size:.75rem;'+(mode==='usage'?'':'display:none')+'">' +
+        '<option value="monthly"'+(cadence==='monthly'?' selected':'')+'>Monthly</option>' +
+        '<option value="weekly"'+(cadence==='weekly'?' selected':'')+'>Weekly</option></select>';
+      var saveBtn = '<button class="admin-save-btn" style="padding:5px 10px;font-size:.72rem" onclick="adminSaveClientPricing(\''+uid+'\',this)">Save</button>' +
+        '<div id="aiStatus_'+uid+'" style="font-size:.68rem;margin-top:2px"></div>';
       return '<tr><td>'+(c.name||c.email||c.uid)+'</td><td>'+c.requests+'</td>' +
         '<td>$'+Number(c.rawCost||0).toFixed(2)+'</td>' +
         '<td style="color:#2E7BFF;font-weight:700">$'+Number(c.billedCost||0).toFixed(2)+'</td>' +
-        '<td style="color:#34d399;font-weight:700">$'+Number(c.profit||0).toFixed(2)+'</td></tr>';
+        '<td style="color:#34d399;font-weight:700">$'+Number(c.profit||0).toFixed(2)+'</td>' +
+        '<td>'+multInput+'</td>' +
+        '<td>'+modeSel+' '+cadSel+'</td>' +
+        '<td>'+saveBtn+'</td></tr>';
     }).join('') + '</tbody></table></div>';
   wrap.innerHTML = header + rows;
 }
@@ -9906,7 +10082,7 @@ function renderGenieOrders(orders){
   if (!wrap) return;
   if (!orders.length) { wrap.innerHTML = '<div style="padding:16px;color:#6b7280;text-align:center">No Genie orders yet.</div>'; return; }
   var tierLabel = { chat: 'Chat ($50)', master: 'Master ($99)', super: 'Super ($297)' };
-  var rows = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Tier</th><th>Business</th><th>Email</th><th>Stripe Customer</th><th>Metered Price</th><th>Referred By</th><th>Commission Earned (lifetime)</th><th>Onboarded</th></tr></thead><tbody>' +
+  var rows = '<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Tier</th><th>Business</th><th>Email</th><th>Stripe Customer</th><th>Metered Price</th><th>Referred By</th><th>Commission Earned (lifetime)</th><th>Onboarded</th><th>Client Portal</th></tr></thead><tbody>' +
     orders.map(function(o){
       var payload = o.onboardPayload || {};
       var business = payload.business || '—';
@@ -9917,12 +10093,75 @@ function renderGenieOrders(orders){
       var referredBy = o.commissionCreditedTo || o.referredByCode || '—';
       var totalComm = Number(o.totalCommissionCredited || o.commissionAmount || 0);
       var commission = (totalComm > 0) ? ('<span style="color:#34d399;font-weight:700">$'+totalComm.toFixed(2)+'</span> <span style="color:#6b7280;font-size:.7rem">(unpaid — pay manually)</span>') : '—';
+      // Each client has their own separate Genie droplet/URL — looked up
+      // live from the private Genie admin API (GET /api/clients) by email,
+      // never a single shared address. See openClientGeniePortal() below.
+      var emailAttr = String(email).replace(/'/g, "&#39;");
+      var businessAttr = String(business).replace(/'/g, "&#39;");
+      var portalBtn = '<button class="admin-save-btn" style="padding:5px 10px;font-size:.72rem" onclick="openClientGeniePortal(\''+emailAttr+'\',\''+businessAttr+'\',this)">🧞 Open Portal</button>';
       return '<tr><td>'+(tierLabel[o.tier]||o.tier||'—')+'</td><td>'+business+'</td><td>'+email+'</td>' +
         '<td style="font-family:monospace;font-size:.75rem">'+cust+'</td><td>'+metered+'</td>' +
-        '<td>'+referredBy+'</td><td>'+commission+'</td><td>'+onboarded+'</td></tr>';
+        '<td>'+referredBy+'</td><td>'+commission+'</td><td>'+onboarded+'</td><td>'+portalBtn+'</td></tr>';
     }).join('') + '</tbody></table></div>';
   wrap.innerHTML = rows;
 }
+
+// ── Genie per-client portal lookup ──────────────────────────────────────────
+// Genie's server at 138.197.22.223:8877 is a PRIVATE admin panel, not a
+// client-facing address — it is never shown or linked to members/clients.
+// Each Genie client has their own separate droplet/URL; this looks that
+// specific client's URL up live via the admin API (GET /api/clients) rather
+// than pointing every "Open Genie Portal" click at one shared address.
+//
+// GENIE_ADMIN_API_KEY must be filled in — ask David/the Genie operator for
+// the X-API-Key value and paste it below. Until it's set, the button below
+// will show a clear "not configured yet" toast instead of failing silently.
+const GENIE_ADMIN_API_BASE = 'http://138.197.22.223:8877';
+const GENIE_ADMIN_API_KEY = ''; // TODO: paste the X-API-Key value here
+let _genieClientListCache = null;
+async function genieFetchClientList(force) {
+  if (_genieClientListCache && !force) return _genieClientListCache;
+  if (!GENIE_ADMIN_API_KEY) throw new Error('Genie admin API key not set yet — add it to GENIE_ADMIN_API_KEY in index.html.');
+  const resp = await fetch(GENIE_ADMIN_API_BASE + '/api/clients', { headers: { 'X-API-Key': GENIE_ADMIN_API_KEY } });
+  if (!resp.ok) throw new Error('Genie admin API returned ' + resp.status);
+  const data = await resp.json();
+  // Response shape is a best guess (array, or {clients:[...]}/{results:[...]})
+  // — adjust here once you've seen a real response from the endpoint.
+  _genieClientListCache = Array.isArray(data) ? data : (data.clients || data.results || []);
+  return _genieClientListCache;
+}
+window.genieFetchClientList = genieFetchClientList;
+
+async function openClientGeniePortal(email, business, btn) {
+  var orig = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    var clients = await genieFetchClientList();
+    var emailL = String(email || '').trim().toLowerCase();
+    var bizL = String(business || '').trim().toLowerCase();
+    // Match by email first (most reliable/unique), fall back to business
+    // name. Field names on each client record (email/business/url) are a
+    // best guess — adjust the lookups below once you've seen a real
+    // /api/clients response from Genie.
+    var match = (emailL && emailL !== '—') ? clients.find(function(c){ return String(c.email || '').trim().toLowerCase() === emailL; }) : null;
+    if (!match && bizL && bizL !== '—') {
+      match = clients.find(function(c){ return String(c.business || c.business_name || c.name || '').trim().toLowerCase() === bizL; });
+    }
+    var url = match && (match.url || match.chat_url || match.portal_url || match.client_url);
+    if (!url) {
+      if (typeof showNotifToast === 'function') showNotifToast('⚠️ No matching Genie client found', 'Double-check the email/business name against the Genie admin panel directly.');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (e) {
+    var msg = (e && e.message) || 'Unknown error';
+    if (typeof showNotifToast === 'function') showNotifToast('⚠️ Could not open client portal', msg);
+    else alert('Could not open client portal: ' + msg);
+  } finally {
+    if (btn) { btn.textContent = orig; btn.disabled = false; }
+  }
+}
+window.openClientGeniePortal = openClientGeniePortal;
 
 // ── COPY & SHARE ──────────────────────────────────────────────────────────────
 function copyAffLink(textId, btnId) {
@@ -11030,14 +11269,9 @@ window.showScreen = function(id) {
   }
   var MASTER_SCREENS = ['reimaster','marketingmaster','marketsmaster','businessmaster','financialmaster','proshub'];
   if (MASTER_SCREENS.indexOf(id) !== -1 && typeof mastersEligible === 'function' && !mastersEligible(id)) {
-    if (id === 'proshub') {
-      // Pros Hub isn't sold à la carte — still a straight Pro/Elite upgrade prompt.
-      if (typeof openUpgradeModal === 'function') openUpgradeModal('pro');
-      if (typeof showNotifToast === 'function') showNotifToast('🔒 Pro & Elite feature', 'Pros Hub is a Pro & Elite perk. Upgrade to unlock it, plus every Master.');
-      return;
-    }
-    // Any other Master: offer the $25 single-Master unlock, with an upgrade
-    // link right in that same modal for anyone who'd rather get all of them.
+    // Every Master (including ProsHub/CRM Master): offer the $25
+    // single-Master unlock, with an upgrade link right in that same modal
+    // for anyone who'd rather get all of them.
     if (typeof buyProduct === 'function') buyProduct('master-' + id);
     if (typeof showNotifToast === 'function') showNotifToast('🔒 Pro, Elite, or $25', 'Unlock just this Master for $25 one-time — or upgrade to Pro/Elite to get every Master included.');
     return;
@@ -12061,15 +12295,16 @@ window.showLoggedIn = function(user, data) {
   var ac = document.getElementById('nav-aicoach');
   if (ac) ac.style.display = 'flex';
   // Master Tools: Pro & Elite get every Master included free. Everyone else still
-  // sees all 5 named Masters in the nav (so they can buy any single one for a
+  // sees all 6 named Masters in the nav (so they can buy any single one for a
   // one-time $25 — see mastersEligible()/buyProduct() in showScreen) with a 🔒
-  // badge on whichever ones they haven't unlocked yet. Pros Hub alone stays a
-  // straight Pro/Elite perk, hidden until upgrade, since it isn't sold à la carte.
+  // badge on whichever ones they haven't unlocked yet. ProsHub/CRM Master is
+  // sold à la carte exactly like the others now (it used to be Pro/Elite-only).
   var mastersUnlocked = (data && (data.plan === 'pro' || data.plan === 'elite')) || window.isMaster === true;
   var prodNav = document.getElementById('nav-productionmaster');
   if (prodNav) prodNav.style.display = 'flex'; // Production Master is a demo/service page — visible to everyone for now
   [['nav-reimaster','reimaster','🏘️ REI Master'],['nav-marketingmaster','marketingmaster','🚀 Marketing Master'],
-   ['nav-marketsmaster','marketsmaster','📈 Markets Master'],['nav-administrativemaster','administrativemaster','🏛️ Administrative Master']].forEach(function(row){
+   ['nav-marketsmaster','marketsmaster','📈 Markets Master'],['nav-administrativemaster','administrativemaster','🏛️ Administrative Master'],
+   ['nav-proshub','proshub','🧰 ProsHub/CRM Master']].forEach(function(row){
     var el = document.getElementById(row[0]);
     if (!el) return;
     el.style.display = 'flex';
@@ -13161,15 +13396,32 @@ window.MM_BUSINESS_PROFILE = window.MM_BUSINESS_PROFILE || {
 function mmBusinessContextText(){
   var p = window.MM_BUSINESS_PROFILE;
   var f = p.financials;
+  // ProsHub/CRM Master's clients/projects/invoices are now real per-member
+  // Firestore data (window.MM_CRM_DATA, loaded by renderProsHub via
+  // callCrmList) instead of the shared demo MM_BUSINESS_PROFILE — once
+  // that's loaded, ground the CRM lines in it instead so "Ask Pros Hub"
+  // talks about the member's actual clients/projects/invoices. Business
+  // Master's own financials/licenses lines are untouched (still demo).
+  var crm = window.MM_CRM_DATA;
+  var clientsLine, projectsLine, invoicesLine;
+  if (crm) {
+    clientsLine = 'Active customers/leads in the CRM: ' + (crm.clients||[]).length + ' (stages: ' + (crm.clients||[]).map(function(c){ return c.stage; }).join(', ') + ').';
+    projectsLine = 'Projects in ProsHub/CRM Master: ' + (crm.projects||[]).map(function(j){ return j.name + ' for ' + j.client + ' — ' + j.status + ', $' + Number(j.value||0).toLocaleString() + ', due ' + j.due; }).join('; ') + '.';
+    invoicesLine = 'Invoices in ProsHub/CRM Master: ' + (crm.invoices||[]).map(function(i){ return i.number + ' (' + i.client + ', $' + Number(i.amount||0).toLocaleString() + ', ' + i.status + ')'; }).join(', ') + '.';
+  } else {
+    clientsLine = 'Active customers/leads in the CRM: ' + p.customers.length + ' (stages: ' + p.customers.map(function(c){ return c.stage; }).join(', ') + ').';
+    projectsLine = 'Projects in Pros Hub: ' + (p.projects||[]).map(function(j){ return j.name + ' for ' + j.client + ' — ' + j.status + ', $' + j.value.toLocaleString() + ', due ' + j.due; }).join('; ') + '.';
+    invoicesLine = 'Invoices in Pros Hub: ' + (p.invoices||[]).map(function(i){ return i.number + ' (' + i.client + ', $' + i.amount.toLocaleString() + ', ' + i.status + ')'; }).join(', ') + '.';
+  }
   return [
     'Business: ' + p.profile.name + ' — ' + p.profile.industry + ', a ' + p.profile.entityType + ' formed ' + p.profile.formed + ' in ' + p.profile.state + '.',
     'Team: ' + p.profile.employeesCount + ' employees/contractors. Owner works roughly 18 hrs/week in the business.',
     'Financials (last 30 days): revenue $' + f.revenueMonth.toLocaleString() + ', expenses $' + f.expensesMonth.toLocaleString() + ', net profit $' + f.netProfitMonth.toLocaleString() + ' (' + f.margin + '% margin), cash on hand $' + f.cash.toLocaleString() + '.',
     'Trailing 12 months revenue: $' + f.revenueTTM.toLocaleString() + ', up ' + f.growthYoY + '% YoY. SDE: $' + f.sde.toLocaleString() + '. Outstanding debt: $' + f.debt.toLocaleString() + '.',
     'Licenses/permits on file: ' + p.licenses.map(function(l){ return l.name + ' (' + l.status + ')'; }).join(', ') + '.',
-    'Active customers/leads in the CRM: ' + p.customers.length + ' (stages: ' + p.customers.map(function(c){ return c.stage; }).join(', ') + ').',
-    'Projects in Pros Hub: ' + (p.projects||[]).map(function(j){ return j.name + ' for ' + j.client + ' — ' + j.status + ', $' + j.value.toLocaleString() + ', due ' + j.due; }).join('; ') + '.',
-    'Invoices in Pros Hub: ' + (p.invoices||[]).map(function(i){ return i.number + ' (' + i.client + ', $' + i.amount.toLocaleString() + ', ' + i.status + ')'; }).join(', ') + '.'
+    clientsLine,
+    projectsLine,
+    invoicesLine
   ].join('\n');
 }
 /* Generic "Jarvis" assistant, reused (with a different persona + system prompt)
@@ -13341,9 +13593,42 @@ function fmExportReport(kind){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 500);
 }
 
-/* ── Business Master (demo CRM / mentor / butler) ────────────────────── */
+/* ── Business Master (per-member profile — see functions/index.js
+   bmGetProfile/bmSaveProfile. The object literal above (window.
+   MM_BUSINESS_PROFILE) is now only the STARTING TEMPLATE for a brand-new
+   member's first visit — after that, profile/licenses/employees are real,
+   saved, and never shared between members.) ── */
 function bmEsc(s){ return String(s == null ? '' : s).replace(/</g,'&lt;'); }
-function renderBusinessMaster(){
+var bmProfileLoaded = false;
+async function bmEnsureProfileLoaded(){
+  if (bmProfileLoaded || typeof window.callBmGetProfile !== 'function') return;
+  bmProfileLoaded = true; // set first so concurrent calls don't double-fetch
+  try {
+    var res = await window.callBmGetProfile();
+    if (res && res.businessProfile) {
+      // A member who already has a saved profile: use it as-is.
+      var saved = res.businessProfile;
+      window.MM_BUSINESS_PROFILE.profile = saved.profile || window.MM_BUSINESS_PROFILE.profile;
+      window.MM_BUSINESS_PROFILE.financials = saved.financials || window.MM_BUSINESS_PROFILE.financials;
+      window.MM_BUSINESS_PROFILE.licenses = saved.licenses || window.MM_BUSINESS_PROFILE.licenses;
+      window.MM_BUSINESS_PROFILE.employees = saved.employees || window.MM_BUSINESS_PROFILE.employees;
+    } else {
+      // Brand-new member, nothing saved yet — seed their own copy from the
+      // starting template so this stops being "the same demo everyone
+      // sees" from this point forward.
+      await bmPersistProfile();
+    }
+  } catch(e) { console.log('bmEnsureProfileLoaded:', e); }
+}
+async function bmPersistProfile(){
+  if (typeof window.callBmSaveProfile !== 'function') return;
+  var p = window.MM_BUSINESS_PROFILE;
+  try {
+    await window.callBmSaveProfile({ profile: p.profile, financials: p.financials, licenses: p.licenses, employees: p.employees });
+  } catch(e) { console.log('bmPersistProfile:', e); }
+}
+async function renderBusinessMaster(){
+  await bmEnsureProfileLoaded();
   var p = window.MM_BUSINESS_PROFILE;
   var byId = function(id, val){ var el = document.getElementById(id); if(el) el.textContent = val; };
   byId('bmName', p.profile.name);
@@ -13374,111 +13659,163 @@ function renderBusinessMaster(){
   }
 
 }
-function bmRenewLicense(btn){
+async function bmRenewLicense(btn){
   var row = btn.closest('tr');
   var name = row.cells[0].textContent;
   var lic = window.MM_BUSINESS_PROFILE.licenses.find(function(l){ return l.name === name; });
-  if(lic){ lic.status = 'active'; lic.expires = 'Renewed just now (demo)'; }
+  if(lic){ lic.status = 'active'; lic.expires = 'Renewed just now'; }
+  await bmPersistProfile();
   renderBusinessMaster();
 }
-function bmAddEmployee(){
+async function bmAddEmployee(){
   var name = document.getElementById('bmEmpName').value.trim();
   var role = document.getElementById('bmEmpRole').value.trim();
   var type = document.getElementById('bmEmpType').value;
   if(!name || !role) return;
   window.MM_BUSINESS_PROFILE.employees.push({ name:name, role:role, type:type, started:new Date().toISOString().slice(0,10), status:'active' });
   window.MM_BUSINESS_PROFILE.profile.employeesCount = window.MM_BUSINESS_PROFILE.employees.length;
+  await bmPersistProfile();
   document.getElementById('bmEmpName').value = '';
   document.getElementById('bmEmpRole').value = '';
   renderBusinessMaster();
 }
-/* ── Pros Hub (native CRM tab — demo data, same pattern as Business Master) ── */
-function renderProsHub(){
-  var p = window.MM_BUSINESS_PROFILE;
+/* ── ProsHub/CRM Master (native CRM tab — REAL per-member Firestore data,
+   via crmList/crmSave/crmDelete in functions/index.js; AI agents can reach
+   the exact same data through the crmApi REST endpoint + X-API-Key). ── */
+window.MM_CRM_DATA = { clients: [], projects: [], invoices: [] };
+async function renderProsHub(){
+  if (typeof window.callCrmList !== 'function') return;
+  try {
+    var clientsRes = await window.callCrmList('clients');
+    var projRes = await window.callCrmList('projects');
+    var invRes = await window.callCrmList('invoices');
+    window.MM_CRM_DATA.clients = (clientsRes && clientsRes.items) || [];
+    window.MM_CRM_DATA.projects = (projRes && projRes.items) || [];
+    window.MM_CRM_DATA.invoices = (invRes && invRes.items) || [];
+  } catch(e) {
+    console.log('renderProsHub: could not load CRM data', e);
+  }
+  var p = window.MM_CRM_DATA;
 
   var clientsBody = document.getElementById('phClientsBody');
   if(clientsBody){
-    clientsBody.innerHTML = p.customers.map(function(c, i){
+    clientsBody.innerHTML = p.clients.map(function(c){
       var pillClass = c.stage === 'Active Job' ? 'active' : c.stage === 'Lead' ? 'lead' : 'past';
       return '<tr><td>'+bmEsc(c.name)+'</td><td>'+bmEsc(c.email||'—')+'</td>' +
         '<td><span class="bm-status-pill '+pillClass+'">'+bmEsc(c.stage)+'</span></td>' +
         '<td>$'+Number(c.value||0).toLocaleString()+'</td><td>'+bmEsc(c.lastContact||'—')+'</td>' +
-        '<td><button class="bm-mini-btn" onclick="phLogContact('+i+')">Log Contact</button></td></tr>';
+        '<td><button class="bm-mini-btn" onclick="phLogContact(\''+c.id+'\')">Log Contact</button> ' +
+        '<button class="bm-mini-btn" style="background:#ef4444" onclick="phDeleteRecord(\'clients\',\''+c.id+'\')">Delete</button></td></tr>';
     }).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:16px">No clients yet — add one above.</td></tr>';
   }
 
   var projBody = document.getElementById('phProjectsBody');
   if(projBody){
-    projBody.innerHTML = (p.projects||[]).map(function(j){
+    projBody.innerHTML = p.projects.map(function(j){
       var pillClass = j.status === 'Active' ? 'active' : j.status === 'Complete' ? 'past' : 'expiring';
       return '<tr><td>'+bmEsc(j.name)+'</td><td>'+bmEsc(j.client)+'</td>' +
         '<td><span class="bm-status-pill '+pillClass+'">'+bmEsc(j.status)+'</span></td>' +
-        '<td>$'+Number(j.value||0).toLocaleString()+'</td><td>'+bmEsc(j.due||'—')+'</td></tr>';
-    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:16px">No projects yet — add one above.</td></tr>';
+        '<td>$'+Number(j.value||0).toLocaleString()+'</td><td>'+bmEsc(j.due||'—')+'</td>' +
+        '<td><button class="bm-mini-btn" style="background:#ef4444" onclick="phDeleteRecord(\'projects\',\''+j.id+'\')">Delete</button></td></tr>';
+    }).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:16px">No projects yet — add one above.</td></tr>';
   }
 
   var invBody = document.getElementById('phInvoicesBody');
   if(invBody){
-    invBody.innerHTML = (p.invoices||[]).map(function(inv, i){
+    invBody.innerHTML = p.invoices.map(function(inv){
       var pillClass = inv.status === 'Paid' ? 'active' : inv.status === 'Sent' ? 'lead' : 'needed';
-      var action = inv.status === 'Paid' ? '' : '<button class="bm-mini-btn" onclick="phMarkInvoicePaid('+i+')">Mark Paid</button>';
+      var action = inv.status === 'Paid' ? '' : '<button class="bm-mini-btn" onclick="phMarkInvoicePaid(\''+inv.id+'\')">Mark Paid</button> ';
       return '<tr><td>'+bmEsc(inv.number)+'</td><td>'+bmEsc(inv.client)+'</td>' +
         '<td>$'+Number(inv.amount||0).toLocaleString()+'</td>' +
         '<td><span class="bm-status-pill '+pillClass+'">'+bmEsc(inv.status)+'</span></td>' +
-        '<td>'+bmEsc(inv.due||'—')+'</td><td>'+action+'</td></tr>';
+        '<td>'+bmEsc(inv.due||'—')+'</td><td>'+action+'<button class="bm-mini-btn" style="background:#ef4444" onclick="phDeleteRecord(\'invoices\',\''+inv.id+'\')">Delete</button></td></tr>';
     }).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:16px">No invoices yet — add one above.</td></tr>';
   }
+
+  crmLoadApiKeyDisplay();
 }
-function phAddClient(){
+async function phAddClient(){
   var name = document.getElementById('phClientName').value.trim();
   var email = document.getElementById('phClientEmail').value.trim();
   var stage = document.getElementById('phClientStage').value;
   var value = Number(document.getElementById('phClientValue').value) || 0;
-  if(!name) return;
-  window.MM_BUSINESS_PROFILE.customers.push({ name:name, email:email, stage:stage, value:value, lastContact:'Just now' });
+  if(!name || typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('clients', { name:name, email:email, stage:stage, value:value, lastContact:'Just now' });
   document.getElementById('phClientName').value = '';
   document.getElementById('phClientEmail').value = '';
   document.getElementById('phClientValue').value = '';
   renderProsHub();
 }
-function phLogContact(i){
-  var c = window.MM_BUSINESS_PROFILE.customers[i];
-  if(c) c.lastContact = 'Just now';
+async function phLogContact(id){
+  if (typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('clients', { lastContact:'Just now' }, id);
   renderProsHub();
 }
-function phAddProject(){
+async function phAddProject(){
   var name = document.getElementById('phProjName').value.trim();
   var client = document.getElementById('phProjClient').value.trim();
   var status = document.getElementById('phProjStatus').value;
   var value = Number(document.getElementById('phProjValue').value) || 0;
   var due = document.getElementById('phProjDue').value || '—';
-  if(!name || !client) return;
-  window.MM_BUSINESS_PROFILE.projects = window.MM_BUSINESS_PROFILE.projects || [];
-  window.MM_BUSINESS_PROFILE.projects.push({ name:name, client:client, status:status, value:value, due:due });
+  if(!name || !client || typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('projects', { name:name, client:client, status:status, value:value, due:due });
   document.getElementById('phProjName').value = '';
   document.getElementById('phProjClient').value = '';
   document.getElementById('phProjValue').value = '';
   document.getElementById('phProjDue').value = '';
   renderProsHub();
 }
-function phAddInvoice(){
+async function phAddInvoice(){
   var number = document.getElementById('phInvNumber').value.trim();
   var client = document.getElementById('phInvClient').value.trim();
   var amount = Number(document.getElementById('phInvAmount').value) || 0;
   var due = document.getElementById('phInvDue').value || '—';
-  if(!number || !client) return;
-  window.MM_BUSINESS_PROFILE.invoices = window.MM_BUSINESS_PROFILE.invoices || [];
-  window.MM_BUSINESS_PROFILE.invoices.push({ number:number, client:client, amount:amount, status:'Sent', due:due });
+  if(!number || !client || typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('invoices', { number:number, client:client, amount:amount, status:'Sent', due:due });
   document.getElementById('phInvNumber').value = '';
   document.getElementById('phInvClient').value = '';
   document.getElementById('phInvAmount').value = '';
   document.getElementById('phInvDue').value = '';
   renderProsHub();
 }
-function phMarkInvoicePaid(i){
-  var inv = window.MM_BUSINESS_PROFILE.invoices[i];
-  if(inv) inv.status = 'Paid';
+async function phMarkInvoicePaid(id){
+  if (typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('invoices', { status:'Paid' }, id);
   renderProsHub();
+}
+async function phDeleteRecord(kind, id){
+  if (typeof window.callCrmDelete !== 'function') return;
+  await window.callCrmDelete(kind, id);
+  renderProsHub();
+}
+async function crmLoadApiKeyDisplay(){
+  var input = document.getElementById('crmApiKeyDisplay');
+  if (!input || typeof window.callCrmGetApiKey !== 'function') return;
+  try {
+    var res = await window.callCrmGetApiKey();
+    if (res && res.apiKey) input.value = res.apiKey;
+  } catch(e) { console.log('crmLoadApiKeyDisplay:', e); }
+}
+async function crmGenerateApiKeyClick(){
+  var status = document.getElementById('crmApiKeyStatus');
+  if (typeof window.callCrmGenerateApiKey !== 'function') return;
+  if (status) { status.style.color = '#8ba0c4'; status.textContent = 'Generating…'; }
+  try {
+    var res = await window.callCrmGenerateApiKey();
+    var input = document.getElementById('crmApiKeyDisplay');
+    if (input && res && res.apiKey) input.value = res.apiKey;
+    if (status) { status.style.color = '#f59e0b'; status.textContent = '⚠️ Any AI agent using the old key stops working — update it wherever this key is used.'; }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ New API key generated', 'Update any AI agent/automation using the old key.');
+  } catch(e) {
+    if (status) { status.style.color = '#ef4444'; status.textContent = 'Failed: ' + ((e && e.message) || 'error'); }
+  }
+}
+function crmCopyApiKey(){
+  var input = document.getElementById('crmApiKeyDisplay');
+  if (!input || !input.value) return;
+  navigator.clipboard.writeText(input.value).then(function(){
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Copied', 'API key copied to clipboard.');
+  });
 }
 function masterSaveMarketsMasterKey(){
   var input = document.getElementById('mmAdminKey');
@@ -13622,7 +13959,8 @@ var MASTER_PRODUCTS = [
   { id:'master-reimaster',        screenId:'reimaster',        type:'master', emoji:'🏘️', name:'REI Master — Individual Access',        price:25, desc:'One-time unlock for REI Master — real-estate deal analysis, lead tools & AI investing coach. Included free with Pro or Elite.' },
   { id:'master-marketingmaster',  screenId:'marketingmaster',  type:'master', emoji:'🚀', name:'Marketing Master — Individual Access',  price:25, desc:'One-time unlock for Marketing Master — the full marketing tool suite. Included free with Pro or Elite.' },
   { id:'master-marketsmaster',    screenId:'marketsmaster',    type:'master', emoji:'📈', name:'Markets Master — Individual Access',    price:25, desc:'One-time unlock for Markets Master — live market data & AI market assistant. Included free with Pro or Elite.' },
-  { id:'master-administrativemaster', screenId:'administrativemaster', type:'master', emoji:'🏛️', name:'Administrative Master — Individual Access', price:25, desc:'One-time unlock for Administrative Master — Business, Financial & Pros Hub tools combined in one place. Included free with Pro or Elite.' }
+  { id:'master-administrativemaster', screenId:'administrativemaster', type:'master', emoji:'🏛️', name:'Administrative Master — Individual Access', price:25, desc:'One-time unlock for Administrative Master — Business & Financial tools combined in one place. Included free with Pro or Elite.' },
+  { id:'master-proshub', screenId:'proshub', type:'master', emoji:'🧰', name:'ProsHub/CRM Master — Individual Access', price:25, desc:'One-time unlock for ProsHub/CRM Master — the full client CRM (clients, projects, invoices) plus an API for your own AI agents to read and write it. Included free with Pro or Elite.' }
 ];
 window.MASTER_PRODUCTS = MASTER_PRODUCTS;
 function getAllProducts() { return DEFAULT_PRODUCTS.concat(MASTER_PRODUCTS).concat(window.UPLOADED_PRODUCTS); }
@@ -13778,12 +14116,12 @@ function studioEligible(){ var pl=(window.userData&&window.userData.plan)||'free
 function eventsEligible(){ var pl=(window.userData&&window.userData.plan)||'free'; return pl==='pro' || pl==='elite' || window.isMaster===true; }
 // Pro/Elite (or the Master account) get every Master included. Everyone else
 // can still get in — one Master at a time — by buying that specific one for
-// $25 (see MASTER_PRODUCTS / buyProduct). Pros Hub stays a Pro & Elite-only
-// perk, not sold à la carte, since it isn't one of the named "Masters".
+// $25 (see MASTER_PRODUCTS / buyProduct). ProsHub/CRM Master (the client CRM)
+// is sold à la carte exactly like every other Master now.
 function mastersEligible(id){
   var pl=(window.userData&&window.userData.plan)||'free';
   if (pl==='pro' || pl==='elite' || window.isMaster===true) return true;
-  if (!id || id === 'proshub') return false;
+  if (!id) return false;
   // Firestore (purchasedMasters, synced at login — follows the member across
   // devices) is the source of truth; localStorage is just an immediate local
   // fallback right after a purchase, before the next full profile reload.
@@ -17458,18 +17796,24 @@ async function reiZillowDoSearch(){
       return;
     }
     wrap.innerHTML = '<div class="rei-grid" style="margin-top:6px">' + listings.slice(0, 24).map(function(p, i){
-      const addr = p.address || p.streetAddress || p.title || 'Listing';
+      const addr = p.address || p.formattedAddress || p.streetAddress || p.title || 'Listing';
       const price = p.price || p.unformattedPrice || p.priceLabel || '';
       const beds = p.beds != null ? p.beds : (p.bedrooms != null ? p.bedrooms : '—');
       const baths = p.baths != null ? p.baths : (p.bathrooms != null ? p.bathrooms : '—');
-      const sqft = p.livingArea || p.area || p.sqft || '—';
-      const img = p.imgSrc || p.image || p.photo || '';
-      const url = p.detailUrl || p.url || p.zillowUrl || '';
-      return '<div class="rei-card" onclick="reiZillowViewDetail(' + i + ')" data-rei-zurl="' + reiZillowEsc(url) + '">' +
+      const sqft = p.sqft || p.livingArea || p.area || '—';
+      const img = p.img || p.imgSrc || p.image || p.photo || '';
+      const url = p.url || p.detailUrl || p.zillowUrl || '';
+      return '<div class="rei-card" data-rei-zurl="' + reiZillowEsc(url) + '">' +
+        '<div onclick="reiZillowViewDetail(' + i + ')">' +
         (img ? '<img class="rei-cardimg" src="' + reiZillowEsc(img) + '" alt="">' : '') +
         '<h4>' + reiZillowEsc(addr) + '</h4>' +
         '<div class="rei-sub">' + beds + ' bd · ' + baths + ' ba · ' + reiZillowEsc(String(sqft)) + ' sqft</div>' +
         '<div class="rei-cardfoot"><span></span><span class="val g">' + reiZillowEsc(String(price)) + '</span></div>' +
+        '</div>' +
+        '<div style="margin-top:8px;display:flex;gap:6px">' +
+        '<button class="rei-btn ghost" style="padding:4px 10px;font-size:.72rem" onclick="event.stopPropagation();reiZillowSaveLead(' + i + ')">💾 Save Lead</button>' +
+        (url ? '' : '<button class="rei-btn ghost" style="padding:4px 10px;font-size:.72rem" onclick="event.stopPropagation();reiZillowGetValuation(' + i + ')">📈 Get Valuation</button>') +
+        '</div>' +
         '</div>';
     }).join('') + '</div>';
     window._reiZillowLastResults = listings;
@@ -17480,28 +17824,71 @@ async function reiZillowDoSearch(){
 }
 window.reiZillowDoSearch = reiZillowDoSearch;
 
-async function reiZillowViewDetail(i){
-  const listing = (window._reiZillowLastResults || [])[i];
-  const url = listing && (listing.detailUrl || listing.url || listing.zillowUrl);
-  if (!url) { alert('No Zillow listing URL available for this property.'); return; }
-  if (!window.callReiZillowPropertyDetail) return;
-  try {
-    const detail = await window.callReiZillowPropertyDetail(url);
-    const d = (detail && (detail.property || detail.data)) || detail || {};
-    const lines = [
-      'Address: ' + (d.address || listing.address || '—'),
-      'Price: ' + (d.price || listing.price || '—'),
-      'Beds/Baths: ' + (d.bedrooms != null ? d.bedrooms : '—') + ' / ' + (d.bathrooms != null ? d.bathrooms : '—'),
-      'Zestimate: ' + (d.zestimate || '—'),
-      'Agent: ' + (d.agentName || d.agent || '—'),
-      '', 'Full listing: ' + url,
-    ];
-    alert(lines.join('\n'));
-  } catch (e) {
-    alert('Could not load property detail: ' + (e.message || e));
-  }
+// Saves a live search result the same way reiSaveLead() saves a feed lead —
+// snapshots the listing's own fields (address/price/beds/baths/url) into
+// this member's reiLeads records rather than an id, so it keeps working
+// unchanged whichever property-data API is behind the search (Zillow today,
+// whatever replaces it later — nothing here is Zillow-specific).
+async function reiZillowSaveLead(i){
+  var p = (window._reiZillowLastResults || [])[i];
+  if (!p || typeof window.callCrmSave !== 'function') return;
+  var fields = {
+    addr: p.address || p.formattedAddress || p.streetAddress || p.title || 'Listing',
+    city: p.city || '', state: p.state || '',
+    price: p.price || p.unformattedPrice || p.priceLabel || null,
+    beds: p.beds != null ? p.beds : p.bedrooms, baths: p.baths != null ? p.baths : p.bathrooms,
+    sqft: p.sqft || p.livingArea || p.area || null,
+    url: p.url || p.detailUrl || p.zillowUrl || '',
+    source: p.source || 'live-search', notes: '', savedAt: new Date().toISOString()
+  };
+  await window.callCrmSave('reiLeads', fields);
+  if (typeof reiLoadSavedLeads === 'function') reiLoadSavedLeads();
+  if (typeof showNotifToast === 'function') showNotifToast('💾 Lead saved', 'Find it under My Saved Leads — add notes there anytime.');
+}
+window.reiZillowSaveLead = reiZillowSaveLead;
+
+// Card click / "view detail" — shows what the search already returned, no
+// extra API call (RentCast's free tier is limited, so browsing shouldn't
+// burn quota). Only the explicit "Get Valuation" button below spends a call.
+function reiZillowViewDetail(i){
+  const p = (window._reiZillowLastResults || [])[i];
+  if (!p) return;
+  const url = p.url || p.detailUrl || p.zillowUrl || '';
+  const lines = [
+    'Address: ' + (p.address || p.formattedAddress || '—'),
+    'Price: ' + (p.price || '—'),
+    'Beds/Baths: ' + (p.beds != null ? p.beds : '—') + ' / ' + (p.baths != null ? p.baths : '—'),
+    'Sqft: ' + (p.sqft || '—'),
+    p.propertyType ? ('Type: ' + p.propertyType) : null,
+    p.yearBuilt ? ('Year Built: ' + p.yearBuilt) : null,
+    p.daysOnMarket != null ? ('Days on Market: ' + p.daysOnMarket) : null,
+    p.mlsNumber ? ('MLS #: ' + p.mlsNumber) : null,
+    p.agentName ? ('Agent: ' + p.agentName + (p.agentPhone ? ' (' + p.agentPhone + ')' : '')) : null,
+    url ? ('' ) : null, url ? ('Full listing: ' + url) : null,
+  ].filter(function(l){ return l != null; });
+  alert(lines.join('\n'));
 }
 window.reiZillowViewDetail = reiZillowViewDetail;
+
+// Explicit valuation lookup (RentCast AVM — its equivalent of a Zestimate).
+// A separate opt-in call so casual browsing doesn't spend free-tier quota.
+async function reiZillowGetValuation(i){
+  const p = (window._reiZillowLastResults || [])[i];
+  const address = p && (p.address || p.formattedAddress);
+  if (!address || !window.callReiZillowPropertyDetail) return;
+  try {
+    const detail = await window.callReiZillowPropertyDetail(null, address);
+    const lines = [
+      'Address: ' + address,
+      'Estimated Value: ' + (detail.zestimate != null ? '$' + Number(detail.zestimate).toLocaleString() : '—'),
+      detail.priceRangeLow != null ? ('Range: $' + Number(detail.priceRangeLow).toLocaleString() + ' – $' + Number(detail.priceRangeHigh).toLocaleString()) : null,
+    ].filter(Boolean);
+    alert(lines.join('\n'));
+  } catch (e) {
+    alert('Could not get a valuation: ' + (e.message || e));
+  }
+}
+window.reiZillowGetValuation = reiZillowGetValuation;
 
 /* ── live connection ── */
 async function reiTestConnection(url, silent){
@@ -18112,7 +18499,96 @@ function reiModalHeader(l){
       <button class="rei-mtab" id="reiMT_opp" onclick="reiModalTab('opp')">💡 Opportunity</button>
       <button class="rei-mtab" id="reiMT_call" onclick="reiModalTab('call')">📞 Call Playbook</button>
       <button class="rei-mtab" id="reiMT_det" onclick="reiModalTab('det')">📋 Details</button>
-    </div>`;
+    </div>
+    ${reiSaveBlock(l)}`;
+}
+
+/* ── Save lead + notes (persists via the same per-member records system as
+   ProsHub/CRM Master — see crmList/crmSave/crmDelete, kind:'reiLeads').
+   Snapshots the lead's own fields at save time rather than referencing an
+   id back into REI_DATA/Zillow results, so it keeps working unchanged no
+   matter which lead-data API is behind the feed. ── */
+window.reiSavedLeadsCache = [];
+function reiLeadKey(l){ return ((l && (l.addr||l.address)) || '') + '|' + ((l && l.city) || ''); }
+function reiFindSavedLead(l){
+  var key = reiLeadKey(l);
+  return window.reiSavedLeadsCache.find(function(s){ return reiLeadKey(s) === key; }) || null;
+}
+function reiSaveBlock(l){
+  var saved = reiFindSavedLead(l);
+  var esc = function(s){ return String(s==null?'':s).replace(/</g,'&lt;'); };
+  return '<div class="rei-save-block" style="margin-top:14px;padding:12px;border-top:1px solid var(--myst-border,#1f2937)">' +
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+    (saved
+      ? '<span style="color:#34d399;font-weight:700;font-size:.82rem">✓ Saved to My Leads</span> <button class="rei-btn ghost" style="padding:4px 10px;font-size:.75rem" onclick="reiUnsaveLead()">Remove</button>'
+      : '<button class="rei-btn" style="padding:6px 14px;font-size:.8rem" onclick="reiSaveLead()">💾 Save Lead</button>') +
+    '</div>' +
+    '<textarea id="reiLeadNotes" placeholder="Notes on this lead — call outcomes, offer thoughts, next steps..." style="width:100%;min-height:70px;padding:8px 10px;border-radius:8px;border:1px solid #374151;background:#0d1220;color:#f3f4f6;font-size:.82rem;resize:vertical">' + esc(saved ? saved.notes : '') + '</textarea>' +
+    '<div style="display:flex;justify-content:flex-end;margin-top:6px">' +
+    '<button class="rei-btn ghost" style="padding:5px 12px;font-size:.75rem" onclick="reiSaveLeadNotes()">Save Notes</button>' +
+    '</div><div id="reiSaveStatus" style="font-size:.72rem;margin-top:4px;text-align:right"></div></div>';
+}
+async function reiSaveLead(){
+  var l = reiCurrentLead; if (!l || typeof window.callCrmSave !== 'function') return;
+  var notesEl = document.getElementById('reiLeadNotes');
+  var fields = {
+    addr: l.addr || l.address || '', city: l.city || '', state: l.state || '',
+    price: (l.fin && l.fin.suggested_offer) || l.price || null,
+    score: l.score || null, source: reiMode === 'demo' ? 'demo' : 'live',
+    notes: notesEl ? notesEl.value : '', savedAt: new Date().toISOString()
+  };
+  var res = await window.callCrmSave('reiLeads', fields);
+  window.reiSavedLeadsCache.push({ id: res.id, ...fields });
+  reiModalTab('opp');
+  if (typeof reiRenderSavedLeads === 'function') reiRenderSavedLeads();
+  if (typeof showNotifToast === 'function') showNotifToast('💾 Lead saved', 'Find it anytime under My Saved Leads.');
+}
+async function reiUnsaveLead(){
+  var l = reiCurrentLead; var saved = reiFindSavedLead(l);
+  if (!saved || typeof window.callCrmDelete !== 'function') return;
+  await window.callCrmDelete('reiLeads', saved.id);
+  window.reiSavedLeadsCache = window.reiSavedLeadsCache.filter(function(s){ return s.id !== saved.id; });
+  reiModalTab('opp');
+  if (typeof reiRenderSavedLeads === 'function') reiRenderSavedLeads();
+}
+async function reiSaveLeadNotes(){
+  var l = reiCurrentLead; var saved = reiFindSavedLead(l);
+  var notesEl = document.getElementById('reiLeadNotes');
+  var status = document.getElementById('reiSaveStatus');
+  if (!saved) { if (status) { status.style.color='#f59e0b'; status.textContent='Save the lead first, then add notes.'; } return; }
+  if (typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('reiLeads', { notes: notesEl ? notesEl.value : '' }, saved.id);
+  saved.notes = notesEl ? notesEl.value : '';
+  if (status) { status.style.color='#10b981'; status.textContent='✓ Notes saved'; }
+  if (typeof reiRenderSavedLeads === 'function') reiRenderSavedLeads();
+}
+async function reiLoadSavedLeads(){
+  if (typeof window.callCrmList !== 'function') return;
+  try {
+    var res = await window.callCrmList('reiLeads');
+    window.reiSavedLeadsCache = (res && res.items) || [];
+    reiRenderSavedLeads();
+  } catch(e) { console.log('reiLoadSavedLeads:', e); }
+}
+function reiRenderSavedLeads(){
+  var wrap = document.getElementById('reiSavedLeadsBody');
+  if (!wrap) return;
+  var esc = function(s){ return String(s==null?'':s).replace(/</g,'&lt;'); };
+  var items = window.reiSavedLeadsCache;
+  wrap.innerHTML = items.length ? items.map(function(s){
+    return '<div class="rei-card" style="cursor:default">' +
+      '<h4>' + esc(s.addr) + '</h4>' +
+      '<div class="rei-sub">' + esc(s.city) + (s.state ? ', ' + esc(s.state) : '') + '</div>' +
+      (s.notes ? '<div style="font-size:.78rem;color:#8ba0c4;margin-top:6px;white-space:pre-wrap">' + esc(s.notes) + '</div>' : '<div style="font-size:.78rem;color:#4b5563;margin-top:6px">No notes yet.</div>') +
+      '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="rei-btn ghost" style="padding:4px 10px;font-size:.72rem" onclick="reiDeleteSavedLead(\'' + s.id + '\')">Remove</button></div>' +
+    '</div>';
+  }).join('') : '<div class="rei-connect" style="padding:20px"><p>No saved leads yet — open any lead and click "💾 Save Lead" to keep it here with your notes.</p></div>';
+}
+async function reiDeleteSavedLead(id){
+  if (typeof window.callCrmDelete !== 'function') return;
+  await window.callCrmDelete('reiLeads', id);
+  window.reiSavedLeadsCache = window.reiSavedLeadsCache.filter(function(s){ return s.id !== id; });
+  reiRenderSavedLeads();
 }
 
 function reiModalTab(tab){
