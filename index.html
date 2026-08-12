@@ -17801,7 +17801,19 @@ async function reiZillowDoSearch(){
       return;
     }
     wrap.innerHTML = '<div class="rei-grid" style="margin-top:6px">' + listings.slice(0, 24).map(function(p, i){
-      const addr = p.address || p.formattedAddress || p.streetAddress || p.title || 'Listing';
+      // Defensive: some providers occasionally send an address as a nested
+      // object instead of a plain string — flatten it instead of letting it
+      // render as the literal text "[object Object]".
+      const flattenAddr = function(v){
+        if (!v) return '';
+        if (typeof v === 'string') return v;
+        if (typeof v === 'object') {
+          return v.formattedAddress || v.full || v.line1 ||
+            [v.addressLine1 || v.line1, v.city, v.state].filter(Boolean).join(', ') || '';
+        }
+        return String(v);
+      };
+      const addr = flattenAddr(p.address) || flattenAddr(p.formattedAddress) || flattenAddr(p.streetAddress) || flattenAddr(p.title) || 'Listing';
       const price = p.price || p.unformattedPrice || p.priceLabel || '';
       const beds = p.beds != null ? p.beds : (p.bedrooms != null ? p.bedrooms : '—');
       const baths = p.baths != null ? p.baths : (p.bathrooms != null ? p.bathrooms : '—');
