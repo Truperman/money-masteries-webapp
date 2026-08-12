@@ -1052,8 +1052,13 @@
   // call it on every real-time update, not just the first load.
   function renderAllAdminUI(list) {
     renderAdminTable(list);
-    renderNewMembersTable(list);
-    renderBillingTable(list);
+    // Guarded: these two were being called but never defined anywhere in
+    // this file, which threw and silently aborted the rest of this function
+    // (stats cards, team tree) on every single admin panel load. Guarding
+    // them lets everything else render; wire up real implementations here
+    // if/when a "new members" widget and a dedicated billing table are built.
+    if (typeof renderNewMembersTable === 'function') renderNewMembersTable(list);
+    if (typeof renderBillingTable === 'function') renderBillingTable(list);
     renderTeamTree(list);
 
     const counts = { free:0, basic:0, pro:0, elite:0 };
