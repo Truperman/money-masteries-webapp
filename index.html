@@ -18341,8 +18341,23 @@ function reiViewSwitch(which){
   if (which==="map") reiMapShow();
 }
 
-/* ── Public Property Lookup — free, live, no backend needed ── */
-/* Sources: US Census Bureau Geocoder + ACS5 (no key), FEMA NFHL ArcGIS (no key), FRED (free key) */
+/* ── Public Property Lookup — free, live government data ── */
+/* Sources: US Census Bureau Geocoder + ACS5 (no key), FEMA NFHL ArcGIS (no key), FRED (free key)
+   NOTE: census.gov and hazards.fema.gov do NOT send CORS headers, so a direct browser fetch()
+   to them is blocked (census.gov's edge even returns a bare 503 instead of a CORS error, which
+   used to get mislabeled as "temporarily unavailable" — it isn't down, it's structurally blocked).
+   reiCorsFetch() below tries the direct call first (works fine once this runs through our own
+   backend proxy) and falls back to a public CORS relay so this still works today without one. */
+async function reiCorsFetch(url, timeoutMs){
+  try {
+    const r = await fetch(url, {signal: AbortSignal.timeout(timeoutMs || 8000)});
+    if (r.ok) return r;
+  } catch(e) {}
+  // Fallback: route through a public CORS proxy since the source blocks direct browser calls.
+  const r2 = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url), {signal: AbortSignal.timeout(timeoutMs || 8000)});
+  if (!r2.ok) throw new Error("Both direct and proxied requests failed (" + r2.status + ")");
+  return r2;
+}
 async function reiLookupRun(){
   const addr = document.getElementById("reiLookupAddr").value.trim();
   const out = document.getElementById("reiLookupOut");
@@ -18350,7 +18365,7 @@ async function reiLookupRun(){
   out.innerHTML = `<div class="rei-connect"><div class="big">📡</div><h3>Looking up public records…</h3></div>`;
   try {
     const geoUrl = "https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=" + encodeURIComponent(addr) + "&benchmark=Public_AR_Current&vintage=Current_Current&format=json";
-    const geoR = await fetch(geoUrl, {signal: AbortSignal.timeout(10000)});
+    const geoR = await reiCorsFetch(geoUrl, 10000);
     const geoJ = await geoR.json();
     const match = geoJ.result && geoJ.result.addressMatches && geoJ.result.addressMatches[0];
     if (!match) { out.innerHTML = `<div class="rei-connect"><div class="big">🔍</div><h3>No match found</h3><p>Try a more complete address (street, city, state, zip).</p></div>`; return; }
@@ -18365,17 +18380,17 @@ async function reiLookupRun(){
     let flood = "—";
     try {
       const femaUrl = "https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/28/query?geometry=" + lng + "," + lat + "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FLD_ZONE,ZONE_SUBTY&f=json";
-      const femaR = await fetch(femaUrl, {signal: AbortSignal.timeout(8000)});
+      const femaR = await reiCorsFetch(femaUrl, 8000);
       const femaJ = await femaR.json();
       if (femaJ.features && femaJ.features.length) flood = femaJ.features[0].attributes.FLD_ZONE + (femaJ.features[0].attributes.ZONE_SUBTY ? " (" + femaJ.features[0].attributes.ZONE_SUBTY + ")" : "");
       else flood = "Zone X (minimal risk) or unmapped area";
-    } catch(e) { flood = "Unavailable right now — FEMA service busy, try again"; }
+    } catch(e) { flood = "Unavailable right now — try again in a moment"; }
 
     let income = "—", homeVal = "—";
     if (stateFips && countyFips) {
       try {
         const acsUrl = "https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B25077_001E&for=county:" + countyFips + "&in=state:" + stateFips;
-        const acsR = await fetch(acsUrl, {signal: AbortSignal.timeout(8000)});
+        const acsR = await reiCorsFetch(acsUrl, 8000);
         const acsJ = await acsR.json();
         if (acsJ && acsJ[1]) { income = "$" + Number(acsJ[1][1]).toLocaleString(); homeVal = "$" + Number(acsJ[1][2]).toLocaleString(); }
       } catch(e) {}
@@ -18407,7 +18422,7 @@ async function reiLookupRun(){
       <div style="margin-top:14px;font-size:.62rem;color:var(--myst-muted)">Sources: U.S. Census Bureau Geocoder &amp; ACS 5-Year Estimates, FEMA National Flood Hazard Layer, FRED (Federal Reserve Economic Data) — free, public, government datasets called directly from this page. Owner name, mortgage balance, phone/email skip trace, foreclosure/probate/tax-delinquent status, and AI lead scoring come from paid providers (RentCast, ATTOM, BatchData, OpenAI, Tracerfy, etc.) — those block direct browser requests and their keys must stay on a server, so connect a Haven Intelligence backend in ⚙ Setup to unlock them.</div>
       <button class="rei-btn" style="margin-top:10px" onclick="reiOpenSettings()">⚙ Connect more data (backend)</button>`;
   } catch(e) {
-    out.innerHTML = `<div class="rei-connect"><div class="big">⚠️</div><h3>Lookup failed</h3><p>The Census geocoding service may be temporarily unavailable. Try again in a moment.</p></div>`;
+    out.innerHTML = `<div class="rei-connect"><div class="big">⚠️</div><h3>Lookup failed</h3><p>Couldn't reach the government data sources right now (both the direct and backup connection failed). Try again in a moment, or check the address is complete.</p></div>`;
   }
 }
 
