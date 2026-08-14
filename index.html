@@ -17774,20 +17774,25 @@ function renderReiMaster(){
 }
 
 function reiShowConnectState(){
+  // Live Listings + Public Records run on the platform's own backend (no per-member
+  // setup — same as the rest of the site). Only the standalone "Leads" feed (distress
+  // records: tax liens, pre-foreclosure, probate, absentee owners) isn't wired to a
+  // real provider yet, so we say that honestly instead of showing a scary global
+  // "NO DATA SOURCE" pill that made the whole tool look disconnected.
   reiMode = "none";
-  document.getElementById("reiStatusPill").className = "rei-pill off";
-  document.getElementById("reiStatusPill").textContent = "NO DATA SOURCE";
+  document.getElementById("reiStatusPill").className = "rei-pill on";
+  document.getElementById("reiStatusPill").textContent = "LIVE DATA · Listings";
   document.getElementById("reiFilterRow").style.display = "none";
   document.getElementById("reiDemoBand").style.display = "none";
   document.getElementById("reiFeedBody").innerHTML = `
     <div class="rei-connect">
-      <div class="big">🔌</div>
-      <h3>Real data only — nothing is connected yet</h3>
-      <p>REI Master shows <b>only real property records</b>. Connect your Haven Intelligence backend
-      (with your licensed data-provider keys) and this feed fills with live leads for any state,
-      county, or city you search. Until then, the feed stays empty on purpose — no fake leads.</p>
-      <button class="rei-btn" onclick="reiOpenSettings()">Connect data source</button>
-      <button class="rei-btn ghost" onclick="reiDemoOn()">Preview with demo data</button>
+      <div class="big">🚧</div>
+      <h3>Distressed-lead feed — coming soon</h3>
+      <p>Live Listings and Public Records are already connected and work automatically for every
+      Pro/Elite member — there's nothing to set up. This Leads tab will fill in the same way,
+      automatically, once tax-lien, pre-foreclosure, probate and absentee-owner data is wired in
+      on our end. No action needed from you — it'll just start working.</p>
+      <button class="rei-btn ghost" onclick="reiDemoOn()">Preview what it'll look like</button>
     </div>`;
 }
 
@@ -18792,30 +18797,21 @@ function reiOpenSettings(){
   const cfg=reiCfg();
   document.getElementById("reiModalCard").innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="font-weight:800;font-size:1.05rem">⚙ REI Master setup</div>
+      <div style="font-weight:800;font-size:1.05rem">⚙ REI Master — data sources</div>
       <button onclick="document.getElementById('reiModal').classList.remove('open')" style="background:none;border:none;color:var(--myst-muted);font-size:1.25rem;cursor:pointer">✕</button></div>
-    <div class="rei-h">DATA SOURCE</div>
-    <div class="rei-field"><label>Haven Intelligence backend URL</label>
-      <input id="reiApiUrl" placeholder="https://api.yourdomain.com" value="${cfg.api||""}"></div>
+    <div class="rei-h">CONNECTED AUTOMATICALLY — NOTHING TO SET UP</div>
+    <div class="rei-reqrow"><b>Live Listings</b><span>Real active listings — pricing, Zestimate, beds/baths, agent contact. Already on for every Pro/Elite member, no setup.</span></div>
+    <div class="rei-reqrow"><b>Public Records</b><span>FEMA flood zone, U.S. Census county income &amp; home values, live mortgage rates. Already on.</span></div>
+    <div class="rei-reqrow"><b>Map</b><span>Leaflet + OpenStreetMap — always on.</span></div>
+    <div class="rei-reqrow"><b>Deal Analyzer</b><span>Formula-based underwriting — works with whatever numbers you enter, no connection needed.</span></div>
+    <div class="rei-h" style="margin-top:22px">COMING SOON</div>
+    <div class="rei-reqrow"><b>Leads feed</b><span>Automated distress leads (tax liens, pre-foreclosure, probate, absentee owners) with skip-traced owner contacts and AI scoring. Will turn on automatically for Pro/Elite members — no setup on your end, ever.</span></div>
+    <div class="rei-h" style="margin-top:22px">OPTIONAL — YOUR OWN KEYS</div>
     <div class="rei-field"><label>Google Maps Platform key (optional — adds Street View photos of each property)</label>
       <input id="reiGKey" placeholder="AIza…" value="${cfg.gkey||""}"></div>
     <div class="rei-field"><label>FRED API key (optional, free — powers the live mortgage rate in Property Lookup)</label>
       <input id="reiFredKey" placeholder="get a free key at fred.stlouisfed.org" value="${cfg.fredKey||""}"></div>
-    <button class="rei-btn" onclick="(function(){const c=reiCfg();c.gkey=document.getElementById('reiGKey').value.trim();c.fredKey=document.getElementById('reiFredKey').value.trim();reiSaveCfg(c);
-      const u=document.getElementById('reiApiUrl').value.trim();
-      if(u){reiTestConnection(u).then(ok=>{if(ok)document.getElementById('reiModal').classList.remove('open')})}
-      else{document.getElementById('reiModal').classList.remove('open')}})()">Save &amp; connect</button>
-    <div class="rei-h" style="margin-top:22px">WORKS RIGHT NOW — NO BACKEND NEEDED</div>
-    <div class="rei-reqrow"><b>Property Lookup tab</b><span>Free live data for any address: FEMA flood zone, U.S. Census county income &amp; home values, FRED mortgage rates. Called directly from this page — try it now under the "Property Lookup" view.</span></div>
-    <div class="rei-reqrow"><b>Map</b><span>Leaflet + OpenStreetMap — free, no key, already on.</span></div>
-    <div class="rei-h" style="margin-top:22px">WHAT MAKES THE LEADS FEED REAL — ADD THESE TO YOUR BACKEND</div>
-    <div style="font-size:.64rem;color:var(--myst-muted);margin-bottom:10px">These providers require a secret key that can't safely live in a page anyone can view-source — and most block requests straight from a browser anyway. Put them behind a small backend (the URL field above) and this whole tab lights up with real leads. From your Haven Intelligence API list:</div>
-    <div class="rei-reqrow"><b>Property data</b><span>RentCast (budget-friendly start) or ATTOM Data / CoreLogic-Cotality — nationwide parcels, owners, sales, AVM values.</span></div>
-    <div class="rei-reqrow"><b>Distress records</b><span>PropertyRadar or DataTree, plus county-direct feeds — Pre-Foreclosure, Notice of Default, Probate, Tax-Delinquent leads.</span></div>
-    <div class="rei-reqrow"><b>Skip tracing</b><span>BatchData or Tracerfy — owner phone numbers &amp; emails with confidence scores, DNC-screened.</span></div>
-    <div class="rei-reqrow"><b>AI scoring &amp; summaries</b><span>OpenAI (or Anthropic) API key — lead scoring, tags, natural-language search, call-playbook generation.</span></div>
-    <div class="rei-reqrow"><b>AI calling</b><span>ElevenLabs Conversational AI agent + Twilio phone number. The backend places the call; the 🤖 button lights up automatically.</span></div>
-    <div style="margin-top:12px;font-size:.64rem;color:var(--myst-muted)">Paid-provider keys live in the backend's .env — never in this page. Until a backend is connected, the Leads feed and Map show only demo or empty states; Property Lookup works either way.</div>`;
+    <button class="rei-btn" onclick="(function(){const c=reiCfg();c.gkey=document.getElementById('reiGKey').value.trim();c.fredKey=document.getElementById('reiFredKey').value.trim();reiSaveCfg(c);document.getElementById('reiModal').classList.remove('open')})()">Save</button>`;
   document.getElementById("reiModal").classList.add("open");
 }
 
