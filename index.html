@@ -18083,7 +18083,11 @@ window.reiConfirmLeadsPull = reiConfirmLeadsPull;
 function reiHandleLeadsError(e){
   const code = (e && e.code) || "";
   const msg = (e && e.message) || "";
-  if (/failed-precondition/.test(code) || /TRACERFY_API_KEY/.test(msg)) {
+  // failed-precondition = deployed but TRACERFY_API_KEY missing; not-found/
+  // internal = the reiLeads* functions haven't been deployed yet at all.
+  // Both mean "not live yet on our end" from the member's point of view —
+  // show the same honest message rather than a raw error code.
+  if (/failed-precondition|not-found|internal/.test(code) || /TRACERFY_API_KEY/.test(msg) || code === "") {
     reiShowConnectState();
     return;
   }
