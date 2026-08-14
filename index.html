@@ -191,6 +191,24 @@
     return res.data;
   };
 
+  // Leads feed (Tracerfy Lead Builder) — pass-through billed per lead. See
+  // functions/index.js reiLeadsPreview/reiLeadsSearch/reiLeadsStrategies.
+  window.callReiLeadsPreview = async (params) => {
+    const fn = httpsCallable(functionsClient, 'reiLeadsPreview');
+    const res = await fn(params);
+    return res.data;
+  };
+  window.callReiLeadsSearch = async (params) => {
+    const fn = httpsCallable(functionsClient, 'reiLeadsSearch');
+    const res = await fn(params);
+    return res.data;
+  };
+  window.callReiLeadsStrategies = async () => {
+    const fn = httpsCallable(functionsClient, 'reiLeadsStrategies');
+    const res = await fn({});
+    return res.data;
+  };
+
   // Store checkout (Stripe) — see functions/index.js createStoreCheckoutSession
   // / storeCheckoutWebhook. Replaces the PayPal JS SDK Buttons flow that used
   // to render in #ordPayBtns; see buyProduct()/renderOrderPay() below.
@@ -9438,11 +9456,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="reiFeed">
       <div class="rei-filterrow" id="reiFilterRow" style="display:none">
         <div class="rei-seg" id="reiSeg">
-          <button class="active" data-strat="" onclick="reiSetStrat(this)">All</button>
-          <button data-strat="wholesale" onclick="reiSetStrat(this)">Wholesale</button>
-          <button data-strat="flip_candidate" onclick="reiSetStrat(this)">Flips</button>
-          <button data-strat="rental_candidate" onclick="reiSetStrat(this)">Rentals</button>
-          <button data-strat="distress" onclick="reiSetStrat(this)">Distressed</button>
+          <button class="active" data-strat="custom" onclick="reiSetStrat(this)">All Distressed</button>
+          <button data-strat="tax_delinquent" onclick="reiSetStrat(this)">Tax Liens</button>
+          <button data-strat="pre_foreclosure_motivated" onclick="reiSetStrat(this)">Pre-Foreclosure</button>
+          <button data-strat="vacant" onclick="reiSetStrat(this)">Vacant</button>
+          <button data-strat="high_equity_absentee" onclick="reiSetStrat(this)">Absentee Owner</button>
+          <button data-strat="probate_inherited" onclick="reiSetStrat(this)">Probate</button>
+          <button data-strat="reo_bank_owned" onclick="reiSetStrat(this)">Bank-Owned</button>
+          <button data-strat="vacant_land" onclick="reiSetStrat(this)">Vacant Land</button>
         </div>
         <select class="rei-select" id="reiSort" onchange="reiRender()">
           <option value="score">AI score</option>
@@ -17971,11 +17992,16 @@ function reiMapLead(l){ /* backend LeadCard → tab shape */
     summary:null, live:true };
 }
 
+/** Real Leads search — Tracerfy Lead Builder, platform-level key, no
+ *  per-member setup. Pass-through billed per lead per David's pricing call:
+ *  this is a two-step flow — free preview (match count + cost) the member
+ *  confirms, then the actual paid pull. See reiConfirmLeadsPull below and
+ *  functions/index.js reiLeadsPreview/reiLeadsSearch. */
 async function reiSearch(){
   const st=document.getElementById("reiState").value,
         county=document.getElementById("reiCountyIn").value.trim(),
         city=document.getElementById("reiCityIn").value.trim();
-  if (reiMode === "none") { reiShowConnectState(); return; }
+
   if (reiMode === "demo") {
     reiLeads = window.REI_DATA.filter(l =>
       (!st || st==="UT") && (!county || l.county.toLowerCase().includes(county.toLowerCase()))
@@ -17983,29 +18009,94 @@ async function reiSearch(){
     reiRender();
     if (document.getElementById("reiMapWrap").style.display!=="none") reiMapRender();
     if (st && st!=="UT") document.getElementById("reiFeedBody").innerHTML =
-      `<div class="rei-connect"><div class="big">🗺️</div><h3>Demo data covers Utah only</h3>
-       <p>The demo preview contains fictional Utah leads. With a live data source connected, this search covers every state, county, and city your providers license.</p></div>`;
+      `<div class="rei-connect"><div class="big">🗺️</div><h3>Demo preview covers Utah only</h3>
+       <p>This is fictional sample data so you can see the layout. Real searches cover every state, county, and city.</p></div>`;
     return;
   }
-  // live
-  const cfg = reiCfg();
-  document.getElementById("reiFeedBody").innerHTML = `<div class="rei-connect"><div class="big">📡</div><h3>Searching live records…</h3></div>`;
+
+  if (!st && !county && !city) {
+    document.getElementById("reiFeedBody").innerHTML =
+      `<div class="rei-connect"><div class="big">📍</div><h3>Pick a location</h3>
+       <p>Choose a state, and optionally narrow to a county or city, then search.</p></div>`;
+    return;
+  }
+  const geography = county ? { mode:"counties", counties:[county], states: st?[st]:[] }
+    : city ? { mode:"city", cities:[city], states: st?[st]:[] }
+    : { mode:"states", states:[st] };
+  const strategy = reiStrat || "custom";
+
+  document.getElementById("reiFilterRow").style.display = "flex";
+  document.getElementById("reiDemoBand").style.display = "none";
+  document.getElementById("reiFeedBody").innerHTML = `<div class="rei-connect"><div class="big">📡</div><h3>Checking match count…</h3></div>`;
   try {
-    const params = new URLSearchParams({limit:"100"});
-    if (county) params.set("county", county);
-    const r = await fetch(cfg.api + "/api/leads?" + params, {signal: AbortSignal.timeout(15000)});
-    let rows = (await r.json()).map(reiMapLead);
-    if (st)   rows = rows.filter(l=>l.state===st);
-    if (city) rows = rows.filter(l=>l.city.toLowerCase().includes(city.toLowerCase()));
-    reiLeads = rows;
+    const preview = await window.callReiLeadsPreview({ strategy, geography, requestedCount: 25 });
+    if (!preview.cappedCount) {
+      document.getElementById("reiFeedBody").innerHTML =
+        `<div class="rei-connect"><div class="big">🔍</div><h3>No matches</h3>
+         <p>Nothing matched this search. Try a different city/county, or a different category.</p></div>`;
+      return;
+    }
+    window._reiPendingSearch = { strategy, geography };
+    document.getElementById("reiFeedBody").innerHTML = `
+      <div class="rei-connect">
+        <div class="big">💰</div>
+        <h3>${preview.matchCount.toLocaleString()} matching propert${preview.matchCount===1?'y':'ies'} found</h3>
+        <p>Pull the top ${preview.cappedCount} with full owner contact info, skip-traced phones/emails (DNC/TCPA-flagged),
+        and instant deal analysis for <b>$${preview.estimatedCostUsd.toFixed(2)}</b>
+        ($${preview.pricePerLeadUsd.toFixed(2)}/lead — you're only charged for what's actually delivered).</p>
+        <button class="rei-btn" onclick="reiConfirmLeadsPull(${preview.cappedCount})">Get These Leads — $${preview.estimatedCostUsd.toFixed(2)}</button>
+      </div>`;
+  } catch(e) {
+    reiHandleLeadsError(e);
+  }
+}
+
+/** The paid step — only fires after the member sees and accepts the cost
+ *  estimate from reiSearch() above. */
+async function reiConfirmLeadsPull(count){
+  const pending = window._reiPendingSearch;
+  if (!pending) return;
+  document.getElementById("reiFeedBody").innerHTML =
+    `<div class="rei-connect"><div class="big">📡</div><h3>Pulling leads &amp; skip-tracing owners…</h3>
+     <p>This can take up to a couple of minutes for larger pulls.</p></div>`;
+  try {
+    const result = await window.callReiLeadsSearch({ strategy: pending.strategy, geography: pending.geography, requestedCount: count });
+    reiMode = "live";
+    reiLeads = result.leads || [];
     reiRender();
     if (document.getElementById("reiMapWrap").style.display!=="none") reiMapRender();
+    if (result.actualCount) {
+      const note = document.createElement("div");
+      note.style.cssText = "font-size:.66rem;color:var(--myst-muted);margin:0 0 10px";
+      note.textContent = `Charged $${result.billedCost.toFixed(2)} for ${result.actualCount} lead${result.actualCount===1?'':'s'} ($${result.pricePerLeadUsd.toFixed(2)}/lead).`;
+      document.getElementById("reiFeedBody").prepend(note);
+    }
   } catch(e) {
-    document.getElementById("reiFeedBody").innerHTML =
-      `<div class="rei-connect"><div class="big">⚠️</div><h3>Backend unreachable</h3>
-       <p>Could not fetch leads. Check that your Haven backend is running and reachable, then try again.</p>
-       <button class="rei-btn" onclick="reiOpenSettings()">Open setup</button></div>`;
+    reiHandleLeadsError(e);
   }
+}
+window.reiConfirmLeadsPull = reiConfirmLeadsPull;
+
+/** Routes a failed Leads call to the right message — "not built yet"
+ *  (backend not configured), "upgrade" (free/basic member), or a generic
+ *  retry — instead of a raw error dump. */
+function reiHandleLeadsError(e){
+  const code = (e && e.code) || "";
+  const msg = (e && e.message) || "";
+  if (/failed-precondition/.test(code) || /TRACERFY_API_KEY/.test(msg)) {
+    reiShowConnectState();
+    return;
+  }
+  if (/permission-denied/.test(code)) {
+    document.getElementById("reiFeedBody").innerHTML =
+      `<div class="rei-connect"><div class="big">🔒</div><h3>Pro/Elite feature</h3>
+       <p>Upgrade to Pro or Elite to search real distressed-property leads.</p>
+       <button class="rei-btn" onclick="showScreen('pricing')">See plans</button></div>`;
+    return;
+  }
+  document.getElementById("reiFeedBody").innerHTML =
+    `<div class="rei-connect"><div class="big">⚠️</div><h3>Search failed</h3>
+     <p>${msg || "Something went wrong. Try again in a moment."}</p></div>`;
 }
 
 /* ── Production Master: Overview vs Create Product tab ── */
@@ -18470,9 +18561,7 @@ async function reiMapShow(){
 function reiMapRender(){
   if (!reiMap || !window.L) return;
   reiMarkers.forEach(m=>m.remove()); reiMarkers=[];
-  const rows = reiLeads.filter(l => (!reiStrat ||
-    (reiStrat==="distress" ? l.tags.some(t=>REI_DISTRESS.includes(t)) : l.tags.includes(reiStrat)))
-    && l.lat!=null && l.lng!=null);
+  const rows = reiLeads.filter(l => l.lat!=null && l.lng!=null);
   const toneColor={gain:"#10b981",risk:"#ef4444",warn:"#f59e0b",cool:"#2E7BFF"};
   rows.forEach(l=>{
     const kind=reiKindOf(l), c=toneColor[kind[2]]||"#2E7BFF", f=l.fin;
@@ -18507,17 +18596,19 @@ function reiPhotoTag(l){
 }
 function reiSetStrat(el){
   document.querySelectorAll("#reiSeg button").forEach(b=>b.classList.remove("active"));
-  el.classList.add("active"); reiStrat=el.getAttribute("data-strat"); reiRender();
-  if (document.getElementById("reiMapWrap").style.display!=="none") reiMapRender();
+  el.classList.add("active"); reiStrat=el.getAttribute("data-strat");
+  // Real leads are pulled server-side already scoped to a strategy (cost
+  // control — no point paying to pull every category then throw most away),
+  // so switching category re-runs the search. Demo mode just re-renders the
+  // fixed local sample set.
+  if (reiMode==="demo") { reiRender(); if (document.getElementById("reiMapWrap").style.display!=="none") reiMapRender(); }
+  else if (reiMode==="live") { reiSearch(); }
 }
-
-const REI_DISTRESS = ["pre_foreclosure","notice_of_default","tax_delinquent","probate","bankruptcy","code_violations","vacant"];
 
 function reiRender(){
   if (reiMode==="none") return;
   const sort=document.getElementById("reiSort").value;
-  let rows = reiLeads.filter(l => !reiStrat ||
-    (reiStrat==="distress" ? l.tags.some(t=>REI_DISTRESS.includes(t)) : l.tags.includes(reiStrat)));
+  let rows = reiLeads.slice();
   const key={score:l=>l.score||0,equity:l=>l.fin.estimated_equity||0,
     flip:l=>l.fin.expected_flip_profit_low||0,wholesale:l=>l.fin.expected_wholesale_profit_high||0}[sort];
   rows.sort((a,b)=>key(b)-key(a));
