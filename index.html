@@ -6342,6 +6342,44 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
     animation: none;
   }
 }
+
+/* -- Master Tool icons — distinct green/black glimmer, on the nav icons for
+      every Master Tool plus each Master screen's own title icon -- */
+@keyframes mm-icon-glimmer-master{
+  0%,100%{ background-position: 200% center; }
+  50%{ background-position: -200% center; }
+}
+.nav-item.master-tool-item .nav-item-icon i,
+#screen-mystoremaster .screen-title i,
+#screen-reimaster .rei-title i,
+#screen-marketingmaster .screen-title i,
+#screen-marketsmaster .screen-title i,
+#screen-administrativemaster .screen-title i,
+#screen-productionmaster .screen-title i,
+#screen-creativemaster .screen-title i,
+#screen-crmmaster .screen-title i,
+#screen-geniemaster .screen-title i{
+  background-image: linear-gradient(110deg, #04150a 0%, #16a34a 28%, #bbf7d0 50%, #16a34a 72%, #04150a 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: mm-icon-glimmer-master 3.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(22,163,74,.65));
+}
+.nav-item.master-tool-item:nth-child(3n) .nav-item-icon i{ animation-delay: .4s }
+.nav-item.master-tool-item:nth-child(3n+1) .nav-item-icon i{ animation-delay: .9s }
+.nav-item.master-tool-item:nth-child(3n+2) .nav-item-icon i{ animation-delay: 1.7s }
+@media (prefers-reduced-motion: reduce){
+  .nav-item.master-tool-item .nav-item-icon i,
+  #screen-mystoremaster .screen-title i,#screen-reimaster .rei-title i,
+  #screen-marketingmaster .screen-title i,#screen-marketsmaster .screen-title i,
+  #screen-administrativemaster .screen-title i,#screen-productionmaster .screen-title i,
+  #screen-creativemaster .screen-title i,#screen-crmmaster .screen-title i,
+  #screen-geniemaster .screen-title i{
+    animation: none;
+  }
+}
 </style>
 
 </head>
@@ -7734,7 +7772,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- MARKETING MASTER -->
     <div class="screen" id="screen-marketingmaster" data-sbg="marketingmaster">
-      <div class="screen-title">🚀 <span>Marketing Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-rocket"></i> <span>Marketing Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
       <div class="mk-grid" style="margin-bottom:18px">
         <div class="mk-card">
@@ -7772,7 +7810,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- MARKETS MASTER (Elite Tools live here for now) -->
     <div class="screen" id="screen-marketsmaster" data-sbg="marketsmaster">
-      <div class="screen-title">📈 <span>Markets Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-chart-line"></i> <span>Markets Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
@@ -7954,7 +7992,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ADMINISTRATIVE MASTER (Business + Financial — Pros Hub's CRM lives inside -->
     <!-- Creative Master now, see screen-creativemaster's CRM tab) -->
     <div class="screen" id="screen-administrativemaster" data-sbg="administrativemaster">
-      <div class="screen-title">🏛️ <span>Administrative Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-landmark"></i> <span>Administrative Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
       <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations and bookkeeping & financial coaching, combined under a single Administrative Master.</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
@@ -7974,7 +8012,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- PRODUCTION MASTER (service page — clients request, fulfillment is manual for now; -->
     <!-- automated domain registration + website generation is a future phase, see chat) -->
     <div class="screen" id="screen-productionmaster" data-sbg="productionmaster">
-      <div class="screen-title">🏭 <span>Production Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-industry"></i> <span>Production Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
@@ -8098,7 +8136,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- CREATIVE MASTER — AI Video (SkyReels) + CRM, pass-through billed, openart.ai-styled studio -->
     <div class="screen" id="screen-creativemaster" data-sbg="creativemaster">
-      <div class="screen-title">🎬 <span>Creative Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-clapperboard"></i> <span>Creative Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="cm-tabs">
@@ -8160,7 +8198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <div class="screen" id="screen-crmmaster" data-sbg="crmmaster">
-      <div class="screen-title">🧰 <span>CRM Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-toolbox"></i> <span>CRM Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
         <div class="fm-demo-banner">
@@ -8490,7 +8528,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- GENIE AGENT MASTER (buy page — always open, no plan gate) -->
     <div class="screen" id="screen-geniemaster" data-sbg="geniemaster">
-      <div class="screen-title">🧞 Genie Agent <span>Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Genie Agent <span>Master</span></div>
       <div class="comp-note" style="margin-bottom:20px">Your own AI agent, billed monthly plus actual usage. Pick a tier below — checkout opens in a new tab, then brings you back here to tell us about your business.</div>
       <div id="mmToggle_genie"></div>
       <div class="mk-grid">
@@ -9163,7 +9201,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- ══════════════════ MY STORE MASTER (Create Product + My Store + Marketplace) ══════════════════ -->
     <div class="screen" id="screen-mystoremaster" data-sbg="mystore">
-      <div class="screen-title">🏬 My Store <span>Master</span></div>
+      <div class="screen-title"><i class="fa-solid fa-store"></i> My Store <span>Master</span></div>
       <div class="rei-view-bar" style="margin-bottom:16px">
         <button class="rei-view active" id="msmVStore" onclick="msmSwitch('store')">🛍️ My Store</button>
         <button class="rei-view" id="msmVStudio" onclick="msmSwitch('studio')">🎨 Create Product <span class="pro-tag" style="background:#a855f7;color:#fff;margin-left:4px">ELITE</span></button>
@@ -9283,11 +9321,11 @@ document.addEventListener('DOMContentLoaded', function() {
       <!-- ── PUSH ACTIONS BAR ──────────────────────────────────────────── -->
       <div class="myst-push-bar">
         <div class="myst-push-left">
-          <button class="myst-shopify-btn" onclick="mystShopifyPush()">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            Push to Shopify
+          <button class="myst-shopify-btn" onclick="mystExportShopifyCsv()">
+            <i class="fa-solid fa-file-export"></i>
+            Export to Shopify
           </button>
-          <span class="myst-push-note">Affiliate link auto-embedded on all products</span>
+          <span class="myst-push-note">Downloads a Shopify-ready product CSV — import it under Shopify Admin → Products → Import. Affiliate link embedded in every description.</span>
         </div>
         <div class="myst-social-strip">
           <span class="myst-social-label">Share to:</span>
@@ -9378,10 +9416,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
           <!-- Shopify -->
           <div class="myst-dg">
-            <label class="myst-dl">Shopify Store URL</label>
-            <input id="mystShopifyUrl" class="myst-di" placeholder="your-store.myshopify.com">
-            <button class="myst-shopify-btn" style="margin-top:10px;width:100%" onclick="mystShopifyPush()">Push All Products to Shopify</button>
-            <p class="myst-hint">Your affiliate link will be embedded automatically in every product listing.</p>
+            <label class="myst-dl">Export to Shopify</label>
+            <button class="myst-shopify-btn" style="margin-top:6px;width:100%" onclick="mystExportShopifyCsv()"><i class="fa-solid fa-file-export"></i> Export All Products (CSV)</button>
+            <p class="myst-hint">Downloads a Shopify-ready CSV of every product in your store. Upload it under Shopify Admin → Products → Import. Your affiliate link is embedded automatically in every product description.</p>
           </div>
 
           <!-- Commission Info -->
@@ -9786,7 +9823,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- Header -->
   <div class="rei-top">
-    <div class="rei-title">🏘️ <span>REI Master</span></div>
+    <div class="rei-title"><i class="fa-solid fa-city"></i> <span>REI Master</span></div>
     <span class="rei-pill off" id="reiStatusPill">NO DATA SOURCE</span>
     <button class="rei-demo-btn" onclick="reiDemoOn()" title="See what REI Master looks like once a data source is connected">▶ View Demo</button>
     <button class="rei-gear" onclick="reiOpenSettings()">⚙ Setup</button>
@@ -16296,21 +16333,62 @@ function mystColorIsDark(hex) {
   return (0.299*r + 0.587*g + 0.114*b) < 128;
 }
 
-// ── Shopify Push ──
-function mystShopifyPush() {
-  var url = (document.getElementById('mystShopifyUrl') || {}).value || '';
+// ── Export to Shopify (real, working) ──────────────────────────────────
+// Generates a standard Shopify product-import CSV (the format Shopify's own
+// Admin → Products → Import expects) from every product currently in this
+// member's store, and downloads it — entirely client-side, no API keys or
+// OAuth needed. This replaces the old "Push to Shopify" button, which only
+// showed a fake "syncing" toast and never actually sent anything anywhere.
+function mystExportShopifyCsv() {
   var s = storeState();
-  var affLink = (window.SITE_BASE || 'https://moneymasteries.com') + '/?store=' + (s.slug || 'your-store');
-  if (!url) {
-    if (typeof showNotifToast === 'function') showNotifToast('🛒 Shopify Setup', 'Enter your Shopify URL in the Customize panel first. Your affiliate link will be auto-embedded: ' + affLink);
-    mystOpenSettings();
-    setTimeout(function(){ var el = document.getElementById('mystShopifyUrl'); if(el) el.focus(); }, 400);
+  var items = mystGetAllItems(); // export ALL products, not just ones currently enabled in this store
+  if (!items.length) {
+    if (typeof showNotifToast === 'function') showNotifToast('🛍️ No products yet', 'Add products to your store first, then export them to Shopify.');
     return;
   }
-  if (typeof showNotifToast === 'function') showNotifToast('🛒 Pushing to Shopify…', 'Syncing ' + mystGetAllItems().filter(function(it){ return s.items[it.id] !== false; }).length + ' products to ' + url + ' with your affiliate link embedded.');
-  // Persist the URL
-  storeState().shopifyUrl = url;
+  var affLink = (window.SITE_BASE || 'https://moneymasteries.com') + '/?store=' + (s.slug || 'your-store');
+  function csvEsc(v) {
+    v = (v === null || v === undefined) ? '' : String(v);
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  function slugify(name, id) {
+    var base = (name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '');
+    var idPart = String(id || '').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 8);
+    return (base || 'product') + (idPart ? '-' + idPart : '');
+  }
+  var headers = ['Handle', 'Title', 'Body (HTML)', 'Vendor', 'Type', 'Tags', 'Published',
+    'Option1 Name', 'Option1 Value', 'Variant SKU', 'Variant Grams', 'Variant Inventory Tracker',
+    'Variant Inventory Qty', 'Variant Inventory Policy', 'Variant Fulfillment Service',
+    'Variant Price', 'Variant Requires Shipping', 'Variant Taxable', 'Image Src', 'Image Position', 'Status'];
+  var rows = [headers.join(',')];
+  items.forEach(function(it) {
+    var handle = slugify(it.name, it.id);
+    var bodyHtml = (it.desc || '') + '<p><em>Sold via ' + (s.name || 'my store') + ' on Money Masteries — ' + affLink + '</em></p>';
+    var requiresShipping = it.cat === 'physical' ? 'TRUE' : 'FALSE';
+    var row = [
+      handle, it.name || 'Product', bodyHtml, s.name || 'Money Masteries', it.cat || 'digital',
+      it.cat || '', 'TRUE', 'Title', 'Default Title', String(it.id || ''),
+      '0', '', '0', 'continue', 'manual',
+      (Number(it.price) || 0).toFixed(2), requiresShipping, 'TRUE',
+      it.image || '', it.image ? '1' : '', 'active'
+    ].map(csvEsc);
+    rows.push(row.join(','));
+  });
+  var csv = rows.join('\r\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (s.slug || 'my-store') + '-shopify-products.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
+  if (typeof showNotifToast === 'function') {
+    showNotifToast('📤 Shopify CSV downloaded', 'Exported ' + items.length + ' product' + (items.length === 1 ? '' : 's') + '. In Shopify: Products → Import → upload this file. Your affiliate link is embedded in every product description.');
+  }
 }
+window.mystExportShopifyCsv = mystExportShopifyCsv;
 
 // ── Social Sharing ──
 function mystSocialShare(platform) {
