@@ -6312,6 +6312,36 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   }
 }
+
+/* -- Icon glimmer — a soft shine sweep across every icon glyph, staggered
+      so the whole page doesn't flash in unison -- */
+@keyframes mm-icon-glimmer{
+  0%,100%{ background-position: 200% center; }
+  50%{ background-position: -200% center; }
+}
+.nav-item-icon i,.qa-icon i,.feat-icon i,.dash-section-label i,.goal-card-title i,
+.aff-card-title i,.empty-state-icon i,.dash-tab i,.share-btn i,.mm-ind-icon i,.cm-tab i{
+  background-image: linear-gradient(110deg, currentColor 35%, #fff 50%, currentColor 65%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: mm-icon-glimmer 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.qa-icon i{ animation-delay: .3s }
+.feat-icon i{ animation-delay: .6s }
+.dash-section-label i{ animation-delay: .9s }
+.goal-card-title i,.aff-card-title i{ animation-delay: 1.2s }
+.nav-item:nth-child(3n) .nav-item-icon i{ animation-delay: .4s }
+.nav-item:nth-child(3n+1) .nav-item-icon i{ animation-delay: .8s }
+.nav-item:nth-child(3n+2) .nav-item-icon i{ animation-delay: 1.6s }
+@media (prefers-reduced-motion: reduce){
+  .nav-item-icon i,.qa-icon i,.feat-icon i,.dash-section-label i,.goal-card-title i,
+  .aff-card-title i,.empty-state-icon i,.dash-tab i,.share-btn i,.mm-ind-icon i,.cm-tab i{
+    animation: none;
+  }
+}
 </style>
 
 </head>
