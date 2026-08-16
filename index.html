@@ -6354,11 +6354,10 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 #screen-reimaster .rei-title i,
 #screen-marketingmaster .screen-title i,
 #screen-marketsmaster .screen-title i,
-#screen-administrativemaster .screen-title i,
-#screen-productionmaster .screen-title i,
 #screen-creativemaster .screen-title i,
 #screen-crmmaster .screen-title i,
-#screen-geniemaster .screen-title i{
+#screen-universitymaster .screen-title i,
+#screen-communitymaster .screen-title i{
   background-image: linear-gradient(110deg, #04150a 0%, #16a34a 28%, #bbf7d0 50%, #16a34a 72%, #04150a 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
@@ -6374,11 +6373,29 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
   .nav-item.master-tool-item .nav-item-icon i,
   #screen-mystoremaster .screen-title i,#screen-reimaster .rei-title i,
   #screen-marketingmaster .screen-title i,#screen-marketsmaster .screen-title i,
-  #screen-administrativemaster .screen-title i,#screen-productionmaster .screen-title i,
   #screen-creativemaster .screen-title i,#screen-crmmaster .screen-title i,
-  #screen-geniemaster .screen-title i{
+  #screen-universitymaster .screen-title i,#screen-communitymaster .screen-title i{
     animation: none;
   }
+}
+
+/* Genie Agent Master — distinct blue/gold/pink shine, takes priority over the green Master glimmer via #id specificity */
+@keyframes mm-icon-glimmer-genie{
+  0%,100%{ background-position: 200% center; }
+  50%{ background-position: -200% center; }
+}
+#nav-geniemaster .nav-item-icon i,
+#screen-geniemaster .screen-title i{
+  background-image: linear-gradient(110deg, #2E7BFF 0%, #ffd700 25%, #ec4899 50%, #ffd700 75%, #2E7BFF 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: mm-icon-glimmer-genie 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(236,72,153,.55));
+}
+@media (prefers-reduced-motion: reduce){
+  #nav-geniemaster .nav-item-icon i,#screen-geniemaster .screen-title i{ animation: none; }
 }
 </style>
 
@@ -6941,26 +6958,21 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <div class="sidebar-section-label">Main</div>
     <div class="nav-item active" onclick="showScreen('dashboard')" id="nav-dashboard"><span class="nav-item-icon"><i class="fa-solid fa-house"></i></span> Dashboard</div>
-    <div class="nav-item" onclick="showScreen('courses')" id="nav-courses"><span class="nav-item-icon"><i class="fa-solid fa-book-open"></i></span> My Courses</div>
-    <div class="nav-item" onclick="showScreen('aicoach')" id="nav-aicoach" style="display:none"><span class="nav-item-icon"><i class="fa-solid fa-robot"></i></span> AI Coach <span class="pro-tag">PRO</span></div>
+    <div class="nav-item" onclick="showScreen('aicoach')" id="nav-aicoach"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> ASK GENIE</div>
     <div class="sidebar-section-label">Plans</div>
     <div class="nav-item" onclick="showScreen('plans')" id="nav-plans"><span class="nav-item-icon"><i class="fa-solid fa-credit-card"></i></span> Plans &amp; Pricing</div>
     <div class="sidebar-section-label">Money</div>
     <div class="nav-item" onclick="showScreen('commissions')" id="nav-commissions"><span class="nav-item-icon"><i class="fa-solid fa-building-columns"></i></span> Payouts/Bank</div>
-    <div class="nav-item" onclick="showScreen('dividends')" id="nav-dividends" style="display:none"><span class="nav-item-icon"><i class="fa-solid fa-gem"></i></span> Elite Dividends</div>
-    <div class="nav-item" onclick="showScreen('revalidation')" id="nav-revalidation"><span class="nav-item-icon"><i class="fa-solid fa-graduation-cap"></i></span> Revalidation Service</div>
     <div class="sidebar-section-label">Master Tools</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('geniemaster')" id="nav-geniemaster"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Genie Agent Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('mystoremaster')" id="nav-mystoremaster"><span class="nav-item-icon"><i class="fa-solid fa-store"></i></span> My Store Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon"><i class="fa-solid fa-city"></i></span> REI Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon"><i class="fa-solid fa-rocket"></i></span> Marketing Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon"><i class="fa-solid fa-chart-line"></i></span> Markets Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('administrativemaster')" id="nav-administrativemaster"><span class="nav-item-icon"><i class="fa-solid fa-landmark"></i></span> Administrative Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('productionmaster')" id="nav-productionmaster"><span class="nav-item-icon"><i class="fa-solid fa-industry"></i></span> Production Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('creativemaster')" id="nav-creativemaster"><span class="nav-item-icon"><i class="fa-solid fa-clapperboard"></i></span> Creative Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('crmmaster')" id="nav-crmmaster"><span class="nav-item-icon"><i class="fa-solid fa-toolbox"></i></span> CRM Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('geniemaster')" id="nav-geniemaster"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Genie Agent Master</div>
-    <div class="sidebar-section-label">Community</div>
-    <div class="nav-item" onclick="showScreen('community')" id="nav-community"><span class="nav-item-icon"><i class="fa-solid fa-comments"></i></span> Community</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('universitymaster')" id="nav-universitymaster"><span class="nav-item-icon"><i class="fa-solid fa-graduation-cap"></i></span> University Master</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('communitymaster')" id="nav-communitymaster"><span class="nav-item-icon"><i class="fa-solid fa-comments"></i></span> Community Master</div>
     <div class="sidebar-section-label" id="adminSectionLabel" style="display:none">Master</div>
     <div class="nav-item admin-item" onclick="showScreen('admin')" id="nav-admin" style="display:none"><span class="nav-item-icon"><i class="fa-solid fa-crown"></i></span> Master Portal</div>
   </aside>
@@ -7020,9 +7032,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="dash-section-label"><i class="fa-solid fa-bolt"></i> Quick Actions</div>
       <div class="quick-actions">
         <div class="qa-tile" onclick="openShareModal()"><div class="qa-icon"><i class="fa-solid fa-share-nodes"></i></div><div class="qa-label">Share My Link</div></div>
-        <div class="qa-tile" onclick="showScreen('courses')"><div class="qa-icon"><i class="fa-solid fa-book-open"></i></div><div class="qa-label">Continue Learning</div></div>
+        <div class="qa-tile" onclick="showScreen('universitymaster')"><div class="qa-icon"><i class="fa-solid fa-book-open"></i></div><div class="qa-label">Continue Learning</div></div>
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-diagram-project"></i></div><div class="qa-label">My Network</div></div>
-        <div class="qa-tile" onclick="showScreen('community')"><div class="qa-icon"><i class="fa-solid fa-video"></i></div><div class="qa-label">Live Events</div></div>
+        <div class="qa-tile" onclick="showScreen('communitymaster')"><div class="qa-icon"><i class="fa-solid fa-video"></i></div><div class="qa-label">Live Events</div></div>
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="qa-label">My Earnings</div></div>
       </div>
 
@@ -7040,7 +7052,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="next-action-title" id="nextActionTitle">Start Your First Learning Path</div>
         <div class="next-action-desc" id="nextActionDesc">You haven't started a course yet. Pick a path — Day Trading, Real Estate, or E-Commerce — and Dr. Gainz will guide you through every step.</div>
-        <button class="next-action-btn" onclick="showScreen('courses')" id="nextActionBtn">Go to Courses →</button>
+        <button class="next-action-btn" onclick="showScreen('universitymaster')" id="nextActionBtn">Go to Courses →</button>
       </div>
 
       <!-- AFFILIATE LINK -->
@@ -7142,10 +7154,18 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
 
-    <!-- COURSES -->
-    <div class="screen" id="screen-courses" data-sbg="courses">
-      <div class="screen-title">📚 My <span>Courses</span></div>
-      <div class="course-grid">
+    <!-- UNIVERSITY MASTER — Courses + Revalidation Service + Impact Webapp -->
+    <div class="screen" id="screen-universitymaster" data-sbg="courses">
+      <div class="screen-title"><i class="fa-solid fa-graduation-cap"></i> <span>University Master</span></div>
+
+      <div class="cm-tabs">
+        <button class="cm-tab active" id="umVCourses" onclick="umViewSwitch('courses')">📚 Courses</button>
+        <button class="cm-tab" id="umVRevalidation" onclick="umViewSwitch('revalidation')">🎓 Revalidation</button>
+        <button class="cm-tab" id="umVImpact" onclick="mmOpenExternalLink(this,'impact')">🌐 Impact Webapp</button>
+      </div>
+
+      <div id="umCoursesTab">
+        <div class="course-grid">
         <div class="course-card featured-course" onclick="openCourse('affiliate')" style="grid-column:1/-1">
           <span class="fc-badge">⭐ START HERE — YOUR MAIN INCOME PATH</span>
           <div class="course-card-icon">💸</div>
@@ -7194,6 +7214,63 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="course-card-title">Airbnb / STR</div>
           <div class="course-card-sub">Coming soon</div>
         </div>
+      </div>
+      </div>
+
+      <div id="umRevalidationTab" style="display:none">
+        <div class="reval-card">
+        <div class="reval-title">🎓 Foreign Education &amp; School Credit Revalidation</div>
+        <div class="reval-desc">
+          This is a paid membership service — $50/month (Standard) or $100/month (Premium) — that revalidates a
+          person's foreign education or school credits for use in the United States. It evaluates their existing
+          academic credentials against U.S. equivalency standards.
+        </div>
+        <div class="reval-disclaimer">
+          <b>Important:</b> This service only revalidates/evaluates foreign educational credentials for U.S.
+          equivalency. It does <b>not</b> guarantee a job, and it does <b>not</b> provide or guarantee any kind
+          of work visa or immigration status. Share this honestly with every client.
+        </div>
+
+        <div class="reval-tiers">
+          <label class="reval-tier-opt" id="revalTierStdWrap">
+            <input type="radio" name="revalTier" value="standard" checked onchange="revalSetTier('standard')">
+            <div class="reval-tier-name">Standard</div>
+            <div class="reval-tier-price">$50<span>/mo</span></div>
+          </label>
+          <label class="reval-tier-opt" id="revalTierPremWrap">
+            <input type="radio" name="revalTier" value="premium" onchange="revalSetTier('premium')">
+            <div class="reval-tier-name">Premium</div>
+            <div class="reval-tier-price">$100<span>/mo</span></div>
+          </label>
+        </div>
+
+        <div class="reval-link-box">
+          <div class="reval-link-label">Your Revalidation Link — share this with clients</div>
+          <div class="reval-link-row">
+            <input class="reval-link-input" id="revalLinkText" readonly>
+            <button class="copy-btn" id="revalCopyBtn" onclick="copyRevalLink()">Copy</button>
+          </div>
+        </div>
+
+        <div class="reval-qr-row">
+          <img id="revalQrImg" class="reval-qr-img" alt="QR code for your revalidation link">
+          <div>
+            <div class="reval-qr-label">Scan &amp; Share QR Code</div>
+            <div class="reval-qr-sub">Print it, post it, or text a screenshot — scanning it opens your revalidation link directly.</div>
+            <a id="revalQrDownload" class="reval-qr-dl" download="my-revalidation-qr.png" target="_blank">⬇ Download QR Code</a>
+          </div>
+        </div>
+
+        <div class="myst-hint" id="revalCommissionNote" style="margin-top:16px;font-size:.78rem;color:#9ca3af">
+          Your commission on every Revalidation payment is based on your membership plan — see the Master Portal
+          or your Compensation Plan for current rates.
+        </div>
+      </div>
+
+      <div class="myst-hint" style="margin-top:14px;text-align:center">
+        Want to see everyone who's signed up through your link, with their contact info? Check
+        <a onclick="showScreen('account')" style="color:#2E7BFF;cursor:pointer">My Account → CRM</a>.
+      </div>
       </div>
     </div>
 
@@ -7247,6 +7324,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="bank-tabs">
         <div class="bank-tab active" id="btab-bank" onclick="switchBankTab('bank')">🏦 Bank</div>
         <div class="bank-tab" id="btab-compensation" onclick="switchBankTab('compensation')">📈 Compensation Plan</div>
+        <div class="bank-tab" id="btab-dividends" onclick="switchBankTab('dividends')" style="display:none">💎 Elite Dividends</div>
       </div>
 
       <div class="bank-panel active" id="bpanel-bank">
@@ -7548,11 +7626,10 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       </div><!-- /bpanel-compensation -->
-    </div><!-- /screen-commissions -->
 
-    <!-- ELITE DIVIDENDS (Elite-only revenue-sharing program) -->
-    <div class="screen" id="screen-dividends" data-sbg="dividends">
-      <div class="screen-title">💎 <span>Elite Dividends</span></div>
+      <!-- ELITE DIVIDENDS — moved inside Payouts/Bank, Elite-only tab -->
+      <div class="bank-panel" id="bpanel-dividends">
+      <div class="screen-title" style="font-size:1.1rem">💎 <span>Elite Dividends</span></div>
 
       <div class="fm-demo-banner">
         <div class="fm-demo-icon">🧪</div>
@@ -7590,11 +7667,19 @@ document.addEventListener('DOMContentLoaded', function() {
           <tbody id="divHistoryBody"></tbody>
         </table></div>
       </div>
-    </div>
+      </div><!-- /bpanel-dividends -->
+    </div><!-- /screen-commissions -->
 
     <!-- COMMUNITY -->
-    <div class="screen" id="screen-community" data-sbg="community">
-      <div class="screen-title">💬 <span>Community</span></div>
+    <div class="screen" id="screen-communitymaster" data-sbg="community">
+      <div class="screen-title"><i class="fa-solid fa-comments"></i> <span>Community Master</span></div>
+
+      <div class="cm-tabs">
+        <button class="cm-tab active" id="cmtyVFeed" onclick="cmtyViewSwitch('feed')">💬 Live Feed</button>
+        <button class="cm-tab" id="cmtyVBizbuzz" onclick="mmOpenExternalLink(this,'bizbuzz')">📱 BizBuzz</button>
+      </div>
+
+      <div id="cmtyFeedTab">
       <div class="comp-note" style="margin-bottom:16px"><b>Post a win, ask a question, cheer someone on.</b> This is your team — the more everyone wins, the more everyone earns.</div>
       <div class="comm-composer">
         <textarea id="commInput" class="comm-input" rows="2" maxlength="400" placeholder="Share a win or ask the community anything..."></textarea>
@@ -7766,7 +7851,8 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       </div>
-    </div>
+      </div><!-- /cmtyFeedTab -->
+    </div><!-- /screen-communitymaster -->
 
     <!-- MARKETPLACE -->
 
@@ -7989,33 +8075,69 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
 
-    <!-- ADMINISTRATIVE MASTER (Business + Financial — Pros Hub's CRM lives inside -->
-    <!-- Creative Master now, see screen-creativemaster's CRM tab) -->
-    <div class="screen" id="screen-administrativemaster" data-sbg="administrativemaster">
-      <div class="screen-title"><i class="fa-solid fa-landmark"></i> <span>Administrative Master</span></div>
+    <!-- CREATIVE MASTER — AI Video (SkyReels) + Production, pass-through billed, openart.ai-styled studio -->
+    <div class="screen" id="screen-creativemaster" data-sbg="creativemaster">
+      <div class="screen-title"><i class="fa-solid fa-clapperboard"></i> <span>Creative Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
-      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations and bookkeeping & financial coaching, combined under a single Administrative Master.</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
-        <div class="mk-card" onclick="showScreen('businessmaster')" style="cursor:pointer">
-          <div style="font-size:2rem">🏢</div>
-          <div class="mk-card-title">Business Tools</div>
-          <div class="mpm-sub">Your AI-run back office — operations, planning, and business tools.</div>
+
+      <div class="cm-tabs">
+        <button class="cm-tab active" id="cmVAiVideo" onclick="cmViewSwitch('aivideo')">🎬 AI Video</button>
+        <button class="cm-tab" id="cmVLibrary" onclick="cmViewSwitch('library')">📼 My Videos</button>
+        <button class="cm-tab" id="cmVProduction" onclick="cmViewSwitch('production')">🏭 Production</button>
         </div>
-        <div class="mk-card" onclick="showScreen('financialmaster')" style="cursor:pointer">
-          <div style="font-size:2rem">💰</div>
-          <div class="mk-card-title">Financial Tools</div>
-          <div class="mpm-sub">Bookkeeping, financial coaching, and money-management tools.</div>
+
+      <div id="cmAiVideoTab">
+        <div class="cm-panel">
+          <div class="po-title">🎬 Describe the video you want</div>
+          <div class="po-sub">Text-to-video by default — attach an image below to animate it instead (image-to-video). Real credits apply per video generated.</div>
+          <div style="margin-top:10px">
+            <textarea class="ai-chat-input" id="cmVideoPrompt" maxlength="500" rows="3" style="width:100%;resize:vertical" placeholder="e.g. A drone shot flying over a modern suburban neighborhood at golden hour, cinematic, smooth camera movement"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:#a3a3b8">Duration
+              <select class="ai-chat-input" id="cmVideoDuration" style="width:auto">
+                <option value="5">5 seconds</option>
+                <option value="10">10 seconds</option>
+              </select>
+            </label>
+            <label class="admin-save-btn" style="background:rgba(255,255,255,.08);cursor:pointer" for="cmVideoImageInput">🖼️ Attach image (optional)</label>
+            <input type="file" id="cmVideoImageInput" accept="image/*" style="display:none" onchange="cmOnImageSelected(event)">
+            <span id="cmVideoImageName" style="font-size:.8rem;color:#a3a3b8"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">
+            <div style="font-size:.85rem;color:#a3a3b8" id="cmVideoEstCost">Estimated cost: —</div>
+            <button class="admin-save-btn cm-gen-btn" id="cmVideoGenBtn" onclick="cmGenerateVideo()">✨ Generate Video</button>
+          </div>
+        </div>
+
+        <div id="cmVideoStatus" style="display:none;margin-top:16px" class="fm-demo-banner">
+          <div class="fm-demo-icon">⏳</div>
+          <div id="cmVideoStatusText">Generating your video — this can take a couple of minutes...</div>
+        </div>
+
+        <div id="cmVideoResultWrap" style="display:none;margin-top:16px">
+          <div class="cm-gallery-card" style="padding:14px">
+            <div class="mk-card-title">🎞️ Your Video</div>
+            <video id="cmVideoResultPlayer" controls style="width:100%;border-radius:10px;margin-top:8px;background:#000;aspect-ratio:auto"></video>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <a id="cmVideoDownloadLink" class="admin-save-btn" style="text-decoration:none;background:rgba(255,255,255,.08)" href="#" download>⬇️ Download</a>
+              <button class="admin-save-btn cm-gen-btn" onclick="showScreen('marketingmaster'); if(typeof showNotifToast==='function')showNotifToast('🚀 Ready to publish','Head to Marketing Master to post this wherever you\'d like.')">🚀 Send to Marketing Master</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PRODUCTION MASTER (service page — clients request, fulfillment is manual for now; -->
-    <!-- automated domain registration + website generation is a future phase, see chat) -->
-    <div class="screen" id="screen-productionmaster" data-sbg="productionmaster">
-      <div class="screen-title"><i class="fa-solid fa-industry"></i> <span>Production Master</span></div>
-      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
+      <div id="cmLibraryTab" style="display:none">
+        <div id="cmLibraryEmpty" class="cm-empty">
+          <div class="big">📼</div>
+          <div class="mk-card-title">No videos yet</div>
+          <div class="mpm-sub">Videos you generate will be saved here automatically.</div>
+        </div>
+        <div id="cmLibraryGrid" class="cm-gallery" style="display:none"></div>
+      </div>
 
-      <div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
+      <div id="cmProductionTab" style="display:none">
+<div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
         <button class="rei-view active" id="prodVOverview" onclick="prodViewSwitch('overview')">🏭 Overview</button>
         <button class="rei-view" id="prodVVideo" onclick="prodViewSwitch('video')">🎬 Video &amp; Ads <span class="pro-tag" style="background:#f59e0b;color:#fff;margin-left:4px">DEMO</span></button>
         <button class="rei-view" id="prodVSoftware" onclick="prodViewSwitch('software')">💻 Create Software <span class="pro-tag" style="background:#f59e0b;color:#fff;margin-left:4px">DEMO</span></button>
@@ -8132,74 +8254,19 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- CREATIVE MASTER — AI Video (SkyReels) + CRM, pass-through billed, openart.ai-styled studio -->
-    <div class="screen" id="screen-creativemaster" data-sbg="creativemaster">
-      <div class="screen-title"><i class="fa-solid fa-clapperboard"></i> <span>Creative Master</span></div>
-      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
-
-      <div class="cm-tabs">
-        <button class="cm-tab active" id="cmVAiVideo" onclick="cmViewSwitch('aivideo')">🎬 AI Video</button>
-        <button class="cm-tab" id="cmVLibrary" onclick="cmViewSwitch('library')">📼 My Videos</button>
-        </div>
-
-      <div id="cmAiVideoTab">
-        <div class="cm-panel">
-          <div class="po-title">🎬 Describe the video you want</div>
-          <div class="po-sub">Text-to-video by default — attach an image below to animate it instead (image-to-video). Real credits apply per video generated.</div>
-          <div style="margin-top:10px">
-            <textarea class="ai-chat-input" id="cmVideoPrompt" maxlength="500" rows="3" style="width:100%;resize:vertical" placeholder="e.g. A drone shot flying over a modern suburban neighborhood at golden hour, cinematic, smooth camera movement"></textarea>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
-            <label style="display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:#a3a3b8">Duration
-              <select class="ai-chat-input" id="cmVideoDuration" style="width:auto">
-                <option value="5">5 seconds</option>
-                <option value="10">10 seconds</option>
-              </select>
-            </label>
-            <label class="admin-save-btn" style="background:rgba(255,255,255,.08);cursor:pointer" for="cmVideoImageInput">🖼️ Attach image (optional)</label>
-            <input type="file" id="cmVideoImageInput" accept="image/*" style="display:none" onchange="cmOnImageSelected(event)">
-            <span id="cmVideoImageName" style="font-size:.8rem;color:#a3a3b8"></span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">
-            <div style="font-size:.85rem;color:#a3a3b8" id="cmVideoEstCost">Estimated cost: —</div>
-            <button class="admin-save-btn cm-gen-btn" id="cmVideoGenBtn" onclick="cmGenerateVideo()">✨ Generate Video</button>
-          </div>
-        </div>
-
-        <div id="cmVideoStatus" style="display:none;margin-top:16px" class="fm-demo-banner">
-          <div class="fm-demo-icon">⏳</div>
-          <div id="cmVideoStatusText">Generating your video — this can take a couple of minutes...</div>
-        </div>
-
-        <div id="cmVideoResultWrap" style="display:none;margin-top:16px">
-          <div class="cm-gallery-card" style="padding:14px">
-            <div class="mk-card-title">🎞️ Your Video</div>
-            <video id="cmVideoResultPlayer" controls style="width:100%;border-radius:10px;margin-top:8px;background:#000;aspect-ratio:auto"></video>
-            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-              <a id="cmVideoDownloadLink" class="admin-save-btn" style="text-decoration:none;background:rgba(255,255,255,.08)" href="#" download>⬇️ Download</a>
-              <button class="admin-save-btn cm-gen-btn" onclick="showScreen('marketingmaster'); if(typeof showNotifToast==='function')showNotifToast('🚀 Ready to publish','Head to Marketing Master to post this wherever you\'d like.')">🚀 Send to Marketing Master</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="cmLibraryTab" style="display:none">
-        <div id="cmLibraryEmpty" class="cm-empty">
-          <div class="big">📼</div>
-          <div class="mk-card-title">No videos yet</div>
-          <div class="mpm-sub">Videos you generate will be saved here automatically.</div>
-        </div>
-        <div id="cmLibraryGrid" class="cm-gallery" style="display:none"></div>
-      </div>
-
-      
-    </div>
+      </div><!-- /cmProductionTab -->
+    </div><!-- /screen-creativemaster -->
 
     <div class="screen" id="screen-crmmaster" data-sbg="crmmaster">
       <div class="screen-title"><i class="fa-solid fa-toolbox"></i> <span>CRM Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
+
+      <div class="cm-tabs">
+        <button class="cm-tab active" id="crmVTools" onclick="crmViewSwitch('tools')">🧰 CRM</button>
+        <button class="cm-tab" id="crmVAdmin" onclick="crmViewSwitch('admin')">🏛️ Administrative</button>
+      </div>
+
+      <div id="crmToolsTab">
 
         <div class="fm-demo-banner">
           <div class="fm-demo-icon">🧰</div>
@@ -8295,6 +8362,23 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       </div>
+
+      <div id="crmAdminTab" style="display:none">
+      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations and bookkeeping &amp; financial coaching, now folded into CRM Master.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+        <div class="mk-card" onclick="showScreen('businessmaster')" style="cursor:pointer">
+          <div style="font-size:2rem">🏢</div>
+          <div class="mk-card-title">Business Tools</div>
+          <div class="mpm-sub">Your AI-run back office — operations, planning, and business tools.</div>
+        </div>
+        <div class="mk-card" onclick="showScreen('financialmaster')" style="cursor:pointer">
+          <div style="font-size:2rem">💰</div>
+          <div class="mk-card-title">Financial Tools</div>
+          <div class="mpm-sub">Bookkeeping, financial coaching, and money-management tools.</div>
+        </div>
+      </div>
+      </div><!-- /crmAdminTab -->
+    </div><!-- /screen-crmmaster -->
 
     <!-- BUSINESS MASTER (demo) -->
     <div class="screen" id="screen-businessmaster" data-sbg="businessmaster">
@@ -8919,70 +9003,8 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <!-- AI COACH (Pro/Elite only) -->
     <div class="screen" id="screen-aicoach" data-sbg="aicoach">
-      <div class="screen-title">🤖 <span>AI Coach</span></div>
+      <div class="screen-title"><i class="fa-solid fa-wand-magic-sparkles"></i> <span>Ask Genie</span></div>
       <div id="aiCoachGate"></div>
-    </div>
-
-    <!-- MY STORE (Elite) -->
-
-    <!-- ══════════════════ REVALIDATION SERVICE — its own tab, open to every
-         paid member regardless of plan (Elite-only My Store does not gate
-         this) ══════════════════ -->
-    <div class="screen" id="screen-revalidation" data-sbg="mystore">
-      <div class="screen-title">🎓 Revalidation <span>Service</span></div>
-      <div class="reval-card">
-        <div class="reval-title">🎓 Foreign Education &amp; School Credit Revalidation</div>
-        <div class="reval-desc">
-          This is a paid membership service — $50/month (Standard) or $100/month (Premium) — that revalidates a
-          person's foreign education or school credits for use in the United States. It evaluates their existing
-          academic credentials against U.S. equivalency standards.
-        </div>
-        <div class="reval-disclaimer">
-          <b>Important:</b> This service only revalidates/evaluates foreign educational credentials for U.S.
-          equivalency. It does <b>not</b> guarantee a job, and it does <b>not</b> provide or guarantee any kind
-          of work visa or immigration status. Share this honestly with every client.
-        </div>
-
-        <div class="reval-tiers">
-          <label class="reval-tier-opt" id="revalTierStdWrap">
-            <input type="radio" name="revalTier" value="standard" checked onchange="revalSetTier('standard')">
-            <div class="reval-tier-name">Standard</div>
-            <div class="reval-tier-price">$50<span>/mo</span></div>
-          </label>
-          <label class="reval-tier-opt" id="revalTierPremWrap">
-            <input type="radio" name="revalTier" value="premium" onchange="revalSetTier('premium')">
-            <div class="reval-tier-name">Premium</div>
-            <div class="reval-tier-price">$100<span>/mo</span></div>
-          </label>
-        </div>
-
-        <div class="reval-link-box">
-          <div class="reval-link-label">Your Revalidation Link — share this with clients</div>
-          <div class="reval-link-row">
-            <input class="reval-link-input" id="revalLinkText" readonly>
-            <button class="copy-btn" id="revalCopyBtn" onclick="copyRevalLink()">Copy</button>
-          </div>
-        </div>
-
-        <div class="reval-qr-row">
-          <img id="revalQrImg" class="reval-qr-img" alt="QR code for your revalidation link">
-          <div>
-            <div class="reval-qr-label">Scan &amp; Share QR Code</div>
-            <div class="reval-qr-sub">Print it, post it, or text a screenshot — scanning it opens your revalidation link directly.</div>
-            <a id="revalQrDownload" class="reval-qr-dl" download="my-revalidation-qr.png" target="_blank">⬇ Download QR Code</a>
-          </div>
-        </div>
-
-        <div class="myst-hint" id="revalCommissionNote" style="margin-top:16px;font-size:.78rem;color:#9ca3af">
-          Your commission on every Revalidation payment is based on your membership plan — see the Master Portal
-          or your Compensation Plan for current rates.
-        </div>
-      </div>
-
-      <div class="myst-hint" style="margin-top:14px;text-align:center">
-        Want to see everyone who's signed up through your link, with their contact info? Check
-        <a onclick="showScreen('account')" style="color:#2E7BFF;cursor:pointer">My Account → CRM</a>.
-      </div>
     </div>
 
     <!-- ABOUT -->
@@ -10038,15 +10060,14 @@ function showScreen(id) {
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
   if (id === 'marketsmaster') setTimeout(function(){ if (typeof renderEliteTools === 'function') renderEliteTools(); if (typeof renderMarketsMaster === 'function') renderMarketsMaster(); }, 30);
   if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid(); }, 30);
-  if (id === 'productionmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('productionmaster'); }, 30);
   if (id === 'creativemaster') setTimeout(function(){ if (typeof cmLoadLibrary === 'function') cmLoadLibrary(); }, 30);
   if (id === 'crmmaster') setTimeout(function(){ if (typeof renderProsHub === 'function') renderProsHub(); if (typeof renderJarvisChips === 'function') renderJarvisChips('proshub'); }, 30);
   if (id === 'marketplace')  setTimeout(function(){ if (typeof renderMarketplace === 'function') renderMarketplace(); }, 30);
   if (id === 'studio')       setTimeout(function(){ if (typeof renderStudio === 'function') renderStudio(); }, 30);
   if (id === 'mystoremaster') setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
   if (id === 'mystore')      setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
-  if (id === 'revalidation') setTimeout(function(){ if (typeof buildRevalLink === 'function') buildRevalLink(); }, 30);
-  if (id === 'community')    setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
+  if (id === 'universitymaster') setTimeout(function(){ if (typeof buildRevalLink === 'function') buildRevalLink(); }, 30);
+  if (id === 'communitymaster')  setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
   if (id === 'admin')        { if (typeof switchAdminTab === 'function') switchAdminTab('overview'); }
   if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); if (typeof loadAiUsageSummary === 'function') loadAiUsageSummary(); if (typeof loadGenieOrders === 'function') loadGenieOrders(); if (typeof adminFillShareCampaignForm === 'function') adminFillShareCampaignForm(); if (typeof adminLoadDiscountCodes === 'function') adminLoadDiscountCodes(); }, 80);
   if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); if (typeof reiLoadSavedLeads === 'function') reiLoadSavedLeads(); }, 30);
@@ -11067,6 +11088,41 @@ function mmOpenSocialJoin(el){
   return false;
 }
 window.mmOpenSocialJoin = mmOpenSocialJoin;
+
+// Generic "open an external link, or show a friendly Coming Soon toast if it
+// hasn't been set yet" helper — used by University Master's Impact Webapp tab
+// and Community Master's BizBuzz tab. TODO: David — replace these two '#'
+// placeholders with the real Impact webapp URL and the real BizBuzz download
+// link (App Store / Play Store / landing page) once they're ready.
+var MM_EXTERNAL_LINKS = { impact: '#', bizbuzz: '#' };
+function mmOpenExternalLink(el, key){
+  var url = MM_EXTERNAL_LINKS[key];
+  if(!url || url === '#'){
+    if (typeof showNotifToast === 'function') showNotifToast('🔗 Coming soon', (key === 'impact' ? 'The Impact webapp link' : 'The BizBuzz app link') + " hasn't been added yet.");
+    return false;
+  }
+  window.open(url, '_blank', 'noopener');
+  return false;
+}
+window.mmOpenExternalLink = mmOpenExternalLink;
+
+// University Master tab switch (Courses / Revalidation — Impact Webapp opens externally, no panel)
+function umViewSwitch(which){
+  document.getElementById('umCoursesTab').style.display = which === 'courses' ? 'block' : 'none';
+  document.getElementById('umRevalidationTab').style.display = which === 'revalidation' ? 'block' : 'none';
+  document.getElementById('umVCourses').classList.toggle('active', which === 'courses');
+  document.getElementById('umVRevalidation').classList.toggle('active', which === 'revalidation');
+  if (which === 'revalidation' && typeof buildRevalLink === 'function') buildRevalLink();
+}
+window.umViewSwitch = umViewSwitch;
+
+// Community Master — Live Feed tab stays the only real panel; BizBuzz opens externally
+function cmtyViewSwitch(which){
+  var f = document.getElementById('cmtyVFeed');
+  if (f) f.classList.toggle('active', which === 'feed');
+}
+window.cmtyViewSwitch = cmtyViewSwitch;
+
 function renderCommunity(){
   var feed = document.getElementById('communityFeed');
   if(!feed) return;
@@ -11680,6 +11736,7 @@ function switchBankTab(id) {
   if (panel) panel.classList.add('active');
   if (id === 'compensation') { if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); }
   if (id === 'bank') { if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); }
+  if (id === 'dividends') { if (typeof eliteDividendsEligible === 'function' && !eliteDividendsEligible()) { if (typeof openUpgradeModal === 'function') openUpgradeModal('elite'); if (typeof showNotifToast === 'function') showNotifToast('💎 Elite feature', 'Revenue-sharing dividends are an Elite-only perk. Upgrade to Elite to start earning a share.'); switchBankTab('bank'); return; } if (typeof renderEliteDividends === 'function') renderEliteDividends(); }
 }
 
 // ── COMPENSATION PAGE ─────────────────────────────────────────────────────────
@@ -11769,14 +11826,8 @@ window.showScreen = function(id) {
     if (typeof showNotifToast === 'function') showNotifToast('🔒 Pro, Elite, or $25', 'Unlock just this Master for $25 one-time — or upgrade to Pro/Elite to get every Master included.');
     return;
   }
-  if (id === 'dividends' && typeof eliteDividendsEligible === 'function' && !eliteDividendsEligible()) {
-    if (typeof openUpgradeModal === 'function') openUpgradeModal('elite');
-    if (typeof showNotifToast === 'function') showNotifToast('💎 Elite feature', 'Revenue-sharing dividends are an Elite-only perk. Upgrade to Elite to start earning a share.');
-    return;
-  }
   _origShow(id);
   if (id === 'commissions') buildCompTable();
-  if (id === 'dividends' && typeof renderEliteDividends === 'function') renderEliteDividends();
 };
 
 // ── HOMEPAGE INTRO VIDEOS (playlist — they play one after another) ─────────────
@@ -12793,10 +12844,8 @@ window.showLoggedIn = function(user, data) {
   // badge on whichever ones they haven't unlocked yet. ProsHub/CRM Master is
   // sold à la carte exactly like the others now (it used to be Pro/Elite-only).
   var mastersUnlocked = (data && (data.plan === 'pro' || data.plan === 'elite')) || window.isMaster === true;
-  var prodNav = document.getElementById('nav-productionmaster');
-  if (prodNav) prodNav.style.display = 'flex'; // Production Master is a demo/service page — visible to everyone for now
   [['nav-reimaster','reimaster','fa-city','REI Master'],['nav-marketingmaster','marketingmaster','fa-rocket','Marketing Master'],
-   ['nav-marketsmaster','marketsmaster','fa-chart-line','Markets Master'],['nav-administrativemaster','administrativemaster','fa-landmark','Administrative Master'],
+   ['nav-marketsmaster','marketsmaster','fa-chart-line','Markets Master'],
    ['nav-creativemaster','creativemaster','fa-clapperboard','Creative Master'],
    ['nav-crmmaster','crmmaster','fa-toolbox','CRM Master']].forEach(function(row){
     var el = document.getElementById(row[0]);
@@ -12808,9 +12857,15 @@ window.showLoggedIn = function(user, data) {
     if (labelSpan) { labelSpan.textContent = baseLabel + (unlocked ? '' : ' 🔒'); }
     else { el.innerHTML = '<span class="nav-item-icon"><i class="fa-solid ' + row[2] + '"></i></span> <span class="nav-item-label">' + baseLabel + (unlocked ? '' : ' 🔒') + '</span>'; }
   });
-  // Elite Dividends — the revenue-sharing program is Elite-only; Pro sees it as an upgrade teaser, Basic doesn't see it at all.
-  var divNav = document.getElementById('nav-dividends');
-  if (divNav) divNav.style.display = (data && (data.plan === 'pro' || data.plan === 'elite')) ? 'flex' : 'none';
+  // Genie Agent Master, My Store Master, University Master, Community Master — organizational
+  // Masters, not individually-purchasable tools, so always visible once logged in (no lock badge).
+  ['nav-geniemaster', 'nav-mystoremaster', 'nav-universitymaster', 'nav-communitymaster'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
+  });
+  // Elite Dividends now lives as a tab inside Payouts/Bank, visible to Elite members only.
+  var divTab = document.getElementById('btab-dividends');
+  if (divTab) divTab.style.display = (data && data.plan === 'elite') ? 'flex' : 'none';
   if (typeof renderMarketplace === 'function') renderMarketplace();
 };
 
@@ -13474,20 +13529,24 @@ function masterToolCardHtml(t) {
 }
 
 // ── AI COACH PAGE (Pro/Elite) ─────────────────────────────────────────────────
+// ASK GENIE is open to every member, including Free — it's a general help bot
+// about the Money Masteries platform itself, not the Pro/Elite-gated Dr. Gainz
+// money coaching found inside course lessons (that still uses aiEligible()).
+function genieEligible() { return true; }
 function renderAiCoach() {
   var wrap = document.getElementById('aiCoachGate');
   if (!wrap) return;
-  if (!aiEligible()) {
+  if (!genieEligible()) {
     wrap.innerHTML = aiUpgradeHtml().replace("closeCourse(); ", "");
     return;
   }
   wrap.innerHTML =
     '<div class="ai-coach-box" style="max-width:760px">' +
-      '<div class="ai-coach-head">🤖 Dr. Gainz — Your Personal Money Coach <span class="ai-live-dot"></span></div>' +
-      '<div class="ai-coach-sub">Trading, real estate, e-commerce, affiliate strategy — ask anything, anytime, in EN / ES / PT</div>' +
+      '<div class="ai-coach-head">🧞 Genie — Ask Me Anything About Money Masteries <span class="ai-live-dot"></span></div>' +
+      '<div class="ai-coach-sub">Plans, every Master Tool, the affiliate program, University &amp; Community Master, and how everything works — ask anything, anytime, in EN / ES / PT</div>' +
       '<div class="ai-chat-log" id="acLog" style="max-height:420px"></div>' +
       '<div class="ai-chat-bar">' +
-        '<input class="ai-chat-input" id="acInput" maxlength="500" placeholder="Ask Dr. Gainz anything about making money from home..." onkeydown="if(event.key===\'Enter\')sendAiCoach()">' +
+        '<input class="ai-chat-input" id="acInput" maxlength="500" placeholder="Ask Genie anything about Money Masteries..." onkeydown="if(event.key===\'Enter\')sendAiCoach()">' +
         '<button class="ai-chat-send" id="acSend" onclick="sendAiCoach()">➤</button>' +
       '</div></div>';
 }
@@ -13496,20 +13555,20 @@ function acBubble(text, who) {
   if (!log) return null;
   var d = document.createElement('div');
   d.className = 'ai-msg ' + who;
-  d.innerHTML = (who === 'bot' ? '<span class="ai-msg-tag">🤖 Dr. Gainz</span>' : '') + '<div>' + text + '</div>';
+  d.innerHTML = (who === 'bot' ? '<span class="ai-msg-tag">🧞 Genie</span>' : '') + '<div>' + text + '</div>';
   log.appendChild(d); log.scrollTop = log.scrollHeight;
   return d;
 }
 async function sendAiCoach() {
   var input = document.getElementById('acInput');
-  if (!input || !input.value.trim() || !aiEligible()) return;
+  if (!input || !input.value.trim() || !genieEligible()) return;
   var q = input.value.trim(); input.value = '';
   acBubble(q.replace(/</g, '&lt;'), 'user');
   var thinking = acBubble('Thinking…', 'bot');
   var btn = document.getElementById('acSend'); if (btn) btn.disabled = true;
   try {
     if (typeof window.askDrGainz !== 'function') throw new Error('demo');
-    var ctx = 'General coaching session inside the Money Masteries member area. The member may ask about day trading, wholesaling real estate, dropshipping, or growing their Money Masteries affiliate income (10% free / 50% pro direct + team levels).';
+    var ctx = 'You are Genie, the Money Masteries webapp help assistant — not a financial coach. Answer questions about how the Money Masteries platform itself works: the three plans (Basic $19.99/mo, Pro $50/mo, Elite $99/mo), the affiliate/commission program, the Master Tools (Genie Agent, My Store, REI, Marketing, Markets, Creative — which now includes Production, CRM — which now includes Administrative, University, and Community Masters), University Master (courses, the Revalidation service, and the Impact webapp), Community Master (the live member feed and the BizBuzz app), Elite Dividends (now inside Payouts/Bank, Elite-only), and general navigation/how-to help. You are not a licensed financial or legal advisor — do not give personalized investment or legal advice.';
     var a = await window.askDrGainz(q, ctx, courseLang);
     thinking.querySelector('div').innerHTML = a.replace(/</g, '&lt;').replace(/\n/g, '<br>');
   } catch(e) {
@@ -14708,9 +14767,8 @@ var MASTER_PRODUCTS = [
   { id:'master-reimaster',        screenId:'reimaster',        type:'master', emoji:'🏘️', name:'REI Master — Individual Access',        price:25, desc:'One-time unlock for REI Master — real-estate deal analysis, lead tools & AI investing coach. Included free with Pro or Elite.' },
   { id:'master-marketingmaster',  screenId:'marketingmaster',  type:'master', emoji:'🚀', name:'Marketing Master — Individual Access',  price:25, desc:'One-time unlock for Marketing Master — the full marketing tool suite. Included free with Pro or Elite.' },
   { id:'master-marketsmaster',    screenId:'marketsmaster',    type:'master', emoji:'📈', name:'Markets Master — Individual Access',    price:25, desc:'One-time unlock for Markets Master — live market data & AI market assistant. Included free with Pro or Elite.' },
-  { id:'master-administrativemaster', screenId:'administrativemaster', type:'master', emoji:'🏛️', name:'Administrative Master — Individual Access', price:25, desc:'One-time unlock for Administrative Master — Business & Financial tools combined in one place. Included free with Pro or Elite.' },
-  { id:'master-creativemaster', screenId:'creativemaster', type:'master', emoji:'🎬', name:'Creative Master — Individual Access', price:25, desc:'One-time unlock for Creative Master — AI video generation via SkyReels. Included free with Pro or Elite.' },
-  { id:'master-crmmaster', screenId:'crmmaster', type:'master', emoji:'🧰', name:'CRM Master — Individual Access', price:25, desc:'One-time unlock for CRM Master — clients, projects, invoices, an AI assistant grounded in your data, and an API for your own AI agents. Included free with Pro or Elite.' }
+  { id:'master-creativemaster', screenId:'creativemaster', type:'master', emoji:'🎬', name:'Creative Master — Individual Access', price:25, desc:'One-time unlock for Creative Master — AI video generation via SkyReels, plus the Production Master toolkit (website/domain/software requests). Included free with Pro or Elite.' },
+  { id:'master-crmmaster', screenId:'crmmaster', type:'master', emoji:'🧰', name:'CRM Master — Individual Access', price:25, desc:'One-time unlock for CRM Master — clients, projects, invoices, an AI assistant grounded in your data, an API for your own AI agents, plus the Administrative Master toolkit. Included free with Pro or Elite.' }
 ];
 window.MASTER_PRODUCTS = MASTER_PRODUCTS;
 function getAllProducts() { return DEFAULT_PRODUCTS.concat(MASTER_PRODUCTS).concat(window.UPLOADED_PRODUCTS); }
@@ -17190,7 +17248,7 @@ var SCREEN_THEMES = {
     ],
     rings: { color:'rgba(255,215,0,0.12)', x:'75%', y:'20%', size:400, delay:0 }
   },
-  courses: {
+  universitymaster: {
     bg: 'sbg-courses', grid: true,
     particles: [
       { type:'dot', color:'rgba(46,123,255,0.6)',  r:2,   speed:.35, count:16 },
@@ -17230,7 +17288,7 @@ var SCREEN_THEMES = {
     ],
     rings: { color:'rgba(168,85,247,0.12)', x:'60%', y:'25%', size:360, delay:1 }
   },
-  community: {
+  communitymaster: {
     bg: 'sbg-community', grid: false,
     particles: [
       { type:'dot',  color:'rgba(99,102,241,0.6)', r:2,   speed:.35, count:15 },
@@ -18930,11 +18988,22 @@ let cmSelectedImageDataUrl = null;
 function cmViewSwitch(which){
   document.getElementById('cmAiVideoTab').style.display = which === 'aivideo' ? 'block' : 'none';
   document.getElementById('cmLibraryTab').style.display = which === 'library' ? 'block' : 'none';
+  document.getElementById('cmProductionTab').style.display = which === 'production' ? 'block' : 'none';
   document.getElementById('cmVAiVideo').classList.toggle('active', which === 'aivideo');
   document.getElementById('cmVLibrary').classList.toggle('active', which === 'library');
+  document.getElementById('cmVProduction').classList.toggle('active', which === 'production');
   if (which === 'library' && typeof cmLoadLibrary === 'function') cmLoadLibrary();
+  if (which === 'production' && typeof renderJarvisChips === 'function') renderJarvisChips('productionmaster');
 }
 window.cmViewSwitch = cmViewSwitch;
+
+function crmViewSwitch(which){
+  document.getElementById('crmToolsTab').style.display = which === 'tools' ? 'block' : 'none';
+  document.getElementById('crmAdminTab').style.display = which === 'admin' ? 'block' : 'none';
+  document.getElementById('crmVTools').classList.toggle('active', which === 'tools');
+  document.getElementById('crmVAdmin').classList.toggle('active', which === 'admin');
+}
+window.crmViewSwitch = crmViewSwitch;
 
 function cmUpdateEstCost(){
   const dur = Number(document.getElementById('cmVideoDuration').value) || 5;
