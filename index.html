@@ -6453,6 +6453,59 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 @media (prefers-reduced-motion: reduce){
   .um-free-banner-text{ animation: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   GLOBAL READABILITY & CLARITY PASS
+   Bigger type, more breathing room, calmer hierarchy — applied last
+   so it wins over the older, denser component styles above without
+   having to touch every individual rule.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Slightly larger base scale — every rem-sized element site-wide grows with it */
+html{ font-size: 17px; }
+body{ line-height: 1.65; }
+
+/* More generous page padding + a touch more max-width so content doesn't feel cramped */
+.screen{ padding: 36px 40px; max-width: 1120px; }
+@media (max-width: 640px){ .screen{ padding: 22px 18px; } }
+
+.screen-title{ font-size: 1.7rem; margin-bottom: 26px; letter-spacing: -0.01em; }
+.screen-title span{ text-wrap: balance; }
+
+/* Sidebar nav — a bit more room per row, a bit more legible label size */
+.nav-item{ font-size: .95rem; padding: 13px 20px; }
+.sidebar-section-label{ letter-spacing: .08em; margin-top: 22px; }
+
+/* The most-reused subtext / helper-text classes across every Master screen —
+   bumping these two rules alone lifts hundreds of card descriptions site-wide */
+.mpm-sub{ font-size: .92rem; line-height: 1.55; color: #a99bd6; }
+.course-card-sub{ font-size: .85rem; line-height: 1.5; color: #9ca3af; }
+.course-card-title{ font-size: 1rem; }
+.mk-card-title{ font-size: 1.05rem; }
+.dash-section-label{ font-size: .82rem; margin: 30px 0 14px; }
+.po-sub{ font-size: .9rem; line-height: 1.55; }
+
+/* More breathing room between cards — the #1 fix for a "busy/cluttered" feel */
+.course-grid{ gap: 20px; }
+.comp-tier-grid{ gap: 18px; }
+.stat-row{ gap: 18px; margin-bottom: 30px; }
+
+.mk-card,.course-card,.payout-card{ padding: 24px; }
+.payout-card{ margin-bottom: 24px; }
+
+/* Calmer card surfaces — one border, one shadow, no stacked glow-on-glow */
+.mk-card,.course-card{ box-shadow: none; }
+.mk-card:hover,.course-card:hover{ box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+
+/* Cleaner section grids that were using tight auto-fit minimums — give cards
+   more room to breathe before wrapping, so rows don't feel packed */
+div[style*="grid-template-columns:repeat(auto-fit,minmax(220px"]{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; gap: 18px !important; }
+div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; gap: 18px !important; }
+
+@media (max-width: 640px){
+  html{ font-size: 16px; }
+  .screen-title{ font-size: 1.4rem; }
+}
 </style>
 
 </head>
