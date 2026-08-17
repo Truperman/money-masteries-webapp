@@ -6506,10 +6506,99 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
   html{ font-size: 16px; }
   .screen-title{ font-size: 1.4rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   LIQUID GLASS — Dashboard + Sidebar pilot
+   Real optical refraction (SVG displacement filter feeding backdrop-filter)
+   over a city-skyline-at-dusk photo, orange/green/pink accents replacing
+   the old all-blue palette. Scoped to #screen-dashboard + .sidebar only —
+   everywhere else keeps its current look until this is reviewed live.
+   Chromium renders the true liquid warp; Safari/Firefox fall back to a
+   plain frosted blur (still looks good, just not "liquid").
+   ══════════════════════════════════════════════════════════════════ */
+
+#dashLiquidBg{
+  position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%),
+    url('https://loremflickr.com/1600/1000/city,skyline,dusk');
+  background-size:cover;background-position:center 35%;
+  opacity:0;transition:opacity .6s ease;
+  pointer-events:none;
+}
+#dashLiquidBg.visible{ opacity:1; }
+@media (prefers-reduced-motion: reduce){ #dashLiquidBg{ transition:none; } }
+
+/* Sidebar — frosted/liquid glass, orange as the active-state accent instead of blue */
+.sidebar.lg-mode{
+  background: rgba(18,14,12,.42) !important;
+  backdrop-filter: url(#lg-distort-side) blur(1px) saturate(150%) brightness(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-right: 1px solid rgba(255,255,255,.14) !important;
+}
+.sidebar.lg-mode::before{ display:none; }
+.sidebar.lg-mode .sidebar-user-card{ background: rgba(255,255,255,.04) !important; border-bottom-color: rgba(255,255,255,.1) !important; }
+.sidebar.lg-mode .sidebar-avatar{ border-color: rgba(255,138,61,.65) !important; box-shadow:0 0 16px rgba(255,138,61,.3) !important; }
+.sidebar.lg-mode .nav-item.active{ background: rgba(255,138,61,.16) !important; color:#ffb27a !important; border-left-color:#ff8a3d !important; }
+.sidebar.lg-mode .nav-item:hover{ background: rgba(255,255,255,.07) !important; color:#fff !important; border-left-color: rgba(255,255,255,.35) !important; }
+.sidebar.lg-mode .nav-item.active .nav-item-icon i,.sidebar.lg-mode .nav-item:hover .nav-item-icon i{ color:#ffb27a !important; }
+
+/* Dashboard screen — the photo shows through every card as real glass */
+#screen-dashboard .stat-card,
+#screen-dashboard .qa-tile,
+#screen-dashboard .activity-card,
+#screen-dashboard .aff-card,
+#screen-dashboard #rankCard{
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  backdrop-filter: url(#lg-distort-card) blur(1px) saturate(150%) brightness(1.06);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 10px 28px rgba(0,0,0,.3);
+}
+#screen-dashboard .next-action-card{
+  background: rgba(111,207,122,.14) !important;
+  border: 1px solid rgba(111,207,122,.4) !important;
+  backdrop-filter: url(#lg-distort-card) blur(1px) saturate(150%) brightness(1.06);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 10px 28px rgba(0,0,0,.3);
+}
+#screen-dashboard .stat-value.gold{ color:#ffb35c !important; }
+#screen-dashboard .stat-value.green{ color:#8fe3a8 !important; }
+#screen-dashboard .stat-value{ color:#f3d9e6; }
+#screen-dashboard .dash-hero + div button{
+  background:linear-gradient(135deg,#ff8a3d,#ec4899) !important;
+  box-shadow:0 10px 30px -10px rgba(236,72,153,.55) !important;
+}
+#screen-dashboard .next-action-btn{ background:linear-gradient(135deg,#6fcf7a,#4ade80) !important; color:#0a1f10 !important; }
+#screen-dashboard .next-action-badge{ background: rgba(111,207,122,.2) !important; color:#8fe3a8 !important; }
+#screen-dashboard .activity-live{ background:#ff8a3d !important; box-shadow:none !important; }
+#screen-dashboard .qa-icon i{ color:#ffb27a !important; filter:drop-shadow(0 0 10px rgba(255,138,61,.35)) !important; }
+#screen-dashboard .aff-card-title i{ color:#ff9fd0 !important; }
+#screen-dashboard .copy-btn{ background:#ff8a3d !important; color:#1a1105 !important; }
+#screen-dashboard .dash-section-label i{ color:#8fe3a8 !important; }
+#screen-dashboard .rank-badge-mini{ filter:none !important; }
+@media (prefers-reduced-motion: reduce){
+  .sidebar.lg-mode, #screen-dashboard .stat-card, #screen-dashboard .qa-tile,
+  #screen-dashboard .activity-card, #screen-dashboard .aff-card, #screen-dashboard #rankCard,
+  #screen-dashboard .next-action-card{ backdrop-filter: blur(16px) saturate(140%) !important; }
+}
 </style>
 
 </head>
 <body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <filter id="lg-distort-side" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.009 0.009" numOctaves="2" seed="7" result="turb"/>
+    <feGaussianBlur in="turb" stdDeviation="3" result="soft"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="lg-distort-card" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="2" seed="11" result="turb2"/>
+    <feGaussianBlur in="turb2" stdDeviation="2.6" result="soft2"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft2" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<div id="dashLiquidBg" class="visible" aria-hidden="true"></div>
 <script>
 // Show landing immediately — don't wait for Firebase
 document.addEventListener('DOMContentLoaded', function() {
@@ -7058,7 +7147,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar lg-mode">
     <div class="sidebar-user-card">
       <img class="sidebar-avatar" id="sidebarAvatar" src="" alt="">
       <div class="sidebar-name" id="sidebarName"></div>
@@ -10191,6 +10280,8 @@ function showScreen(id) {
   const navEl  = document.getElementById('nav-' + id);
   if (screen) screen.classList.add('active');
   if (navEl)  navEl.classList.add('active');
+  var dashBg = document.getElementById('dashLiquidBg');
+  if (dashBg) dashBg.classList.toggle('visible', id === 'dashboard');
   if (id === 'commissions') loadCommissions();
   if (typeof mmApplyDemoToScreen === 'function') mmApplyDemoToScreen(id);
 }
