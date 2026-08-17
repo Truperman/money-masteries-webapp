@@ -6508,26 +6508,33 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   LIQUID GLASS — Dashboard + Sidebar pilot
+   LIQUID GLASS — now site-wide
    Real optical refraction (SVG displacement filter feeding backdrop-filter)
-   over a city-skyline-at-dusk photo, orange/green/pink accents replacing
-   the old all-blue palette. Scoped to #screen-dashboard + .sidebar only —
-   everywhere else keeps its current look until this is reviewed live.
+   over a per-screen photo backdrop, orange/green/pink accents replacing
+   the old all-blue palette. Each screen gets its own fixed/locked photo
+   (see MM_LG_SCREEN_PHOTOS in JS) so it's recognizable, not random per visit.
    Chromium renders the true liquid warp; Safari/Firefox fall back to a
    plain frosted blur (still looks good, just not "liquid").
+   Performance note: the SVG-distortion variant is reserved for the small,
+   fixed-count elements (sidebar, dashboard stat row, rank/activity/next-action
+   cards). Grids that can repeat many times per screen (course cards, mk-cards,
+   payout cards, quick-action tiles) use a plain frosted blur — visually almost
+   identical, much cheaper when a screen renders a dozen+ of them at once.
    ══════════════════════════════════════════════════════════════════ */
 
 #dashLiquidBg{
   position:fixed;inset:0;z-index:0;
-  background-image:
-    linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%),
-    url('https://loremflickr.com/1600/1000/city,skyline,dusk');
   background-size:cover;background-position:center 35%;
-  opacity:0;transition:opacity .6s ease;
+  opacity:0;transition:opacity .5s ease, background-image .5s ease;
   pointer-events:none;
+  animation: mmLgPan 46s ease-in-out infinite alternate;
 }
 #dashLiquidBg.visible{ opacity:1; }
-@media (prefers-reduced-motion: reduce){ #dashLiquidBg{ transition:none; } }
+@keyframes mmLgPan{
+  0%{ background-position: center 30%; transform:scale(1); }
+  100%{ background-position: center 46%; transform:scale(1.045); }
+}
+@media (prefers-reduced-motion: reduce){ #dashLiquidBg{ transition:none; animation:none; } }
 
 /* Sidebar — frosted/liquid glass, orange as the active-state accent instead of blue */
 .sidebar.lg-mode{
@@ -6543,9 +6550,8 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
 .sidebar.lg-mode .nav-item:hover{ background: rgba(255,255,255,.07) !important; color:#fff !important; border-left-color: rgba(255,255,255,.35) !important; }
 .sidebar.lg-mode .nav-item.active .nav-item-icon i,.sidebar.lg-mode .nav-item:hover .nav-item-icon i{ color:#ffb27a !important; }
 
-/* Dashboard screen — the photo shows through every card as real glass */
+/* Dashboard's small, fixed-count cards — full SVG liquid warp */
 #screen-dashboard .stat-card,
-#screen-dashboard .qa-tile,
 #screen-dashboard .activity-card,
 #screen-dashboard .aff-card,
 #screen-dashboard #rankCard{
@@ -6562,25 +6568,43 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 10px 28px rgba(0,0,0,.3);
 }
-#screen-dashboard .stat-value.gold{ color:#ffb35c !important; }
-#screen-dashboard .stat-value.green{ color:#8fe3a8 !important; }
+
+/* Every other card-like surface, on every screen — plain frosted glass
+   (cheap enough to repeat a dozen+ times per screen without lag) */
+.mk-card,.course-card,.payout-card,.qa-tile,
+#rankCard, .comp-tier-grid > div, .goal-card, .activity-card, .aff-card{
+  background: rgba(255,255,255,.065) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  backdrop-filter: blur(16px) saturate(150%) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(150%) brightness(1.05) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 8px 24px rgba(0,0,0,.28) !important;
+}
+.mk-card:hover,.course-card:hover{ box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 12px 30px rgba(0,0,0,.35) !important; }
+
+/* Site-wide accent recolor — orange lead / green secondary / pink tertiary */
+.stat-value.gold{ color:#ffb35c !important; }
+.stat-value.green{ color:#8fe3a8 !important; }
 #screen-dashboard .stat-value{ color:#f3d9e6; }
 #screen-dashboard .dash-hero + div button{
   background:linear-gradient(135deg,#ff8a3d,#ec4899) !important;
   box-shadow:0 10px 30px -10px rgba(236,72,153,.55) !important;
 }
-#screen-dashboard .next-action-btn{ background:linear-gradient(135deg,#6fcf7a,#4ade80) !important; color:#0a1f10 !important; }
-#screen-dashboard .next-action-badge{ background: rgba(111,207,122,.2) !important; color:#8fe3a8 !important; }
-#screen-dashboard .activity-live{ background:#ff8a3d !important; box-shadow:none !important; }
-#screen-dashboard .qa-icon i{ color:#ffb27a !important; filter:drop-shadow(0 0 10px rgba(255,138,61,.35)) !important; }
-#screen-dashboard .aff-card-title i{ color:#ff9fd0 !important; }
-#screen-dashboard .copy-btn{ background:#ff8a3d !important; color:#1a1105 !important; }
-#screen-dashboard .dash-section-label i{ color:#8fe3a8 !important; }
-#screen-dashboard .rank-badge-mini{ filter:none !important; }
+.next-action-btn{ background:linear-gradient(135deg,#6fcf7a,#4ade80) !important; color:#0a1f10 !important; }
+.next-action-badge{ background: rgba(111,207,122,.2) !important; color:#8fe3a8 !important; }
+.activity-live{ background:#ff8a3d !important; box-shadow:none !important; }
+.qa-icon i{ color:#ffb27a !important; filter:drop-shadow(0 0 10px rgba(255,138,61,.35)) !important; }
+.aff-card-title i{ color:#ff9fd0 !important; }
+.copy-btn{ background:#ff8a3d !important; color:#1a1105 !important; }
+.dash-section-label i,.screen-title i{ color:#8fe3a8; }
+.rank-badge-mini{ filter:none !important; }
+.genie-upsell{ background:linear-gradient(135deg,#1c1408,#111827) !important; border-color:#ffb27a50 !important; color:#ffb27a !important; }
+.cm-tab.active,.crm-tab.active,.um-tab.active{ background:linear-gradient(135deg,#ff8a3d,#ec4899) !important; }
+
 @media (prefers-reduced-motion: reduce){
-  .sidebar.lg-mode, #screen-dashboard .stat-card, #screen-dashboard .qa-tile,
-  #screen-dashboard .activity-card, #screen-dashboard .aff-card, #screen-dashboard #rankCard,
-  #screen-dashboard .next-action-card{ backdrop-filter: blur(16px) saturate(140%) !important; }
+  .sidebar.lg-mode, #screen-dashboard .stat-card, #screen-dashboard .activity-card,
+  #screen-dashboard .aff-card, #screen-dashboard #rankCard, #screen-dashboard .next-action-card{
+    backdrop-filter: blur(16px) saturate(140%) !important;
+  }
 }
 </style>
 
@@ -7141,7 +7165,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <canvas id="sbgCanvas" aria-hidden="true"></canvas>
 <div id="sbgLayer" class="screen-bg-layer" aria-hidden="true"></div>
 <div id="bgGrid" class="bg-grid" aria-hidden="true"></div>
-<div id="dashLiquidBg" class="visible" aria-hidden="true"></div>
+<div id="dashLiquidBg" class="visible" data-lg-screen="dashboard" style="background-image:linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%), url('https://loremflickr.com/1600/1000/city,skyline,dusk?lock=101');background-position:center 35%" aria-hidden="true"></div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
   <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
@@ -10255,6 +10279,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 // ── SCREEN NAVIGATION ────────────────────────────────────────────────────────
+// ── LIQUID GLASS — per-screen background photo ─────────────────────────────
+// Each screen gets ONE fixed photo (locked via loremflickr's lock= param so
+// it doesn't change on every visit/reload — recognizable per Master, not random).
+// Screens with no entry here simply don't show the photo layer (falls back to
+// the screen's existing background theme).
+var MM_LG_SCREEN_PHOTOS = {
+  dashboard:        { kw: 'city,skyline,dusk',        lock: 101, pos: 'center 35%' },
+  aicoach:          { kw: 'aurora,night,sky',          lock: 102, pos: 'center 40%' },
+  geniemaster:      { kw: 'aurora,night,sky',          lock: 102, pos: 'center 40%' },
+  universitymaster: { kw: 'library,university',        lock: 103, pos: 'center 45%' },
+  mystoremaster:    { kw: 'boutique,retail,shop',       lock: 104, pos: 'center 45%' },
+  reimaster:        { kw: 'architecture,modern,building', lock: 105, pos: 'center 40%' },
+  marketingmaster:  { kw: 'neon,city,night',            lock: 106, pos: 'center 45%' },
+  marketsmaster:    { kw: 'stockmarket,trading,finance', lock: 107, pos: 'center 40%' },
+  creativemaster:   { kw: 'film,studio,camera',         lock: 108, pos: 'center 45%' },
+  crmmaster:        { kw: 'office,workspace,modern',    lock: 109, pos: 'center 45%' },
+  communitymaster:  { kw: 'crowd,festival,friends',     lock: 110, pos: 'center 45%' },
+  commissions:      { kw: 'bank,vault,gold',            lock: 111, pos: 'center 40%' },
+  plans:            { kw: 'marble,luxury,texture',      lock: 112, pos: 'center 45%' }
+};
+function mmUpdateLiquidGlassBg(id){
+  var el = document.getElementById('dashLiquidBg');
+  if (!el) return;
+  var cfg = MM_LG_SCREEN_PHOTOS[id];
+  if (!cfg) { el.classList.remove('visible'); return; }
+  if (el.getAttribute('data-lg-screen') !== id) {
+    var url = 'https://loremflickr.com/1600/1000/' + encodeURIComponent(cfg.kw) + '?lock=' + cfg.lock;
+    el.style.backgroundImage =
+      "linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%), url('" + url + "')";
+    el.style.backgroundPosition = cfg.pos;
+    el.setAttribute('data-lg-screen', id);
+  }
+  el.classList.add('visible');
+}
+window.mmUpdateLiquidGlassBg = mmUpdateLiquidGlassBg;
+
 function showScreen(id) {
   if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); if (typeof renderPayoutRequestStatus === 'function') renderPayoutRequestStatus(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
@@ -10280,8 +10340,7 @@ function showScreen(id) {
   const navEl  = document.getElementById('nav-' + id);
   if (screen) screen.classList.add('active');
   if (navEl)  navEl.classList.add('active');
-  var dashBg = document.getElementById('dashLiquidBg');
-  if (dashBg) dashBg.classList.toggle('visible', id === 'dashboard');
+  if (typeof mmUpdateLiquidGlassBg === 'function') mmUpdateLiquidGlassBg(id);
   if (id === 'commissions') loadCommissions();
   if (typeof mmApplyDemoToScreen === 'function') mmApplyDemoToScreen(id);
 }
