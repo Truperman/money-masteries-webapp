@@ -13926,6 +13926,118 @@ function genieFabBubble(text, who) {
   log.appendChild(d); log.scrollTop = log.scrollHeight;
   return d;
 }
+// ── GENIE ACTIONS — lets Genie actually DO things for the member, not just
+// talk about them. Each action wraps an existing window.callXXX backend
+// callable (the same ones the screens themselves use), so Genie can never
+// do anything a member couldn't already do by clicking through the UI
+// themselves. Anything that spends money or writes data always shows a
+// confirm step in chat before it runs — nothing fires on Gemini's say-so
+// alone. To add a new action: add an entry here (describe + run), then add
+// its name to the ACTIONS list baked into the prompt in sendGenieFab().
+var MM_GENIE_ACTIONS = {
+  rei_search_leads: {
+    describe: "Search Real Estate Master for distressed-property leads. Params: {\"geography\":{\"mode\":\"states\"|\"counties\"|\"city\",\"states\":[\"XX\"],\"counties\"?:[\"...\"],\"cities\"?:[\"...\"]}, \"strategy\"?:\"custom\"}. Requires at minimum a 2-letter US state code. This is a PAID action (billed per lead delivered) — never mark it ready unless the member gave you at least a state.",
+    confirmText: function(p){
+      var g = p.geography || {};
+      var where = (g.cities && g.cities[0]) || (g.counties && g.counties[0]) || (g.states && g.states[0]) || 'that area';
+      return "Search for distressed-property leads in <b>" + where.replace(/</g,'&lt;') + "</b>? I'll show you the price before pulling anything.";
+    },
+    run: async function(p){
+      var geography = p.geography;
+      if (!geography || !geography.mode) throw new Error("I need at least a state to search leads.");
+      var strategy = p.strategy || "custom";
+      var preview = await window.callReiLeadsPreview({ strategy: strategy, geography: geography, requestedCount: 25 });
+      if (!preview.cappedCount) return { text: "No matching properties found there — try a different city, county, or state.", done: true };
+      // second, money-specific confirm — the member sees the real price before anything is charged
+      return {
+        text: preview.matchCount.toLocaleString() + " matching properties found. Pull the top " + preview.cappedCount +
+          " with full owner contact info for <b>$" + preview.estimatedCostUsd.toFixed(2) + "</b> ($" + preview.pricePerLeadUsd.toFixed(2) + "/lead)?",
+        confirmAgain: { name: 'rei_search_leads_confirm', params: { strategy: strategy, geography: geography, requestedCount: preview.cappedCount, price: preview.estimatedCostUsd } }
+      };
+    }
+  },
+  rei_search_leads_confirm: {
+    // internal second step of rei_search_leads — not offered to Gemini directly
+    describe: null,
+    confirmText: function(p){ return "Pull " + p.requestedCount + " leads for $" + Number(p.price||0).toFixed(2) + "?"; },
+    run: async function(p){
+      var result = await window.callReiLeadsSearch({ strategy: p.strategy, geography: p.geography, requestedCount: p.requestedCount });
+      if (typeof window.reiLeads !== 'undefined') window.reiLeads = result.leads || [];
+      if (typeof window.reiMode !== 'undefined') window.reiMode = "live";
+      if (typeof window.showScreen === 'function') window.showScreen('reimaster');
+      if (typeof window.reiRender === 'function') setTimeout(window.reiRender, 150);
+      var n = result.actualCount || (result.leads || []).length;
+      return { text: n
+        ? "Done — pulled " + n + " lead" + (n===1?'':'s') + " for $" + (result.billedCost||0).toFixed(2) + ". Switched you to Real Estate Master so you can see them."
+        : "That search didn't return any leads after all — you weren't charged.", done: true };
+    }
+  },
+  crm_save_lead: {
+    describe: "Add a new client/lead to CRM Master. Params: {\"name\":\"...\", \"email\"?:\"...\", \"stage\"?:\"New\", \"value\"?:\"$0\"}. Requires at least a name. Free — just writes a record.",
+    confirmText: function(p){ return "Add <b>" + String(p.name||'').replace(/</g,'&lt;') + "</b> to your CRM as a client?"; },
+    run: async function(p){
+      if (!p.name) throw new Error("I need at least a name to add a CRM client.");
+      await window.callCrmSave('clients', { name: p.name, email: p.email || '', stage: p.stage || 'New', value: p.value || '$0', lastContact: 'Just now' });
+      if (typeof window.showScreen === 'function') window.showScreen('crmmaster');
+      return { text: "Added " + p.name.replace(/</g,'&lt;') + " to your CRM. Switched you to CRM Master.", done: true };
+    }
+  },
+  creative_video_generate: {
+    describe: "Generate an AI video in Creative Master. Params: {\"prompt\":\"...\", \"duration\"?:5|10}. Requires a clear description of the desired video. This is a PAID action (billed per generation).",
+    confirmText: function(p){ return "Generate a " + (p.duration||5) + "s AI video of: “" + String(p.prompt||'').replace(/</g,'&lt;') + "”? This uses paid AI credits."; },
+    run: async function(p){
+      if (!p.prompt) throw new Error("I need a description of the video you want.");
+      var result = await window.callCreativeVideoGenerate({ prompt: p.prompt, duration: [5,10].includes(Number(p.duration)) ? Number(p.duration) : 5 });
+      if (typeof window.showScreen === 'function') window.showScreen('creativemaster');
+      return { text: result && result.videoUrl
+        ? "Video's ready — switched you to Creative Master so you can view/download it."
+        : "Video generation kicked off — check Creative Master's video library shortly.", done: true };
+    }
+  }
+};
+var _genieFabPending = {};
+var _genieFabPendingSeq = 0;
+function genieFabConfirmBubble(actionName, params, promptText){
+  var log = document.getElementById('genieFabLog');
+  if (!log) return;
+  var id = 'gfa' + (++_genieFabPendingSeq);
+  _genieFabPending[id] = { actionName: actionName, params: params };
+  var d = document.createElement('div');
+  d.className = 'ai-msg bot';
+  d.innerHTML = '<span class="ai-msg-tag">🧞 Genie</span><div>' + promptText +
+    '<div style="margin-top:8px;display:flex;gap:8px">' +
+    '<button onclick="genieFabRunAction(\'' + id + '\')" style="background:#ec4899;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.74rem;font-weight:700;cursor:pointer">Yes, do it</button>' +
+    '<button onclick="genieFabCancelAction(\'' + id + '\')" style="background:transparent;color:#9ca3af;border:1px solid #374151;border-radius:8px;padding:6px 12px;font-size:.74rem;cursor:pointer">Not now</button>' +
+    '</div></div>';
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+}
+async function genieFabRunAction(id){
+  var pending = _genieFabPending[id];
+  if (!pending) return;
+  delete _genieFabPending[id];
+  // disable the buttons that were clicked so a double-click can't double-fire
+  var log = document.getElementById('genieFabLog');
+  if (log && log.lastElementChild) { var btns = log.lastElementChild.querySelectorAll('button'); btns.forEach(function(b){ b.disabled = true; b.style.opacity = .5; }); }
+  var thinking = genieFabBubble('Working on it…', 'bot');
+  try {
+    var action = MM_GENIE_ACTIONS[pending.actionName];
+    if (!action) throw new Error("I don't know how to do that anymore.");
+    var out = await action.run(pending.params);
+    thinking.querySelector('div').innerHTML = out.text;
+    if (out.confirmAgain) {
+      genieFabConfirmBubble(out.confirmAgain.name, out.confirmAgain.params, MM_GENIE_ACTIONS[out.confirmAgain.name].confirmText(out.confirmAgain.params));
+    }
+  } catch(e) {
+    thinking.querySelector('div').innerHTML = "Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;');
+  }
+}
+function genieFabCancelAction(id){
+  delete _genieFabPending[id];
+  genieFabBubble("No problem — let me know if you want me to do something else.", 'bot');
+}
+window.genieFabRunAction = genieFabRunAction;
+window.genieFabCancelAction = genieFabCancelAction;
+
 async function sendGenieFab() {
   var input = document.getElementById('genieFabInput');
   if (!input || !input.value.trim()) return;
@@ -13934,13 +14046,38 @@ async function sendGenieFab() {
   var thinking = genieFabBubble('Thinking…', 'bot');
   var btn = document.getElementById('genieFabSend'); if (btn) btn.disabled = true;
   try {
-    if (typeof window.askDrGainz !== 'function') throw new Error('demo');
+    if (typeof window.genText !== 'function') throw new Error('demo');
     var screenId = window.mmCurrentScreen || 'dashboard';
     var screenHelp = MM_GENIE_SCREEN_HELP[screenId] || '';
-    var ctx = 'You are Genie, the Money Masteries webapp help assistant — not a financial coach. Answer questions about how the Money Masteries platform itself works: the three plans (Basic $19.99/mo, Pro $50/mo, Elite $99/mo), the affiliate/commission program, and every Master Tool (Genie Agent, My Store, Real Estate, Marketing, Markets, Creative — includes Production, CRM — includes Administrative, University, and Community Masters). ' +
-      'The member is CURRENTLY on this screen: ' + screenId + ' — ' + screenHelp + ' Prioritize helping them use THIS screen if their question is about "this", "here", or how to do something — give concrete steps (which button/tab to click) using the screen description above. If their question is unrelated, answer generally about the platform. You are not a licensed financial or legal advisor — do not give personalized investment or legal advice.';
-    var a = await window.askDrGainz(q, ctx, (typeof courseLang !== 'undefined' ? courseLang : 'en'));
-    thinking.querySelector('div').innerHTML = a.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+    var actionSpecs = Object.keys(MM_GENIE_ACTIONS)
+      .filter(function(k){ return MM_GENIE_ACTIONS[k].describe; })
+      .map(function(k){ return '- "' + k + '": ' + MM_GENIE_ACTIONS[k].describe; }).join('\n');
+    var prompt =
+      'You are Genie, the Money Masteries webapp assistant. You both ANSWER questions about the platform (three plans — Basic $19.99/mo, Pro $50/mo, Elite $99/mo — the affiliate/commission program, and every Master Tool: Genie Agent, My Store, Real Estate, Marketing, Markets, Creative, CRM, University, Community) AND, when asked, can actually perform a small set of actions on the member\'s behalf.\n' +
+      'The member is currently on: ' + screenId + ' — ' + screenHelp + '\n\n' +
+      'AVAILABLE ACTIONS (only use one if the member is clearly asking you to DO something, not just asking how something works):\n' + actionSpecs + '\n\n' +
+      'Respond with STRICT JSON ONLY (no markdown fences, no extra text before or after) in exactly this shape:\n' +
+      '{"reply":"<short, friendly response to show the member, under 80 words>","action":null}\n' +
+      'or, only when you have every required param for one action from what the member said:\n' +
+      '{"reply":"<short response>","action":{"name":"<action key>","params":{...matching that action\'s params>}}}\n' +
+      'If the member wants an action but you are missing a required param (e.g. no state given for a lead search), set action to null and ask for the missing detail in reply instead. Never invent parameter values. You are not a licensed financial or legal advisor.\n\n' +
+      'MEMBER MESSAGE: ' + q;
+    var raw = await window.genText(prompt);
+    var jsonStr = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
+    var firstBrace = jsonStr.indexOf('{'), lastBrace = jsonStr.lastIndexOf('}');
+    if (firstBrace >= 0 && lastBrace > firstBrace) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+    var parsed = null;
+    try { parsed = JSON.parse(jsonStr); } catch(e) { parsed = null; }
+    if (parsed && typeof parsed.reply === 'string') {
+      thinking.querySelector('div').innerHTML = parsed.reply.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+      if (parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe) {
+        var act = MM_GENIE_ACTIONS[parsed.action.name];
+        genieFabConfirmBubble(parsed.action.name, parsed.action.params || {}, act.confirmText(parsed.action.params || {}));
+      }
+    } else {
+      // Gemini didn't return valid JSON — fall back to showing its raw text so the member still gets an answer.
+      thinking.querySelector('div').innerHTML = raw.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+    }
   } catch(e) {
     thinking.querySelector('div').innerHTML = String(e.message || e).includes('demo')
       ? 'This is the offline preview — on the live site I answer for real!'
