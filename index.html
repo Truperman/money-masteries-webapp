@@ -6253,7 +6253,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .nav-install-btn:hover{filter:brightness(1.1)}
 .nav-user{position:relative;cursor:pointer}
 .nav-user-dropdown{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#131a2b;border:1px solid #263047;border-radius:12px;min-width:180px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.4);z-index:300}
-.nav-user:hover .nav-user-dropdown{display:block}
+.nav-user-dropdown.open{display:block}
 .nud-item{padding:10px 12px;border-radius:8px;font-size:.82rem;font-weight:600;color:#e5e7eb;cursor:pointer;white-space:nowrap}
 .nud-item:hover{background:#1f2937}
 .nud-item.nud-danger:hover{background:#ef444422;color:#f87171}
@@ -6660,14 +6660,13 @@ document.addEventListener('DOMContentLoaded', function() {
   <button class="nav-install-btn" id="navInstallBtn" onclick="installPWA()">📲 Install App</button>
   <div class="nav-right">
     <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
-    <div class="nav-user" id="navUser">
+    <div class="nav-user" id="navUser" onclick="toggleNavUserDropdown(event)">
       <img class="nav-avatar" id="navAvatar" src="" alt="">
       <span class="nav-user-name" id="navName"></span>
       <span class="nav-plan-badge" id="navPlanBadge">Free</span>
-      <span class="nav-plan-badge" id="navPlanBadge">Free</span>
       <div class="nav-user-dropdown" id="navUserDropdown">
-        <div class="nud-item" onclick="showScreen('account')">👤 My Account</div>
-        <div class="nud-item" onclick="showScreen('account');setTimeout(function(){switchAcctTopTab('about')},30)">ℹ️ About</div>
+        <div class="nud-item" onclick="closeNavUserDropdown();showScreen('account')">👤 My Account</div>
+        <div class="nud-item" onclick="closeNavUserDropdown();showScreen('account');setTimeout(function(){switchAcctTopTab('about')},30)">ℹ️ About</div>
         <div class="nud-sep"></div>
         <div class="nud-item nud-danger" onclick="doSignOut()">🚪 Sign Out</div>
       </div>
@@ -12734,6 +12733,24 @@ function toggleNotifDropdown() {
   document.getElementById('notifDropdown').classList.toggle('open', notifOpen);
   if (notifOpen) buildNotifList();
 }
+// Account/Sign-Out menu (top-right avatar) — click-to-toggle, same pattern as
+// the notif bell above. Previously this only opened on CSS :hover, which is
+// unreliable on touch devices (no hover state) and closes the instant the
+// mouse drifts off the trigger on desktop, making Sign Out hard to reach.
+let navUserOpen = false;
+function toggleNavUserDropdown(e) {
+  if (e) e.stopPropagation();
+  navUserOpen = !navUserOpen;
+  var dd = document.getElementById('navUserDropdown');
+  if (dd) dd.classList.toggle('open', navUserOpen);
+}
+function closeNavUserDropdown() {
+  navUserOpen = false;
+  var dd = document.getElementById('navUserDropdown');
+  if (dd) dd.classList.remove('open');
+}
+window.toggleNavUserDropdown = toggleNavUserDropdown;
+window.closeNavUserDropdown = closeNavUserDropdown;
 function markAllRead(e) {
   if(e) e.stopPropagation();
   MOCK_NOTIFS.forEach(n => n.unread = false);
@@ -12891,6 +12908,9 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.notif-bell-wrap')) {
     notifOpen = false;
     document.getElementById('notifDropdown')?.classList.remove('open');
+  }
+  if (!e.target.closest('.nav-user')) {
+    closeNavUserDropdown();
   }
 });
 // Simulate a referral notification after 6 seconds
