@@ -2988,6 +2988,21 @@ body{top:0 !important;position:static !important}
 @keyframes fab-pulse{0%,100%{box-shadow:0 8px 24px #2E7BFF45}50%{box-shadow:0 8px 34px #2E7BFF70,0 0 0 9px #2E7BFF14}}
 .share-fab:hover{transform:translateY(-2px)}
 @media(max-width:600px){.share-fab{bottom:16px;right:16px;padding:13px 18px;font-size:.84rem}}
+/* ── GENIE FAB — persistent site-wide chat widget, all screens, all members ── */
+.genie-fab{position:fixed;bottom:88px;right:22px;z-index:1401;background:linear-gradient(110deg,#831843 0%,#ffd700 25%,#ec4899 50%,#ffd700 75%,#831843 100%);background-size:250% 100%;animation:mm-icon-glimmer-genie 3.4s ease-in-out infinite,fab-pulse-genie 2.8s ease-in-out infinite;color:#fff;border:none;border-radius:30px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(236,72,153,.35)}
+@keyframes fab-pulse-genie{0%,100%{box-shadow:0 8px 24px rgba(236,72,153,.35)}50%{box-shadow:0 8px 30px rgba(255,215,0,.5),0 0 0 8px rgba(236,72,153,.12)}}
+.genie-fab:hover{transform:translateY(-2px)}
+.genie-fab.hidden{display:none}
+@media(max-width:600px){.genie-fab{bottom:78px;right:16px;padding:12px 16px;font-size:.82rem}}
+.genie-fab-panel{position:fixed;bottom:150px;right:22px;z-index:1402;width:360px;max-width:calc(100vw - 32px);background:#0d1119;border:1px solid #ec489945;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
+.genie-fab-panel.open{display:flex}
+.genie-fab-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(135deg,#3b0764,#831843);font-weight:800;font-size:.88rem;color:#fce7f3}
+.genie-fab-close{background:none;border:none;color:#fce7f3;font-size:1rem;cursor:pointer;opacity:.8;padding:2px 6px}
+.genie-fab-close:hover{opacity:1}
+.genie-fab-sub{font-size:.72rem;color:#9ca3af;padding:10px 16px 0}
+.genie-fab-panel .ai-chat-log{max-height:320px;padding:12px 16px 0;margin-bottom:8px}
+.genie-fab-panel .ai-chat-bar{padding:0 16px 16px}
+@media(max-width:600px){.genie-fab-panel{right:16px;left:16px;width:auto;bottom:140px}}
 .share-overlay{position:fixed;inset:0;background:#000d;z-index:3500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;padding:16px}
 .share-overlay.open{opacity:1;pointer-events:auto}
 .share-card{background:#111827;border:1px solid #2E7BFF45;border-radius:20px;padding:26px;width:min(430px,95vw);max-height:92vh;overflow-y:auto;position:relative;transform:translateY(14px);transition:.25s;text-align:center}
@@ -7169,6 +7184,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
   <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
+  <button class="genie-fab" id="genieFab" onclick="toggleGenieFab()">🧞 <span>Ask Genie</span></button>
+  <div class="genie-fab-panel" id="genieFabPanel">
+    <div class="genie-fab-head">
+      <span>🧞 Genie <span class="ai-live-dot"></span></span>
+      <button class="genie-fab-close" onclick="toggleGenieFab(false)">✕</button>
+    </div>
+    <div class="genie-fab-sub" id="genieFabSub">Ask me anything — I can see which screen you're on and help you use it.</div>
+    <div class="ai-chat-log" id="genieFabLog"></div>
+    <div class="ai-chat-bar">
+      <input class="ai-chat-input" id="genieFabInput" maxlength="500" placeholder="Ask Genie..." onkeydown="if(event.key==='Enter')sendGenieFab()">
+      <button class="ai-chat-send" id="genieFabSend" onclick="sendGenieFab()">➤</button>
+    </div>
+  </div>
 
   <!-- SIDEBAR -->
   <aside class="sidebar lg-mode">
@@ -10340,6 +10368,8 @@ function showScreen(id) {
   const navEl  = document.getElementById('nav-' + id);
   if (screen) screen.classList.add('active');
   if (navEl)  navEl.classList.add('active');
+  window.mmCurrentScreen = id;
+  if (typeof mmUpdateGenieFabContext === 'function') mmUpdateGenieFabContext(id);
   if (typeof mmUpdateLiquidGlassBg === 'function') mmUpdateLiquidGlassBg(id);
   if (id === 'commissions') loadCommissions();
   if (typeof mmApplyDemoToScreen === 'function') mmApplyDemoToScreen(id);
@@ -13839,6 +13869,86 @@ async function sendAiCoach() {
   }
   if (btn) btn.disabled = false;
 }
+
+// ── GENIE FAB — persistent site-wide help widget (all screens, all members) ──
+// Same free askDrGainz() call as Ask Genie (screen-aicoach), just wrapped in a
+// floating widget that stays mounted outside the .screen divs (see #shareFab
+// sibling in the HTML) so it survives showScreen() swaps, plus a per-screen
+// context blurb so Genie can actually help with whatever tool the member is
+// looking at instead of only answering generic platform questions.
+var MM_GENIE_SCREEN_HELP = {
+  dashboard:        "The Dashboard — home screen with stats, next best action, activity feed, and affiliate snapshot.",
+  geniemaster:       "Genie Agent Master — purchase/configure a white-labeled AI agent product to resell to clients.",
+  universitymaster:  "University Master — video courses (day trading, real estate, e-commerce), the Revalidation service tab, and the Impact webapp tab.",
+  mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
+  reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
+  marketingmaster:   "Marketing Master — AI-assisted marketing content and connecting social accounts.",
+  marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A.",
+  creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
+  crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
+  communitymaster:   "Community Master — the live member feed, plus a link out to BizBuzz.",
+  commissions:       "Payouts/Bank — commission tree, payout requests, PayPal setup, and Elite Dividends (Elite members only).",
+  plans:             "Plans & Pricing — compare Basic/Pro/Elite and upgrade or downgrade.",
+  account:           "My Account — profile, affiliate link, membership plan, share kit, and past purchases.",
+  aicoach:           "Ask Genie — this same chat, full-screen."
+};
+function mmUpdateGenieFabContext(id){
+  var sub = document.getElementById('genieFabSub');
+  if (!sub) return;
+  var help = MM_GENIE_SCREEN_HELP[id];
+  sub.textContent = help ? ("You're on: " + help) : "Ask me anything — I can see which screen you're on and help you use it.";
+}
+function toggleGenieFab(force){
+  var panel = document.getElementById('genieFabPanel');
+  var fab = document.getElementById('genieFab');
+  if (!panel) return;
+  var willOpen = typeof force === 'boolean' ? force : !panel.classList.contains('open');
+  panel.classList.toggle('open', willOpen);
+  if (fab) fab.classList.toggle('hidden', willOpen && window.innerWidth <= 600);
+  if (willOpen) {
+    mmUpdateGenieFabContext(window.mmCurrentScreen || 'dashboard');
+    var log = document.getElementById('genieFabLog');
+    if (log && !log.children.length) {
+      genieFabBubble("Hey! I'm Genie 🧞 — ask me how to use anything on this screen, or about Money Masteries in general.", 'bot');
+    }
+    var input = document.getElementById('genieFabInput');
+    if (input) setTimeout(function(){ input.focus(); }, 50);
+  }
+}
+window.toggleGenieFab = toggleGenieFab;
+window.mmUpdateGenieFabContext = mmUpdateGenieFabContext;
+function genieFabBubble(text, who) {
+  var log = document.getElementById('genieFabLog');
+  if (!log) return null;
+  var d = document.createElement('div');
+  d.className = 'ai-msg ' + who;
+  d.innerHTML = (who === 'bot' ? '<span class="ai-msg-tag">🧞 Genie</span>' : '') + '<div>' + text + '</div>';
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  return d;
+}
+async function sendGenieFab() {
+  var input = document.getElementById('genieFabInput');
+  if (!input || !input.value.trim()) return;
+  var q = input.value.trim(); input.value = '';
+  genieFabBubble(q.replace(/</g, '&lt;'), 'user');
+  var thinking = genieFabBubble('Thinking…', 'bot');
+  var btn = document.getElementById('genieFabSend'); if (btn) btn.disabled = true;
+  try {
+    if (typeof window.askDrGainz !== 'function') throw new Error('demo');
+    var screenId = window.mmCurrentScreen || 'dashboard';
+    var screenHelp = MM_GENIE_SCREEN_HELP[screenId] || '';
+    var ctx = 'You are Genie, the Money Masteries webapp help assistant — not a financial coach. Answer questions about how the Money Masteries platform itself works: the three plans (Basic $19.99/mo, Pro $50/mo, Elite $99/mo), the affiliate/commission program, and every Master Tool (Genie Agent, My Store, Real Estate, Marketing, Markets, Creative — includes Production, CRM — includes Administrative, University, and Community Masters). ' +
+      'The member is CURRENTLY on this screen: ' + screenId + ' — ' + screenHelp + ' Prioritize helping them use THIS screen if their question is about "this", "here", or how to do something — give concrete steps (which button/tab to click) using the screen description above. If their question is unrelated, answer generally about the platform. You are not a licensed financial or legal advisor — do not give personalized investment or legal advice.';
+    var a = await window.askDrGainz(q, ctx, (typeof courseLang !== 'undefined' ? courseLang : 'en'));
+    thinking.querySelector('div').innerHTML = a.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+  } catch(e) {
+    thinking.querySelector('div').innerHTML = String(e.message || e).includes('demo')
+      ? 'This is the offline preview — on the live site I answer for real!'
+      : 'I could not answer right now. (Owner: enable Firebase AI Logic in the console.)';
+  }
+  if (btn) btn.disabled = false;
+}
+window.sendGenieFab = sendGenieFab;
 
 // ── PAYOUT CALCULATOR ─────────────────────────────────────────────────────────
 var calcPlan = 'pro';
