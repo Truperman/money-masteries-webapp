@@ -13940,6 +13940,17 @@ function genieFabBubble(text, who) {
 // alone. To add a new action: add an entry here (describe + run), then add
 // its name to the ACTIONS list baked into the prompt in sendGenieFab().
 var MM_GENIE_ACTIONS = {
+  navigate_to_screen: {
+    describe: "Take the member to a different screen in the app. Params: {\"screen\":\"<one of: dashboard, geniemaster, universitymaster, mystoremaster, reimaster, marketingmaster, marketsmaster, creativemaster, crmmaster, communitymaster, commissions, plans, account, aicoach>\"}. Use this whenever the member asks to go to / open / take me to / show me a Master or section by name (map names loosely: 'real estate' -> reimaster, 'store' -> mystoremaster, 'crm' -> crmmaster, 'payouts'/'bank' -> commissions, 'pricing' -> plans, 'my account' -> account, 'university'/'courses' -> universitymaster, 'community' -> communitymaster, 'markets'/'trading' -> marketsmaster, 'marketing' -> marketingmaster, 'creative'/'video' -> creativemaster, 'genie agent' -> geniemaster). This just switches screens — it is instant and free, no confirmation needed.",
+    instant: true,
+    confirmText: function(p){ return "Taking you to " + (MM_GENIE_SCREEN_HELP[p.screen] ? p.screen : 'that screen') + "…"; },
+    run: async function(p){
+      var screen = p.screen;
+      if (!screen || !MM_GENIE_SCREEN_HELP[screen] || typeof window.showScreen !== 'function') throw new Error("I don't recognize that screen.");
+      window.showScreen(screen);
+      return { text: "Done — you're on " + (MM_GENIE_SCREEN_HELP[screen] || screen).split(' — ')[0] + " now.", done: true };
+    }
+  },
   rei_search_leads: {
     describe: "Search Real Estate Master for distressed-property leads. Params: {\"geography\":{\"mode\":\"states\"|\"counties\"|\"city\",\"states\":[\"XX\"],\"counties\"?:[\"...\"],\"cities\"?:[\"...\"]}, \"strategy\"?:\"custom\"}. Requires at minimum a 2-letter US state code. This is a PAID action (billed per lead delivered) — never mark it ready unless the member gave you at least a state.",
     confirmText: function(p){
@@ -14077,7 +14088,13 @@ async function sendGenieFab() {
       thinking.querySelector('div').innerHTML = parsed.reply.replace(/</g, '&lt;').replace(/\n/g, '<br>');
       if (parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe) {
         var act = MM_GENIE_ACTIONS[parsed.action.name];
-        genieFabConfirmBubble(parsed.action.name, parsed.action.params || {}, act.confirmText(parsed.action.params || {}));
+        var actParams = parsed.action.params || {};
+        if (act.instant) {
+          // safe, non-destructive, free actions (like navigation) run immediately, no confirm click needed
+          act.run(actParams).then(function(out){ genieFabBubble(out.text, 'bot'); }).catch(function(e){ genieFabBubble("Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;'), 'bot'); });
+        } else {
+          genieFabConfirmBubble(parsed.action.name, actParams, act.confirmText(actParams));
+        }
       }
     } else {
       // Gemini didn't return valid JSON — fall back to showing its raw text so the member still gets an answer.
