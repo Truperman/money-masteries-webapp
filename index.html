@@ -7192,7 +7192,10 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="genie-fab-panel" id="genieFabPanel">
     <div class="genie-fab-head">
       <span>🧞 Genie <span class="ai-live-dot"></span></span>
-      <button class="genie-fab-close" onclick="toggleGenieFab(false)">✕</button>
+      <span style="display:flex;gap:4px">
+        <button class="genie-fab-close" id="genieFabVoiceBtn" onclick="genieFabToggleVoice()" title="Turn Genie's voice on/off">🔊</button>
+        <button class="genie-fab-close" onclick="toggleGenieFab(false)">✕</button>
+      </span>
     </div>
     <div class="genie-fab-sub" id="genieFabSub">Ask me anything — I can see which screen you're on and help you use it.</div>
     <div class="ai-chat-log" id="genieFabLog"></div>
@@ -12132,12 +12135,7 @@ window.showScreen = function(id) {
 //     For an uploaded .mp4, put the file in the site folder and use its name (e.g. 'video2.mp4').
 //     You can also use a YouTube link. Just add more lines to the list.
 var INTRO_VIDEOS = [
-  // No video file ships inside this single-file export, so pointing this at a local
-  // filename (e.g. 'video1.mp4') always shows a broken player — there is no such file
-  // on the server. Add a real, reachable video URL here (a YouTube link, or a full
-  // https:// URL to a video you've hosted elsewhere), or upload one from
-  // Admin → Intro Video Manager, e.g.:
-  // { src:'https://youtu.be/XXXXXXXXXXX', title:'Welcome to Money Masteries' }
+  { src:'https://youtu.be/V69JH0L8qLA', title:'Welcome to Money Masteries' }
 ];
 // Live PayPal REST Client ID ("Money Masteries 1" app, developer.paypal.com →
 // Apps & Credentials → Live) — turns on real card/PayPal checkout for the
@@ -13912,9 +13910,11 @@ function toggleGenieFab(force){
   if (fab) fab.classList.toggle('hidden', willOpen && window.innerWidth <= 600);
   if (willOpen) {
     mmUpdateGenieFabContext(window.mmCurrentScreen || 'dashboard');
+    var voiceBtn = document.getElementById('genieFabVoiceBtn');
+    if (voiceBtn) voiceBtn.textContent = _genieFabVoiceOn() ? '🔊' : '🔇';
     var log = document.getElementById('genieFabLog');
     if (log && !log.children.length) {
-      genieFabBubble("Hey! I'm Genie 🧞 — ask me how to use anything on this screen, or about Money Masteries in general.", 'bot');
+      genieFabBubble("Hey! I'm Genie 🧞 — ask me how to use anything on this screen, or about Money Masteries in general.", 'bot', { speak: true });
     }
     var input = document.getElementById('genieFabInput');
     if (input) setTimeout(function(){ input.focus(); }, 50);
@@ -13922,15 +13922,82 @@ function toggleGenieFab(force){
 }
 window.toggleGenieFab = toggleGenieFab;
 window.mmUpdateGenieFabContext = mmUpdateGenieFabContext;
-function genieFabBubble(text, who) {
+function genieFabBubble(text, who, opts) {
   var log = document.getElementById('genieFabLog');
   if (!log) return null;
   var d = document.createElement('div');
   d.className = 'ai-msg ' + who;
   d.innerHTML = (who === 'bot' ? '<span class="ai-msg-tag">🧞 Genie</span>' : '') + '<div>' + text + '</div>';
   log.appendChild(d); log.scrollTop = log.scrollHeight;
+  if (who === 'bot' && opts && opts.speak) genieFabSpeak(text);
   return d;
 }
+
+// ── GENIE VOICE — free, unlimited browser text-to-speech (Web Speech API).
+// No API key, no cost, works offline of any AI provider. Quality depends on
+// the member's OS/browser voices (best on Chrome/Edge — those ship Google's
+// higher-quality network voices; more robotic on some older systems). Genie
+// speaks its replies aloud automatically; the 🔊 button in the panel header
+// lets a member mute it, saved per-browser so it sticks between visits.
+function _genieFabVoiceOn(){ try { return localStorage.getItem('genieVoiceOff') !== '1'; } catch(e){ return true; } }
+function genieFabToggleVoice(){
+  var on = !_genieFabVoiceOn();
+  try { localStorage.setItem('genieVoiceOff', on ? '0' : '1'); } catch(e){}
+  var btn = document.getElementById('genieFabVoiceBtn');
+  if (btn) btn.textContent = on ? '🔊' : '🔇';
+  if (!on && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+window.genieFabToggleVoice = genieFabToggleVoice;
+var _genieFabVoiceList = [];
+function _genieFabLoadVoices(){
+  if (!window.speechSynthesis) return;
+  _genieFabVoiceList = window.speechSynthesis.getVoices() || [];
+}
+if (window.speechSynthesis) {
+  _genieFabLoadVoices();
+  window.speechSynthesis.onvoiceschanged = _genieFabLoadVoices;
+}
+function _genieFabPickVoice(langPrefix){
+  var voices = _genieFabVoiceList.length ? _genieFabVoiceList : (window.speechSynthesis ? window.speechSynthesis.getVoices() : []);
+  var pool = voices.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(langPrefix) === 0; });
+  if (!pool.length) pool = voices;
+  if (!pool.length) return null;
+  // Prefer the higher-quality network voices (Google/Microsoft "Natural"/"Online" voices
+  // sound far more realistic than the default offline OS voice) that most browsers expose.
+  var ranked = pool.slice().sort(function(a, b){
+    function score(v){
+      var n = (v.name || '').toLowerCase();
+      var s = 0;
+      if (!v.localService) s += 3; // network voices are almost always the natural-sounding ones
+      if (/natural|neural|online|premium|enhanced/.test(n)) s += 3;
+      if (/google/.test(n)) s += 1;
+      return s;
+    }
+    return score(b) - score(a);
+  });
+  return ranked[0];
+}
+function genieFabSpeak(text){
+  if (!window.speechSynthesis || !_genieFabVoiceOn()) return;
+  var clean = String(text || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s+/g, ' ').trim();
+  if (!clean) return;
+  try {
+    window.speechSynthesis.cancel(); // don't stack replies — newest reply always wins
+    var utter = new SpeechSynthesisUtterance(clean);
+    var lang = _genieFabSpeechLang ? _genieFabSpeechLang() : 'en-US';
+    utter.lang = lang;
+    var voice = _genieFabPickVoice(lang.split('-')[0].toLowerCase());
+    if (voice) utter.voice = voice;
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    window.speechSynthesis.speak(utter);
+  } catch(e) {}
+}
+window.genieFabSpeak = genieFabSpeak;
 // ── GENIE ACTIONS — lets Genie actually DO things for the member, not just
 // talk about them. Each action wraps an existing window.callXXX backend
 // callable (the same ones the screens themselves use), so Genie can never
@@ -14026,6 +14093,7 @@ function genieFabConfirmBubble(actionName, params, promptText){
     '<button onclick="genieFabCancelAction(\'' + id + '\')" style="background:transparent;color:#9ca3af;border:1px solid #374151;border-radius:8px;padding:6px 12px;font-size:.74rem;cursor:pointer">Not now</button>' +
     '</div></div>';
   log.appendChild(d); log.scrollTop = log.scrollHeight;
+  genieFabSpeak(promptText);
 }
 async function genieFabRunAction(id){
   var pending = _genieFabPending[id];
@@ -14040,16 +14108,19 @@ async function genieFabRunAction(id){
     if (!action) throw new Error("I don't know how to do that anymore.");
     var out = await action.run(pending.params);
     thinking.querySelector('div').innerHTML = out.text;
+    if (!out.confirmAgain) genieFabSpeak(out.text);
     if (out.confirmAgain) {
       genieFabConfirmBubble(out.confirmAgain.name, out.confirmAgain.params, MM_GENIE_ACTIONS[out.confirmAgain.name].confirmText(out.confirmAgain.params));
     }
   } catch(e) {
-    thinking.querySelector('div').innerHTML = "Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;');
+    var errText = "Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;');
+    thinking.querySelector('div').innerHTML = errText;
+    genieFabSpeak(errText);
   }
 }
 function genieFabCancelAction(id){
   delete _genieFabPending[id];
-  genieFabBubble("No problem — let me know if you want me to do something else.", 'bot');
+  genieFabBubble("No problem — let me know if you want me to do something else.", 'bot', { speak: true });
 }
 window.genieFabRunAction = genieFabRunAction;
 window.genieFabCancelAction = genieFabCancelAction;
@@ -14085,13 +14156,16 @@ async function sendGenieFab() {
     var parsed = null;
     try { parsed = JSON.parse(jsonStr); } catch(e) { parsed = null; }
     if (parsed && typeof parsed.reply === 'string') {
-      thinking.querySelector('div').innerHTML = parsed.reply.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+      var replyHtml = parsed.reply.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+      thinking.querySelector('div').innerHTML = replyHtml;
+      var hasInstantAction = parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe && MM_GENIE_ACTIONS[parsed.action.name].instant;
+      if (!hasInstantAction) genieFabSpeak(parsed.reply); // instant actions speak their own result below instead
       if (parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe) {
         var act = MM_GENIE_ACTIONS[parsed.action.name];
         var actParams = parsed.action.params || {};
         if (act.instant) {
           // safe, non-destructive, free actions (like navigation) run immediately, no confirm click needed
-          act.run(actParams).then(function(out){ genieFabBubble(out.text, 'bot'); }).catch(function(e){ genieFabBubble("Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;'), 'bot'); });
+          act.run(actParams).then(function(out){ genieFabBubble(out.text, 'bot', { speak: true }); }).catch(function(e){ genieFabBubble("Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;'), 'bot', { speak: true }); });
         } else {
           genieFabConfirmBubble(parsed.action.name, actParams, act.confirmText(actParams));
         }
@@ -14099,11 +14173,14 @@ async function sendGenieFab() {
     } else {
       // Gemini didn't return valid JSON — fall back to showing its raw text so the member still gets an answer.
       thinking.querySelector('div').innerHTML = raw.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+      genieFabSpeak(raw);
     }
   } catch(e) {
-    thinking.querySelector('div').innerHTML = String(e.message || e).includes('demo')
+    var failMsg = String(e.message || e).includes('demo')
       ? 'This is the offline preview — on the live site I answer for real!'
       : 'I could not answer right now. (Owner: enable Firebase AI Logic in the console.)';
+    thinking.querySelector('div').innerHTML = failMsg;
+    genieFabSpeak(failMsg);
   }
   if (btn) btn.disabled = false;
 }
