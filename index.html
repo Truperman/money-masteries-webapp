@@ -223,6 +223,14 @@
     return res.data;
   };
 
+  // The Gainz Plan — Pro members start at 40% direct commission; picking a
+  // niche, finishing that niche's course, and getting 10 confirmed (paying)
+  // referrals unlocks the full 50% Elite-level rate. See functions/index.js
+  // gainzGetStatus/gainzSetNiche/gainzMarkCourseDone.
+  window.callGainzGetStatus = async () => (await httpsCallable(functionsClient, 'gainzGetStatus')({})).data;
+  window.callGainzSetNiche = async (niche) => (await httpsCallable(functionsClient, 'gainzSetNiche')({ niche })).data;
+  window.callGainzMarkCourseDone = async () => (await httpsCallable(functionsClient, 'gainzMarkCourseDone')({})).data;
+
   // Markets Master — Trading Journal, Indicators membership, Copy Trading Bot.
   // See functions/index.js journalAddEntry/journalList/journalDelete,
   // getIndicatorsStatus, mmBrokerConnect/mmBrokerStatus/mmBrokerDisconnect,
@@ -1668,6 +1676,30 @@ body{background:#0A0E1A;color:#e5e7eb;font-family:Inter,Segoe UI,sans-serif;min-
 .next-action-desc{font-size:.83rem;color:#9ca3af;line-height:1.6;margin-bottom:14px}
 .next-action-btn{background:#4ade80;color:#000;border:none;padding:10px 22px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;transition:.2s}
 .next-action-btn:hover{background:#22c55e}
+
+/* ── THE GAINZ PLAN — dashboard widget ─────────────────────────────────── */
+.gainz-card{background:linear-gradient(135deg,#1a1330,#111827);border:1px solid #7c3aed55;border-radius:16px;padding:22px;margin-bottom:24px}
+.gainz-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.gainz-head{font-size:1.02rem;font-weight:800;color:#e9d5ff}
+.gainz-rate-badge{background:#a855f722;color:#c4b5fd;border:1px solid #a855f755;font-size:.72rem;font-weight:800;padding:5px 12px;border-radius:20px;white-space:nowrap}
+.gainz-rate-badge.unlocked{background:#f5c84222;color:#f5c842;border-color:#f5c84266}
+.gainz-sub{font-size:.82rem;color:#9ca3af;line-height:1.6;margin-bottom:16px}
+.gainz-steps{display:flex;flex-direction:column;gap:12px}
+.gainz-step{display:flex;gap:12px;background:#0000002a;border:1px solid #ffffff12;border-radius:12px;padding:14px}
+.gainz-step.locked{opacity:.5}
+.gainz-step.done{border-color:#4ade8055;background:#4ade8010}
+.gainz-num{width:30px;height:30px;border-radius:50%;background:#111827;border:2px solid #374151;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0;color:#9ca3af}
+.gainz-step.done .gainz-num{background:#4ade80;border-color:#4ade80;color:#08170c}
+.gainz-step-body{flex:1;min-width:0}
+.gainz-step-title{font-size:.86rem;font-weight:700;color:#e5e7eb}
+.gainz-step-sub{font-size:.76rem;color:#9ca3af;margin-top:2px;line-height:1.5}
+.gainz-btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.gainz-btn{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s}
+.gainz-btn:hover{border-color:#a855f7;color:#c4b5fd}
+.gainz-btn.primary{background:#a855f7;border-color:#a855f7;color:#fff}
+.gainz-btn.primary:hover{background:#9333ea}
+.gainz-bar{height:6px;border-radius:4px;background:#ffffff14;margin-top:10px;overflow:hidden}
+.gainz-bar-fill{height:100%;background:linear-gradient(90deg,#a855f7,#4ade80);border-radius:4px;transition:width .3s}
 
 /* AFFILIATE CARD */
 .aff-card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:20px;margin-bottom:24px}
@@ -7285,6 +7317,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <!-- YOUR RANK -->
       <div id="rankCard"></div>
 
+      <!-- THE GAINZ PLAN — Pro members start at 40% commission; completing
+           these 3 steps (or upgrading to Elite) unlocks the full 50%. -->
+      <div class="gainz-card" id="gainzPlanCard" style="display:none"></div>
+
       <!-- QUICK ACTIONS -->
       <div class="dash-section-label"><i class="fa-solid fa-bolt"></i> Quick Actions</div>
       <div class="quick-actions">
@@ -7860,6 +7896,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <thead><tr><th>Level</th><th>People</th><th>Basic — 30% L1 (one-time)</th><th>Pro — 50% L1 · 2% L2–4</th><th>Elite — 50% L1 · 5/3/2/1%</th></tr></thead>
           <tbody id="compLevelTable"></tbody>
         </table>
+      </div>
+      <div style="font-size:.74rem;color:#9ca3af;margin:-14px 0 24px;line-height:1.6">
+        <b>The Gainz Plan:</b> new Pro members start at 40% direct commission. Pick a niche, finish its course, and get 10 confirmed (paying) referrals — shown above once unlocked — to reach the full 50% rate shown here. Upgrading to Elite unlocks it instantly.
       </div>
 
       <!-- DIGITAL PRODUCTS TABLE -->
@@ -10496,6 +10535,7 @@ function showLoggedIn(user, data) {
   const statPointsValEl = document.getElementById('statPointsValue');
   if (statPointsEl) statPointsEl.textContent = pts;
   if (statPointsValEl) statPointsValEl.textContent = 'Redeemable value: ' + fmtUSD(pts * 0.05);
+  if (typeof renderGainzPlanCard === 'function') renderGainzPlanCard(data);
 
   // Affiliate links
   ['dashAffLink','affPageLink','accountAffLink'].forEach(id => {
@@ -11785,7 +11825,7 @@ function loadRealTeamTree(force) {
   __realTeamUnsub = FB.onSnapshot(l1Query, async (l1Snap) => {
     try {
       const myPlan = (window.userData && window.userData.plan) || 'free';
-      const directRate = (myPlan === 'pro' || myPlan === 'elite') ? 0.5 : (myPlan === 'basic' ? 0.3 : 0.1);
+      const directRate = gainzRateFor(myPlan);
       const teamRate = myPlan === 'elite' ? 0.05 : (myPlan === 'pro' ? 0.02 : 0);
       const l1Docs = l1Snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const l1Codes = l1Docs.filter(m => m.affiliateCode).map(m => m.affiliateCode);
@@ -15441,18 +15481,98 @@ var MASTER_PRODUCTS = [
 window.MASTER_PRODUCTS = MASTER_PRODUCTS;
 function getAllProducts() { return DEFAULT_PRODUCTS.concat(MASTER_PRODUCTS).concat(window.UPLOADED_PRODUCTS); }
 
+// Pro members start at 40% direct commission; Elite is always 50%. Pro only
+// reaches 50% by completing the Gainz Plan (see MM_GAINZ_* below) — keep in
+// sync with directCommissionRate() in functions/index.js.
+function gainzRateFor(plan) {
+  if (plan === 'elite') return 0.5;
+  if (plan === 'pro') return (window.userData && window.userData.gainzPlanComplete) ? 0.5 : 0.4;
+  if (plan === 'basic') return 0.3;
+  return 0.1;
+}
 function earnFor(p) {
   var plan = (window.userData && window.userData.plan) || 'free';
-  var rate = (plan === 'pro' || plan === 'elite') ? 0.5 : (plan === 'basic' ? 0.3 : 0.1);
+  var rate = gainzRateFor(plan);
   if (p.commissionPct) rate = Math.min(rate, p.commissionPct / 100);
   return p.price * rate;
 }
+
+// ── THE GAINZ PLAN — dashboard widget ────────────────────────────────────
+// Pro members start at 40% direct commission. These 3 steps (or upgrading
+// to Elite outright) unlock the full 50% rate. Only shown to Pro members —
+// Elite already has 50%, and Basic/Free aren't part of this gate.
+var MM_GAINZ_NICHES = {
+  daytrading: { label: 'Day Trading' },
+  realestate: { label: 'Real Estate' },
+  ecommerce:  { label: 'E-Commerce' }
+};
+function renderGainzPlanCard(data) {
+  var card = document.getElementById('gainzPlanCard');
+  if (!card) return;
+  var plan = (data && data.plan) || 'free';
+  if (plan !== 'pro') { card.style.display = 'none'; return; }
+  card.style.display = '';
+  var niche = data.gainzNiche || null;
+  var courseDone = !!data.gainzCourseDone;
+  var refCount = Number(data.referrals) || 0;
+  var complete = !!data.gainzPlanComplete;
+  var rate = Math.round(gainzRateFor(plan) * 100);
+  var nicheLabel = niche && MM_GAINZ_NICHES[niche] ? MM_GAINZ_NICHES[niche].label : niche;
+
+  var step1 = niche
+    ? '<div class="gainz-step done"><div class="gainz-num">✓</div><div class="gainz-step-body"><div class="gainz-step-title">Niche chosen</div><div class="gainz-step-sub">' + nicheLabel + '</div></div></div>'
+    : '<div class="gainz-step"><div class="gainz-num">1</div><div class="gainz-step-body"><div class="gainz-step-title">Choose your niche</div><div class="gainz-step-sub">This locks in once picked — choose the path you\'ll focus on.</div>' +
+        '<div class="gainz-btn-row">' + Object.keys(MM_GAINZ_NICHES).map(function(k){ return '<button class="gainz-btn" onclick="gainzPickNiche(\'' + k + '\')">' + MM_GAINZ_NICHES[k].label + '</button>'; }).join('') + '</div></div></div>';
+
+  var step2 = courseDone
+    ? '<div class="gainz-step done"><div class="gainz-num">✓</div><div class="gainz-step-body"><div class="gainz-step-title">Course finished</div><div class="gainz-step-sub">' + (nicheLabel || '') + '</div></div></div>'
+    : '<div class="gainz-step' + (niche ? '' : ' locked') + '"><div class="gainz-num">2</div><div class="gainz-step-body"><div class="gainz-step-title">Finish your course</div><div class="gainz-step-sub">' +
+        (niche ? 'Complete your ' + nicheLabel + ' course in University Master, then mark it done here.' : 'Choose a niche first.') + '</div>' +
+        (niche ? '<div class="gainz-btn-row"><button class="gainz-btn" onclick="showScreen(\'universitymaster\')">Go to Course</button><button class="gainz-btn primary" onclick="gainzMarkCourseDone()">Mark Complete</button></div>' : '') +
+        '</div></div>';
+
+  var step3 = '<div class="gainz-step' + (refCount >= 10 ? ' done' : '') + '"><div class="gainz-num">' + (refCount >= 10 ? '✓' : '3') + '</div><div class="gainz-step-body">' +
+      '<div class="gainz-step-title">Get 10 confirmed referrals</div>' +
+      '<div class="gainz-step-sub">' + Math.min(refCount, 10) + ' / 10 people you referred who became paying members</div>' +
+      '<div class="gainz-bar"><div class="gainz-bar-fill" style="width:' + Math.min(100, refCount / 10 * 100) + '%"></div></div>' +
+      '</div></div>';
+
+  card.innerHTML =
+    '<div class="gainz-head-row"><div class="gainz-head">🎯 The Gainz Plan</div><div class="gainz-rate-badge' + (complete ? ' unlocked' : '') + '">' + rate + '% commission' + (complete ? ' · Unlocked 🎉' : '') + '</div></div>' +
+    '<div class="gainz-sub">' + (complete
+      ? "You've unlocked the full 50% commission rate — nice work."
+      : 'Complete all 3 steps below to unlock the full 50% commission rate — or upgrade to Elite anytime to get it instantly.') + '</div>' +
+    '<div class="gainz-steps">' + step1 + step2 + step3 + '</div>';
+}
+window.renderGainzPlanCard = renderGainzPlanCard;
+async function gainzPickNiche(niche) {
+  try {
+    if (typeof window.callGainzSetNiche !== 'function') throw new Error('demo');
+    var res = await window.callGainzSetNiche(niche);
+    if (window.userData) { window.userData.gainzNiche = niche; window.userData.gainzPlanComplete = res.planComplete; }
+    renderGainzPlanCard(window.userData || {});
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('Could not save', String((e && e.message) || e));
+  }
+}
+async function gainzMarkCourseDone() {
+  try {
+    if (typeof window.callGainzMarkCourseDone !== 'function') throw new Error('demo');
+    var res = await window.callGainzMarkCourseDone();
+    if (window.userData) { window.userData.gainzCourseDone = true; window.userData.gainzPlanComplete = res.planComplete; }
+    renderGainzPlanCard(window.userData || {});
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('Could not save', String((e && e.message) || e));
+  }
+}
+window.gainzPickNiche = gainzPickNiche;
+window.gainzMarkCourseDone = gainzMarkCourseDone;
 
 function renderMarketplace() {
   var wrap = document.getElementById('mkWrap');
   if (!wrap) return;
   var plan = (window.userData && window.userData.plan) || 'free';
-  var rateLabel = (plan === 'pro' || plan === 'elite') ? '50%' : (plan === 'basic' ? '30%' : '10%');
+  var rateLabel = Math.round(gainzRateFor(plan) * 100) + '%';
   var isPaidPlan = (plan === 'basic' || plan === 'pro' || plan === 'elite');
   function card(p) {
     var isM = p.type === 'membership';
@@ -17802,7 +17922,7 @@ window.renderMarketplace = function() {
   var wrap = document.getElementById('mkWrap');
   if (!wrap) return;
   var plan = (window.userData && window.userData.plan) || 'free';
-  var rateLabel = (plan === 'pro' || plan === 'elite') ? '50%' : (plan === 'basic' ? '30%' : '10%');
+  var rateLabel = Math.round(gainzRateFor(plan) * 100) + '%';
   var isPaidPlan = (plan === 'basic' || plan === 'pro' || plan === 'elite');
   var s = storeState();
 
