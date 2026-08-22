@@ -223,6 +223,16 @@
     return res.data;
   };
 
+  // Marketing Master — real social posting via Zernio (zernio.com). See
+  // functions/index.js mmSocialConnectStart/mmSocialAccounts/
+  // mmSocialDisconnect/mmSocialPublish for the backend side, and the "not
+  // configured yet" error every one of these throws until the site owner
+  // sets ZERNIO_API_KEY.
+  window.callSocialConnectStart = async (platform) => (await httpsCallable(functionsClient, 'mmSocialConnectStart')({ platform })).data;
+  window.callSocialAccounts = async () => (await httpsCallable(functionsClient, 'mmSocialAccounts')({})).data;
+  window.callSocialDisconnect = async (accountId) => (await httpsCallable(functionsClient, 'mmSocialDisconnect')({ accountId })).data;
+  window.callSocialPublish = async (params) => (await httpsCallable(functionsClient, 'mmSocialPublish')(params)).data;
+
   // The Gainz Plan — Pro members start at 40% direct commission; picking a
   // niche, finishing that niche's course, and getting 10 confirmed (paying)
   // referrals unlocks the full 50% Elite-level rate. See functions/index.js
@@ -8182,9 +8192,10 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="payout-card" style="margin-bottom:20px">
         <div class="po-title">🔗 Connect Your Social Accounts</div>
-        <div class="po-sub">Link your accounts so Marketing Master (and the site-wide Share button) can post straight to your feeds instead of just opening the app for you.</div>
-        <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#f59e0b;margin:6px 0 12px">🧪 Connecting is a preview right now — full auto-posting needs each platform's developer approval, which is in progress. Click Connect to see how it'll work.</div>
+        <div class="po-sub">Connect your real accounts, then post to them straight from here — or ask Genie to do it for you.</div>
+        <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#6b7280;margin:6px 0 12px">Loading…</div>
         <div id="mmSocialConnectGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
+        <div id="mmSocialComposer"></div>
       </div>
       <div class="payout-card" style="margin-bottom:20px">
         <div class="po-title">🤖 Ask Marketing Master</div>
@@ -13957,7 +13968,7 @@ var MM_GENIE_SCREEN_HELP = {
   universitymaster:  "University Master — video courses (day trading, real estate, e-commerce), the Revalidation service tab, and the Impact webapp tab.",
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
-  marketingmaster:   "Marketing Master — AI-assisted marketing content, and a preview of connecting social accounts (real auto-posting isn't live yet — it's pending each platform's developer approval, so never tell a member you posted or connected something for real here; you can draft captions/content and click the preview Connect toggle, but be upfront that posting itself isn't automated yet).",
+  marketingmaster:   "Marketing Master — AI-assisted marketing content, plus REAL social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once the member connects an account here. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate. If the status line/elements show accounts aren't connected yet or posting isn't configured, say so honestly rather than claiming you posted something.",
   marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
   crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
@@ -14248,6 +14259,26 @@ var MM_GENIE_ACTIONS = {
       return { text: result && result.videoUrl
         ? "Video's ready — switched you to Creative Master so you can view/download it."
         : "Video generation kicked off — check Creative Master's video library shortly.", done: true };
+    }
+  },
+  social_publish_post: {
+    describe: "Publish real content to the member's connected social accounts (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) via Marketing Master's real posting integration. Params: {\"text\":\"...\", \"platforms\"?:[\"instagram\",\"x\",...]} — if platforms is omitted, use ALL of the member's currently connected accounts. Only offer this if the member has at least one connected account (check the ELEMENTS list / screen context) and has given you real content to post, not just asked about posting in general. This publishes for real, immediately, to a public audience — always confirm first.",
+    confirmText: function(p){
+      var where = (p.platforms && p.platforms.length) ? p.platforms.join(', ') : 'all your connected accounts';
+      return "Post this to <b>" + where.replace(/</g,'&lt;') + "</b> right now?<br><i>“" + String(p.text||'').replace(/</g,'&lt;').slice(0,200) + "”</i>";
+    },
+    run: async function(p){
+      if (!p.text) throw new Error("I need the actual text to post.");
+      if (typeof window.callSocialAccounts !== 'function') throw new Error("Social posting isn't available right now.");
+      var accountsRes = await window.callSocialAccounts();
+      var accounts = accountsRes.accounts || [];
+      if (!accounts.length) throw new Error("No connected accounts yet — connect one in Marketing Master first.");
+      var wanted = (p.platforms || []).map(function(s){ return String(s).toLowerCase() === 'x' ? 'twitter' : String(s).toLowerCase(); });
+      var targets = wanted.length ? accounts.filter(function(a){ return wanted.indexOf(a.platform) !== -1; }) : accounts;
+      if (!targets.length) throw new Error("None of those platforms are connected yet.");
+      var result = await window.callSocialPublish({ text: p.text, accountIds: targets.map(function(a){ return a._id; }) });
+      if (typeof window.showScreen === 'function') window.showScreen('marketingmaster');
+      return { text: "Posted to " + targets.length + " account" + (targets.length===1?'':'s') + ". Switched you to Marketing Master so you can see it.", done: true };
     }
   },
   // ── GENERIC ON-SCREEN ACTIONS — these let Genie operate ANY current or
@@ -20397,47 +20428,126 @@ async function adminDeleteDiscountCode(code){
 }
 window.adminDeleteDiscountCode = adminDeleteDiscountCode;
 
-// ── Marketing Master: Connect Your Social Accounts ────────────────────────
+// ── Marketing Master: Connect Your Social Accounts — REAL posting via
+// Zernio (zernio.com), not a preview toggle. See functions/index.js
+// mmSocialConnectStart/mmSocialAccounts/mmSocialDisconnect/mmSocialPublish.
+// zernioKey is the platform identifier Zernio's API actually expects —
+// only 'x' differs from our own UI key (Zernio still calls it 'twitter').
 const MM_SOCIAL_PLATFORMS = [
-  { key: 'facebook',  label: 'Facebook',  color: '#1877F2', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#1877F2"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z"/></svg>' },
-  { key: 'instagram', label: 'Instagram', color: '#E1306C', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#E1306C" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg>' },
-  { key: 'tiktok',    label: 'TikTok',    color: '#25F4EE', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#e5e7eb"><path d="M16.6 3c.3 2 1.6 3.6 3.9 3.9v3.1c-1.4 0-2.7-.4-3.9-1.2v6.4a5.6 5.6 0 1 1-4.8-5.6v3.2a2.5 2.5 0 1 0 1.8 2.4V3z"/></svg>' },
-  { key: 'x',         label: 'X',         color: '#e5e7eb',  icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#e5e7eb"><path d="M18.9 2H22l-7.3 8.3L23.3 22H16.7l-5.2-6.8L5.6 22H2.5l7.8-8.9L1.7 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.7L7.4 3.9H5.6L17.7 20z"/></svg>' },
-  { key: 'linkedin',  label: 'LinkedIn',  color: '#0A66C2', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#0A66C2"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.11 20.45H3.56V9h3.55z"/></svg>' },
-  { key: 'youtube',   label: 'YouTube',   color: '#FF0000',  icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#FF0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12z"/></svg>' },
+  { key: 'facebook',  zernioKey: 'facebook',  label: 'Facebook',  color: '#1877F2', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#1877F2"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z"/></svg>' },
+  { key: 'instagram', zernioKey: 'instagram', label: 'Instagram', color: '#E1306C', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#E1306C" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg>' },
+  { key: 'tiktok',    zernioKey: 'tiktok',    label: 'TikTok',    color: '#25F4EE', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#e5e7eb"><path d="M16.6 3c.3 2 1.6 3.6 3.9 3.9v3.1c-1.4 0-2.7-.4-3.9-1.2v6.4a5.6 5.6 0 1 1-4.8-5.6v3.2a2.5 2.5 0 1 0 1.8 2.4V3z"/></svg>' },
+  { key: 'x',         zernioKey: 'twitter',   label: 'X',         color: '#e5e7eb',  icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#e5e7eb"><path d="M18.9 2H22l-7.3 8.3L23.3 22H16.7l-5.2-6.8L5.6 22H2.5l7.8-8.9L1.7 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.7L7.4 3.9H5.6L17.7 20z"/></svg>' },
+  { key: 'linkedin',  zernioKey: 'linkedin',  label: 'LinkedIn',  color: '#0A66C2', icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#0A66C2"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.11 20.45H3.56V9h3.55z"/></svg>' },
+  { key: 'youtube',   zernioKey: 'youtube',   label: 'YouTube',   color: '#FF0000',  icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#FF0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12z"/></svg>' },
 ];
-function renderSocialConnectGrid(){
+var _mmSocialAccounts = []; // last-fetched real connected accounts, [{_id/id, platform, username}]
+async function renderSocialConnectGrid(){
   const wrap = document.getElementById('mmSocialConnectGrid');
+  const statusEl = document.getElementById('mmSocialConnectStatus');
   if (!wrap) return;
-  const connected = (window.userData && window.userData.connectedSocials) || {};
+  let accounts = [];
+  let notConfigured = false;
+  try {
+    if (typeof window.callSocialAccounts !== 'function') throw new Error('demo');
+    accounts = (await window.callSocialAccounts()).accounts || [];
+  } catch (e) {
+    notConfigured = /not set up|not configured|ZERNIO_API_KEY/i.test(String(e && e.message)) || String(e.message||'').includes('demo');
+  }
+  _mmSocialAccounts = accounts;
+  if (statusEl) {
+    statusEl.style.color = notConfigured ? '#f59e0b' : '#6b7280';
+    statusEl.textContent = notConfigured
+      ? "🧪 Real posting isn't finished setting up on the site owner's end yet — accounts can't connect until then."
+      : (accounts.length ? '✅ Live — posts go out to your real connected accounts.' : 'Connect an account below, then post to it from the composer.');
+  }
+  const byPlatform = {};
+  accounts.forEach(function(a){ (byPlatform[a.platform] = byPlatform[a.platform] || []).push(a); });
   wrap.innerHTML = MM_SOCIAL_PLATFORMS.map(function(p){
-    const isOn = !!connected[p.key];
+    const accs = byPlatform[p.zernioKey] || [];
+    const isOn = accs.length > 0;
+    const acctLine = isOn ? accs.map(function(a){ return '@' + (a.username || a.name || 'connected'); }).join(', ') : '';
     return '<div style="background:var(--myst-chip-bg,#111827);border:1px solid ' + (isOn ? p.color : 'var(--myst-border,#1f2937)') + ';border-radius:12px;padding:14px;text-align:center">' +
       '<div style="display:flex;justify-content:center;margin-bottom:8px">' + p.icon + '</div>' +
-      '<div style="font-weight:700;font-size:.82rem;margin-bottom:8px">' + p.label + '</div>' +
-      '<button class="admin-save-btn" style="width:100%;padding:7px;background:' + (isOn ? '#10b981' : '#374151') + '" onclick="mmToggleSocialConnect(\'' + p.key + '\')">' + (isOn ? '✓ Connected' : 'Connect') + '</button>' +
+      '<div style="font-weight:700;font-size:.82rem;margin-bottom:2px">' + p.label + '</div>' +
+      (isOn ? '<div style="font-size:.68rem;color:#9ca3af;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + acctLine.replace(/</g,'&lt;') + '</div>' : '<div style="margin-bottom:8px"></div>') +
+      '<button class="admin-save-btn" style="width:100%;padding:7px;background:' + (isOn ? '#10b981' : '#374151') + '" onclick="' + (isOn ? "mmSocialDisconnectClick('" + accs[0]._id + "')" : "mmSocialConnectClick('" + p.zernioKey + "')") + '">' + (isOn ? '✓ Connected — Disconnect' : 'Connect') + '</button>' +
       '</div>';
   }).join('');
+  mmRenderSocialComposer();
 }
 window.renderSocialConnectGrid = renderSocialConnectGrid;
-async function mmToggleSocialConnect(key){
-  const connected = Object.assign({}, (window.userData && window.userData.connectedSocials) || {});
-  const turningOn = !connected[key];
-  connected[key] = turningOn;
+async function mmSocialConnectClick(zernioKey){
+  // Open the tab synchronously (before the await) so browsers don't treat
+  // it as an unrequested popup — then point it at the real auth URL once
+  // we have it back from the backend.
+  var win = window.open('', '_blank');
   try {
-    if (window.updateMyUserDoc) await window.updateMyUserDoc({ connectedSocials: connected });
-    renderSocialConnectGrid();
-    if (typeof showNotifToast === 'function') {
-      showNotifToast(
-        turningOn ? '🔗 Connected (preview)' : 'Disconnected',
-        turningOn ? 'This is a preview of the connected state — real posting to ' + key + ' goes live once its developer app is approved.' : 'Removed from your connected accounts.'
-      );
-    }
-  } catch(e) {
-    if (typeof showNotifToast === 'function') showNotifToast('⚠ Couldn\'t update', e.message || 'Please try again.');
+    const res = await window.callSocialConnectStart(zernioKey);
+    if (win) win.location = res.authUrl; else window.open(res.authUrl, '_blank');
+  } catch (e) {
+    if (win) win.close();
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not connect', e.message || 'Please try again.');
   }
 }
-window.mmToggleSocialConnect = mmToggleSocialConnect;
+window.mmSocialConnectClick = mmSocialConnectClick;
+async function mmSocialDisconnectClick(accountId){
+  if (!confirm('Disconnect this account? Genie and the composer will no longer be able to post to it.')) return;
+  try {
+    await window.callSocialDisconnect(accountId);
+    await renderSocialConnectGrid();
+    if (typeof showNotifToast === 'function') showNotifToast('Disconnected', 'Removed from your connected accounts.');
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not disconnect', e.message || 'Please try again.');
+  }
+}
+window.mmSocialDisconnectClick = mmSocialDisconnectClick;
+// A minimal real compose-and-publish box, right under the connect grid —
+// checkboxes for whichever accounts are actually connected, one Publish
+// button. Genie can also trigger this (see the social_publish_post action).
+function mmRenderSocialComposer(){
+  const wrap = document.getElementById('mmSocialComposer');
+  if (!wrap) return;
+  if (!_mmSocialAccounts.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML =
+    '<div class="po-title" style="margin-top:18px">📣 Post to Your Accounts</div>' +
+    '<textarea id="mmSocialComposeText" maxlength="2000" placeholder="Write what you want to post…" style="width:100%;min-height:80px;background:#0d1119;border:1px solid #1f2937;border-radius:10px;color:#e5e7eb;padding:10px;font-family:inherit;font-size:.85rem;margin:8px 0"></textarea>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px">' +
+    _mmSocialAccounts.map(function(a){
+      const plat = MM_SOCIAL_PLATFORMS.find(function(p){ return p.zernioKey === a.platform; });
+      return '<label style="display:flex;align-items:center;gap:6px;font-size:.78rem"><input type="checkbox" class="mmSocialAcctCheck" value="' + a._id + '" checked> ' + (plat ? plat.label : a.platform) + ' @' + (a.username||'') + '</label>';
+    }).join('') +
+    '</div>' +
+    '<button class="admin-save-btn" onclick="mmSocialPublishClick()">Publish Now</button>';
+}
+async function mmSocialPublishClick(){
+  const text = (document.getElementById('mmSocialComposeText') || {}).value || '';
+  const checks = Array.from(document.querySelectorAll('.mmSocialAcctCheck:checked'));
+  const accountIds = checks.map(function(c){ return c.value; });
+  if (!text.trim()) { if (typeof showNotifToast === 'function') showNotifToast('Nothing to post', 'Write something first.'); return; }
+  if (!accountIds.length) { if (typeof showNotifToast === 'function') showNotifToast('Pick an account', 'Check at least one connected account.'); return; }
+  if (!confirm('Post this to ' + accountIds.length + ' connected account' + (accountIds.length===1?'':'s') + ' right now? This publishes for real.')) return;
+  try {
+    await window.callSocialPublish({ text: text.trim(), accountIds: accountIds });
+    document.getElementById('mmSocialComposeText').value = '';
+    if (typeof showNotifToast === 'function') showNotifToast('🚀 Posted', 'Published to ' + accountIds.length + ' account' + (accountIds.length===1?'':'s') + '.');
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Publish failed', e.message || 'Please try again.');
+  }
+}
+window.mmSocialPublishClick = mmSocialPublishClick;
+// If Zernio just redirected the member back here after they approved a
+// platform (see ZERNIO_REDIRECT_URL in functions/index.js), this is almost
+// always the throwaway tab we opened for the OAuth flow (see
+// mmSocialConnectClick) — the ORIGINAL tab is still open with Marketing
+// Master showing, and picks up the new account via the focus listener
+// below once the member switches back to it. Just clean the URL here.
+if (typeof window !== 'undefined' && /[?&]zernioConnected=1/.test(location.search)) {
+  try { history.replaceState(null, '', location.pathname + location.hash); } catch(e) {}
+}
+window.addEventListener('focus', function(){
+  if (window.mmCurrentScreen === 'marketingmaster' && typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid();
+});
 
 function openProductStudio(){
   showScreen('mystoremaster');
