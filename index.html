@@ -3040,6 +3040,7 @@ body{top:0 !important;position:static !important}
 .ai-chat-mic.unsupported{display:none}
 @media(max-width:600px){.genie-fab-panel{right:16px;left:16px;width:auto;bottom:140px}}
 .genie-fab.genie-fab-locked{filter:saturate(.55) brightness(.85)}
+.genie-fab-badge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:#ffd700;border-radius:50%;border:2px solid #1a0f14;animation:fab-pulse-genie 1.6s ease-in-out infinite}
 /* Floating cursor Genie uses to visibly "drive" the screen for the member */
 .genie-cursor{position:fixed;z-index:1500;font-size:24px;line-height:1;pointer-events:none;opacity:0;transform:translateZ(0);transition:left .55s cubic-bezier(.4,0,.2,1),top .55s cubic-bezier(.4,0,.2,1),opacity .25s;filter:drop-shadow(0 4px 10px rgba(236,72,153,.65))}
 .genie-cursor.visible{opacity:1}
@@ -7225,7 +7226,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
   <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
-  <button class="genie-fab" id="genieFab" onclick="toggleGenieFab()">🧞 <span>Ask Genie</span></button>
+  <button class="genie-fab" id="genieFab" onclick="toggleGenieFab()">🧞 <span>Ask Genie</span><span class="genie-fab-badge" id="genieFabBadge" style="display:none" title="Genie noticed something"></span></button>
   <div class="genie-cursor" id="genieCursor" aria-hidden="true">🧞</div>
   <div class="genie-fab-panel" id="genieFabPanel">
     <div class="genie-fab-head">
@@ -13956,7 +13957,7 @@ var MM_GENIE_SCREEN_HELP = {
   universitymaster:  "University Master — video courses (day trading, real estate, e-commerce), the Revalidation service tab, and the Impact webapp tab.",
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
-  marketingmaster:   "Marketing Master — AI-assisted marketing content and connecting social accounts.",
+  marketingmaster:   "Marketing Master — AI-assisted marketing content, and a preview of connecting social accounts (real auto-posting isn't live yet — it's pending each platform's developer approval, so never tell a member you posted or connected something for real here; you can draft captions/content and click the preview Connect toggle, but be upfront that posting itself isn't automated yet).",
   marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
   crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
@@ -14000,7 +14001,19 @@ function toggleGenieFab(force){
       } else {
         genieFabBubble("Hey! I'm Genie 🧞 — tell me what you're trying to do and I'll do it for you right here, or just ask me anything about Money Masteries.", 'bot', { speak: true });
       }
+      // Proactive nudges a weekly backend job noticed for this member (see
+      // genieBuildSuggestions) — surfaced once, right when they open the chat,
+      // so it feels like Genie actually paid attention instead of only ever
+      // reacting to what they type.
+      var sugg = (window.userData && Array.isArray(window.userData.genieSuggestions)) ? window.userData.genieSuggestions : [];
+      if (sugg.length) {
+        var suggText = "By the way, I noticed a couple things:<br>" + sugg.map(function(s){ return "• " + String((s && s.text) || s).replace(/</g,'&lt;'); }).join('<br>');
+        genieFabBubble(suggText, 'bot', { speak: false });
+        genieRemember('model', 'I noticed: ' + sugg.map(function(s){ return (s && s.text) || s; }).join(' | '));
+      }
     }
+    var badge = document.getElementById('genieFabBadge');
+    if (badge) badge.style.display = 'none';
     var input = document.getElementById('genieFabInput');
     if (input) setTimeout(function(){ input.focus(); }, 50);
   }
@@ -14433,7 +14446,7 @@ async function sendGenieFab() {
   var historyForPrompt = _genieHistory.slice(-10);
   genieRemember('user', q);
   try {
-    if (typeof window.genText !== 'function') throw new Error('demo');
+    if (typeof window.genText !== 'function' && typeof window.askAI !== 'function') throw new Error('demo');
     var screenId = window.mmCurrentScreen || 'dashboard';
     var screenHelp = MM_GENIE_SCREEN_HELP[screenId] || '';
     var actionSpecs = Object.keys(MM_GENIE_ACTIONS)
@@ -14456,7 +14469,21 @@ async function sendGenieFab() {
       '{"reply":"<short response>","action":{"name":"<action key>","params":{...matching that action\'s params>}}}\n' +
       'If the member wants an action but you are missing a required param (e.g. no state given for a lead search), set action to null and ask for the missing detail in reply instead. Never invent parameter values. You are not a licensed financial or legal advisor.\n\n' +
       'MEMBER MESSAGE: ' + q;
-    var raw = await window.genText(prompt);
+    // Route through the real, token-metered askAI Cloud Function first — same
+    // pattern as askMasterJarvis — so Genie's usage is logged, billed, and
+    // visible in the Master Portal's AI Usage panel like every other paid AI
+    // feature on the site. Only falls back to the free client-side Gemini
+    // call when askAI is unreachable (logged out, function not deployed),
+    // so the demo/preview experience still works — that path is never billed.
+    var raw;
+    if (typeof window.askAI === 'function') {
+      try {
+        raw = (await window.askAI(prompt, 'geniefab')).reply;
+      } catch (e) {
+        console.log('sendGenieFab: askAI unavailable, falling back to genText:', e.message || e);
+      }
+    }
+    if (raw == null) raw = await window.genText(prompt);
     var jsonStr = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
     var firstBrace = jsonStr.indexOf('{'), lastBrace = jsonStr.lastIndexOf('}');
     if (firstBrace >= 0 && lastBrace > firstBrace) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
@@ -15975,6 +16002,11 @@ function mmUpdateGenieFabAccess(){
   var span = fab.querySelector('span');
   if (span) span.textContent = eligible ? 'Ask Genie' : 'Ask Genie 🔒';
   if (!eligible) { var panel = document.getElementById('genieFabPanel'); if (panel) panel.classList.remove('open'); }
+  // A small pulsing dot when Genie has proactively noticed something worth
+  // mentioning (see genieBuildSuggestions in functions/index.js, a weekly
+  // scheduled job) — cleared once the member actually opens the chat.
+  var badge = document.getElementById('genieFabBadge');
+  if (badge) badge.style.display = (eligible && window.userData && Array.isArray(window.userData.genieSuggestions) && window.userData.genieSuggestions.length) ? 'block' : 'none';
 }
 window.mmUpdateGenieFabAccess = mmUpdateGenieFabAccess;
 // Pro/Elite (or the Master account) get every Master included. Everyone else
