@@ -7232,6 +7232,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span>🧞 Genie <span class="ai-live-dot"></span></span>
       <span style="display:flex;gap:4px">
         <button class="genie-fab-close" id="genieFabVoiceBtn" onclick="genieFabToggleVoice()" title="Turn Genie's voice on/off">🔊</button>
+        <button class="genie-fab-close" onclick="if(confirm('Start a new conversation? This clears what Genie remembers about your past chats.'))genieClearMemory()" title="Start a new conversation">↺</button>
         <button class="genie-fab-close" onclick="toggleGenieFab(false)">✕</button>
       </span>
     </div>
@@ -10544,6 +10545,7 @@ function showLoggedIn(user, data) {
   if (statPointsValEl) statPointsValEl.textContent = 'Redeemable value: ' + fmtUSD(pts * 0.05);
   if (typeof renderGainzPlanCard === 'function') renderGainzPlanCard(data);
   if (typeof mmUpdateGenieFabAccess === 'function') mmUpdateGenieFabAccess();
+  if (typeof genieLoadMemoryFromUserData === 'function') genieLoadMemoryFromUserData(data);
 
   // Affiliate links
   ['dashAffLink','affPageLink','accountAffLink'].forEach(id => {
@@ -13988,7 +13990,16 @@ function toggleGenieFab(force){
     if (voiceBtn) voiceBtn.textContent = _genieFabVoiceOn() ? '🔊' : '🔇';
     var log = document.getElementById('genieFabLog');
     if (log && !log.children.length) {
-      genieFabBubble("Hey! I'm Genie 🧞 — tell me what you're trying to do and I'll do it for you right here, or just ask me anything about Money Masteries.", 'bot', { speak: true });
+      if (_genieHistory && _genieHistory.length) {
+        // Pick up where they left off: replay the saved conversation quietly
+        // (no voice, no re-triggering actions) then greet them back in.
+        genieFabBubble("Welcome back — here's where we left off:", 'bot');
+        _genieHistory.slice(-16).forEach(function(m){
+          genieFabBubble(String(m.text || '').replace(/</g,'&lt;').replace(/\n/g,'<br>'), m.role === 'user' ? 'user' : 'bot');
+        });
+      } else {
+        genieFabBubble("Hey! I'm Genie 🧞 — tell me what you're trying to do and I'll do it for you right here, or just ask me anything about Money Masteries.", 'bot', { speak: true });
+      }
     }
     var input = document.getElementById('genieFabInput');
     if (input) setTimeout(function(){ input.focus(); }, 50);
@@ -14308,6 +14319,51 @@ var MM_GENIE_ACTIONS = {
     }
   }
 };
+// ── GENIE MEMORY — per-member conversation history, so a member can close
+// the chat (or come back on another device) and pick up right where they
+// left off. Stored as a short, capped array directly on their user doc
+// (users/{uid}.genieMemory), the same place other per-member arrays like
+// `creations`/`store` already live — loaded once at login (showLoggedIn
+// already has the full user doc in hand, so no extra read is needed) and
+// saved back (debounced) every time a real message is exchanged. Only the
+// last 40 turns are kept, and only the last 10 are ever replayed into the
+// AI prompt, so neither Firestore nor the prompt grows without bound.
+var _genieHistory = [];
+var _genieMemSaveTimer = null;
+function genieRemember(role, text){
+  var clean = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+  if (!clean) return;
+  _genieHistory.push({ role: role, text: clean });
+  if (_genieHistory.length > 40) _genieHistory = _genieHistory.slice(-40);
+  if (_genieMemSaveTimer) clearTimeout(_genieMemSaveTimer);
+  _genieMemSaveTimer = setTimeout(genieSaveMemoryNow, 1200);
+}
+function genieSaveMemoryNow(){
+  try {
+    if (!window.currentUser || !window.FB || !window.FB.updateDoc || !window.FB.doc || !window.FB.db) return;
+    window.FB.updateDoc(window.FB.doc(window.FB.db, 'users', window.currentUser.uid), { genieMemory: _genieHistory })
+      .catch(function(e){ console.warn('[Genie] memory save failed', e); });
+    if (window.userData) window.userData.genieMemory = _genieHistory;
+  } catch(e) { console.warn('[Genie] memory save error', e); }
+}
+function genieLoadMemoryFromUserData(data){
+  _genieHistory = (data && Array.isArray(data.genieMemory)) ? data.genieMemory.slice(-40) : [];
+}
+window.genieLoadMemoryFromUserData = genieLoadMemoryFromUserData;
+function genieClearMemory(){
+  _genieHistory = [];
+  if (_genieMemSaveTimer) { clearTimeout(_genieMemSaveTimer); _genieMemSaveTimer = null; }
+  try {
+    if (window.currentUser && window.FB && window.FB.updateDoc && window.FB.doc && window.FB.db) {
+      window.FB.updateDoc(window.FB.doc(window.FB.db, 'users', window.currentUser.uid), { genieMemory: [] }).catch(function(e){});
+    }
+  } catch(e){}
+  if (window.userData) window.userData.genieMemory = [];
+  var log = document.getElementById('genieFabLog');
+  if (log) log.innerHTML = '';
+  genieFabBubble("Fresh start — what can I help you with?", 'bot', { speak: true });
+}
+window.genieClearMemory = genieClearMemory;
 var _genieFabPending = {};
 var _genieFabPendingSeq = 0;
 function genieFabConfirmBubble(actionName, params, promptText){
@@ -14338,9 +14394,12 @@ async function genieFabRunAction(id){
     if (!action) throw new Error("I don't know how to do that anymore.");
     var out = await action.run(pending.params);
     thinking.querySelector('div').innerHTML = out.text;
+    genieRemember('model', out.text);
     if (!out.confirmAgain) genieFabSpeak(out.text);
     if (out.confirmAgain) {
-      genieFabConfirmBubble(out.confirmAgain.name, out.confirmAgain.params, MM_GENIE_ACTIONS[out.confirmAgain.name].confirmText(out.confirmAgain.params));
+      var confirmMsg = MM_GENIE_ACTIONS[out.confirmAgain.name].confirmText(out.confirmAgain.params);
+      genieFabConfirmBubble(out.confirmAgain.name, out.confirmAgain.params, confirmMsg);
+      genieRemember('model', confirmMsg);
     }
   } catch(e) {
     var errText = "Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;');
@@ -14351,6 +14410,7 @@ async function genieFabRunAction(id){
 function genieFabCancelAction(id){
   delete _genieFabPending[id];
   genieFabBubble("No problem — let me know if you want me to do something else.", 'bot', { speak: true });
+  genieRemember('model', "No problem — let me know if you want me to do something else.");
 }
 window.genieFabRunAction = genieFabRunAction;
 window.genieFabCancelAction = genieFabCancelAction;
@@ -14368,6 +14428,10 @@ async function sendGenieFab() {
   genieFabBubble(q.replace(/</g, '&lt;'), 'user');
   var thinking = genieFabBubble('Thinking…', 'bot');
   var btn = document.getElementById('genieFabSend'); if (btn) btn.disabled = true;
+  // Snapshot memory BEFORE recording this message, so the prompt's history
+  // block shows only what came before it (the new message is sent separately).
+  var historyForPrompt = _genieHistory.slice(-10);
+  genieRemember('user', q);
   try {
     if (typeof window.genText !== 'function') throw new Error('demo');
     var screenId = window.mmCurrentScreen || 'dashboard';
@@ -14377,9 +14441,12 @@ async function sendGenieFab() {
       .map(function(k){ return '- "' + k + '": ' + MM_GENIE_ACTIONS[k].describe; }).join('\n');
     var elementList = typeof genieScanInteractive === 'function' ? genieScanInteractive() : '';
     var langName = genieLangName();
+    var historyLines = historyForPrompt.map(function(m){ return (m.role === 'user' ? 'Member: ' : 'Genie: ') + m.text; }).join('\n');
     var prompt =
       'You are Genie, the Money Masteries webapp assistant. You both ANSWER questions about the platform (three plans — Basic $19.99/mo, Pro $50/mo, Elite $99/mo — the affiliate/commission program, and every Master Tool: Genie Agent, My Store, Real Estate, Marketing, Markets, Creative, CRM, University, Community) AND can actually operate the app for the member — clicking, typing, and navigating on their behalf while they watch — so they never have to click through it themselves if they\'d rather just tell you what they want.\n' +
       'LANGUAGE: the member has the site set to ' + langName + ' using the language switcher at the top of the page. Respond ONLY in ' + langName + ' — both in "reply" and when speaking out loud — no matter what language their message is written or spoken in, unless they explicitly ask you to switch languages.\n' +
+      'MEMORY: you remember this member across visits. Use the recent conversation below to stay consistent and pick up where you left off — don\'t re-ask something they already told you, and don\'t re-greet them like a stranger if you were already mid-conversation.\n' +
+      'RECENT CONVERSATION WITH THIS MEMBER (oldest first; the newest message from them is given separately below as MEMBER MESSAGE):\n' + (historyLines || '(no prior messages — this is a fresh conversation)') + '\n\n' +
       'The member is currently on: ' + screenId + ' — ' + screenHelp + '\n\n' +
       'CURATED ACTIONS (only use one if the member is clearly asking you to DO something, not just asking how something works):\n' + actionSpecs + '\n\n' +
       'ELEMENTS CURRENTLY VISIBLE ON THIS SCREEN (numbered — use ui_click / ui_type / ui_select / ui_scroll_to with these exact IDs when the member wants something done that isn\'t covered by a curated action above; NEVER invent an ID, and if what they want truly isn\'t listed, say so instead of guessing):\n' + (elementList || '(nothing detected)') + '\n\n' +
@@ -14398,6 +14465,7 @@ async function sendGenieFab() {
     if (parsed && typeof parsed.reply === 'string') {
       var replyHtml = parsed.reply.replace(/</g, '&lt;').replace(/\n/g, '<br>');
       thinking.querySelector('div').innerHTML = replyHtml;
+      genieRemember('model', parsed.reply);
       var hasInstantAction = parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe && genieActionInstant(MM_GENIE_ACTIONS[parsed.action.name], parsed.action.params);
       if (!hasInstantAction) genieFabSpeak(parsed.reply); // instant actions speak their own result below instead
       if (parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe) {
@@ -14405,14 +14473,16 @@ async function sendGenieFab() {
         var actParams = parsed.action.params || {};
         if (genieActionInstant(act, actParams)) {
           // safe, non-destructive, free actions (like navigation or reading the screen) run immediately, no confirm click needed
-          act.run(actParams).then(function(out){ genieFabBubble(out.text, 'bot', { speak: true }); }).catch(function(e){ genieFabBubble("Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;'), 'bot', { speak: true }); });
+          act.run(actParams).then(function(out){ genieFabBubble(out.text, 'bot', { speak: true }); genieRemember('model', out.text); }).catch(function(e){ genieFabBubble("Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;'), 'bot', { speak: true }); });
         } else {
           genieFabConfirmBubble(parsed.action.name, actParams, act.confirmText(actParams));
+          genieRemember('model', act.confirmText(actParams));
         }
       }
     } else {
       // Gemini didn't return valid JSON — fall back to showing its raw text so the member still gets an answer.
       thinking.querySelector('div').innerHTML = raw.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+      genieRemember('model', raw);
       genieFabSpeak(raw);
     }
   } catch(e) {
