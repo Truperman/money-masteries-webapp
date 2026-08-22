@@ -3039,6 +3039,12 @@ body{top:0 !important;position:static !important}
 .ai-chat-mic.listening{background:#ec4899;border-color:#ec4899;animation:fab-pulse-genie 1.1s ease-in-out infinite}
 .ai-chat-mic.unsupported{display:none}
 @media(max-width:600px){.genie-fab-panel{right:16px;left:16px;width:auto;bottom:140px}}
+.genie-fab.genie-fab-locked{filter:saturate(.55) brightness(.85)}
+/* Floating cursor Genie uses to visibly "drive" the screen for the member */
+.genie-cursor{position:fixed;z-index:1500;font-size:24px;line-height:1;pointer-events:none;opacity:0;transform:translateZ(0);transition:left .55s cubic-bezier(.4,0,.2,1),top .55s cubic-bezier(.4,0,.2,1),opacity .25s;filter:drop-shadow(0 4px 10px rgba(236,72,153,.65))}
+.genie-cursor.visible{opacity:1}
+.genie-target-highlight{outline:3px solid #ec4899!important;outline-offset:3px;border-radius:8px;animation:genie-target-pulse 1s ease-in-out infinite}
+@keyframes genie-target-pulse{0%,100%{outline-color:#ec4899}50%{outline-color:#ffd700}}
 .share-overlay{position:fixed;inset:0;background:#000d;z-index:3500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;padding:16px}
 .share-overlay.open{opacity:1;pointer-events:auto}
 .share-card{background:#111827;border:1px solid #2E7BFF45;border-radius:20px;padding:26px;width:min(430px,95vw);max-height:92vh;overflow-y:auto;position:relative;transform:translateY(14px);transition:.25s;text-align:center}
@@ -7220,6 +7226,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
   <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
   <button class="genie-fab" id="genieFab" onclick="toggleGenieFab()">🧞 <span>Ask Genie</span></button>
+  <div class="genie-cursor" id="genieCursor" aria-hidden="true">🧞</div>
   <div class="genie-fab-panel" id="genieFabPanel">
     <div class="genie-fab-head">
       <span>🧞 Genie <span class="ai-live-dot"></span></span>
@@ -7228,7 +7235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <button class="genie-fab-close" onclick="toggleGenieFab(false)">✕</button>
       </span>
     </div>
-    <div class="genie-fab-sub" id="genieFabSub">Ask me anything — I can see which screen you're on and help you use it.</div>
+    <div class="genie-fab-sub" id="genieFabSub">Tell me what you want done — I can click, type, and navigate for you.</div>
     <div class="ai-chat-log" id="genieFabLog"></div>
     <div class="ai-chat-bar">
       <input class="ai-chat-input" id="genieFabInput" maxlength="500" placeholder="Ask Genie..." onkeydown="if(event.key==='Enter')sendGenieFab()">
@@ -10536,6 +10543,7 @@ function showLoggedIn(user, data) {
   if (statPointsEl) statPointsEl.textContent = pts;
   if (statPointsValEl) statPointsValEl.textContent = 'Redeemable value: ' + fmtUSD(pts * 0.05);
   if (typeof renderGainzPlanCard === 'function') renderGainzPlanCard(data);
+  if (typeof mmUpdateGenieFabAccess === 'function') mmUpdateGenieFabAccess();
 
   // Affiliate links
   ['dashAffLink','affPageLink','accountAffLink'].forEach(id => {
@@ -13960,13 +13968,18 @@ function mmUpdateGenieFabContext(id){
   var sub = document.getElementById('genieFabSub');
   if (!sub) return;
   var help = MM_GENIE_SCREEN_HELP[id];
-  sub.textContent = help ? ("You're on: " + help) : "Ask me anything — I can see which screen you're on and help you use it.";
+  sub.textContent = help ? ("You're on: " + help) : "Tell me what you want done — I can click, type, and navigate for you.";
 }
 function toggleGenieFab(force){
   var panel = document.getElementById('genieFabPanel');
   var fab = document.getElementById('genieFab');
   if (!panel) return;
   var willOpen = typeof force === 'boolean' ? force : !panel.classList.contains('open');
+  if (willOpen && typeof genieAgentEligible === 'function' && !genieAgentEligible()) {
+    if (typeof openUpgradeModal === 'function') openUpgradeModal('pro');
+    if (typeof showNotifToast === 'function') showNotifToast('🧞 Pro & Elite feature', 'Ask Genie — your AI agent that can operate the app for you — is included with Pro and Elite membership. Upgrade to unlock it.');
+    return;
+  }
   panel.classList.toggle('open', willOpen);
   if (fab) fab.classList.toggle('hidden', willOpen && window.innerWidth <= 600);
   if (willOpen) {
@@ -13975,7 +13988,7 @@ function toggleGenieFab(force){
     if (voiceBtn) voiceBtn.textContent = _genieFabVoiceOn() ? '🔊' : '🔇';
     var log = document.getElementById('genieFabLog');
     if (log && !log.children.length) {
-      genieFabBubble("Hey! I'm Genie 🧞 — ask me how to use anything on this screen, or about Money Masteries in general.", 'bot', { speak: true });
+      genieFabBubble("Hey! I'm Genie 🧞 — tell me what you're trying to do and I'll do it for you right here, or just ask me anything about Money Masteries.", 'bot', { speak: true });
     }
     var input = document.getElementById('genieFabInput');
     if (input) setTimeout(function(){ input.focus(); }, 50);
@@ -14059,6 +14072,81 @@ function genieFabSpeak(text){
   } catch(e) {}
 }
 window.genieFabSpeak = genieFabSpeak;
+// ── GENIE ON-SCREEN AUTOMATION — generic click/type/select engine ──────────
+// Scans whatever screen is currently visible for real, live interactive
+// elements and hands Gemini a numbered list (g1, g2, …) so it can operate
+// ANY screen — including ones added later — without a hand-written action
+// per feature. genieMoveCursorTo() drives a small floating cursor + a pulse
+// highlight so the member can watch Genie work instead of just reading
+// about it. genieElementSensitive() flags anything that looks like it could
+// move money, change the account/plan, or submit/delete something, so those
+// still require a confirm click; genieElementHardBlocked() refuses payment/
+// password/ID fields outright, no matter what.
+var _genieScanMap = {};
+var _GENIE_SENSITIVE_RE = /submit|confirm|delete|remove|cancel|checkout|withdraw|payout|purchase|\bbuy\b|charge|upgrade|change\s*plan|discount\s*code|downgrade|unsubscribe|card\s*number|cvv|cvc|routing|account\s*number|\bssn\b|social\s*security|password/i;
+var _GENIE_HARDBLOCK_RE = /card\s*number|cvv|cvc|\bssn\b|social\s*security|routing|account\s*number|\biban\b|\bswift\b/i;
+function genieElementSensitive(el, label){
+  if (!el) return true; // unknown element — err on the side of confirming
+  var type = (el.type || '').toLowerCase();
+  if (type === 'password' || type === 'submit') return true;
+  var attrs = ((el.getAttribute('name')||'') + ' ' + (el.getAttribute('id')||'') + ' ' + (el.getAttribute('autocomplete')||'') + ' ' + (el.className||'')).toLowerCase();
+  if (_GENIE_SENSITIVE_RE.test(String(label||'')) || _GENIE_SENSITIVE_RE.test(attrs)) return true;
+  if (el.tagName === 'BUTTON' && el.closest && el.closest('form')) return true;
+  return false;
+}
+function genieElementHardBlocked(el){
+  if (!el) return true;
+  if ((el.type || '').toLowerCase() === 'password') return true;
+  var attrs = ((el.getAttribute('name')||'') + ' ' + (el.getAttribute('id')||'') + ' ' + (el.getAttribute('autocomplete')||'')).toLowerCase();
+  return _GENIE_HARDBLOCK_RE.test(attrs);
+}
+function genieScanInteractive(){
+  _genieScanMap = {};
+  var root = document.querySelector('.screen.active') || document.getElementById('appLayout') || document.body;
+  if (!root) return '';
+  var nodes = root.querySelectorAll('button, a[href], input, select, textarea, [role="button"], .tab-btn, .lang-chip');
+  var lines = [], n = 0;
+  for (var idx = 0; idx < nodes.length && n < 40; idx++) {
+    var el = nodes[idx];
+    if (el.closest && (el.closest('#genieFabPanel') || el.closest('#genieFab'))) continue;
+    if (el.disabled) continue;
+    var rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) continue;
+    var style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') continue;
+    var label = (el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.textContent || el.value || el.getAttribute('title') || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    var tag = el.tagName.toLowerCase();
+    if (!label) label = '(' + tag + (el.type ? ':' + el.type : '') + ')';
+    n++;
+    var id = 'g' + n;
+    var sensitive = genieElementSensitive(el, label);
+    _genieScanMap[id] = { el: el, label: label, sensitive: sensitive };
+    var kind = tag === 'input' ? ('input:' + (el.type || 'text')) : tag === 'select' ? 'select' : tag === 'textarea' ? 'textarea' : tag === 'a' ? 'link' : 'button';
+    lines.push(id + ': ' + kind + ' "' + label + '"' + (sensitive ? ' [sensitive]' : ''));
+  }
+  return lines.join('\n');
+}
+function genieMoveCursorTo(el){
+  return new Promise(function(resolve){
+    var cursor = document.getElementById('genieCursor');
+    if (!cursor || !el) { resolve(); return; }
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+    setTimeout(function(){
+      var r = el.getBoundingClientRect();
+      cursor.style.left = (r.left + r.width / 2 - 14) + 'px';
+      cursor.style.top = (r.top + r.height / 2 - 14) + 'px';
+      cursor.classList.add('visible');
+      el.classList.add('genie-target-highlight');
+      setTimeout(function(){
+        el.classList.remove('genie-target-highlight');
+        cursor.classList.remove('visible');
+        resolve();
+      }, 900);
+    }, 350);
+  });
+}
+window.genieMoveCursorTo = genieMoveCursorTo;
+window.genieScanInteractive = genieScanInteractive;
 // ── GENIE ACTIONS — lets Genie actually DO things for the member, not just
 // talk about them. Each action wraps an existing window.callXXX backend
 // callable (the same ones the screens themselves use), so Genie can never
@@ -14137,6 +14225,87 @@ var MM_GENIE_ACTIONS = {
         ? "Video's ready — switched you to Creative Master so you can view/download it."
         : "Video generation kicked off — check Creative Master's video library shortly.", done: true };
     }
+  },
+  // ── GENERIC ON-SCREEN ACTIONS — these let Genie operate ANY current or
+  // future screen without needing a hand-written action per feature. Before
+  // every message, genieScanInteractive() walks the visible screen and hands
+  // Gemini a numbered list of the real buttons/links/inputs/dropdowns on it
+  // right now (see _genieScanMap). Genie can then click/type/select by
+  // number — never by inventing a selector. A simulated cursor visibly moves
+  // to and highlights whatever it touches, so the member watches it work.
+  // Anything that looks like it could move money, change the account/plan,
+  // or submit/delete something is auto-flagged "sensitive" and still shows
+  // a confirm bubble first, exactly like the curated actions above. Payment,
+  // card, ID, and password fields are hard-blocked from ui_type entirely.
+  ui_click: {
+    describe: "Click a numbered on-screen element from the ELEMENTS list given in this prompt. Params: {\"elementId\":\"g#\"}. Only ever use an ID that literally appears in that list — never invent one, and never use this on a password/payment field.",
+    instant: function(p){ var info = _genieScanMap[p && p.elementId]; return !info || !info.sensitive; },
+    confirmText: function(p){
+      var info = _genieScanMap[p && p.elementId];
+      return 'Click "' + String(info ? info.label : 'that').replace(/</g,'&lt;') + '"? This looks like it could change your account, plan, or money — want me to go ahead?';
+    },
+    run: async function(p){
+      var info = _genieScanMap[p && p.elementId];
+      if (!info || !info.el || !document.body.contains(info.el)) throw new Error("That's not on screen anymore — ask me again and I'll take another look.");
+      await genieMoveCursorTo(info.el);
+      info.el.click();
+      return { text: 'Done — clicked "' + String(info.label).replace(/</g,'&lt;') + '".', done: true };
+    }
+  },
+  ui_type: {
+    describe: "Type text into a numbered on-screen input/textarea from the ELEMENTS list. Params: {\"elementId\":\"g#\",\"text\":\"...\"}. NEVER use this on a password, card number, CVV, SSN, or other ID field — tell the member to type those in themselves instead.",
+    instant: function(p){ var info = _genieScanMap[p && p.elementId]; return !info || !info.sensitive; },
+    confirmText: function(p){
+      var info = _genieScanMap[p && p.elementId];
+      return 'Type "' + String((p && p.text) || '').replace(/</g,'&lt;') + '" into "' + String(info ? info.label : 'that field').replace(/</g,'&lt;') + '"?';
+    },
+    run: async function(p){
+      var info = _genieScanMap[p && p.elementId];
+      if (!info || !info.el || !document.body.contains(info.el)) throw new Error("That field isn't on screen anymore — ask me again.");
+      if (genieElementHardBlocked(info.el)) throw new Error("I can't fill in payment, password, or ID fields for your security — please type that one in yourself.");
+      await genieMoveCursorTo(info.el);
+      info.el.focus();
+      var val = String((p && p.text) || '');
+      var proto = info.el.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+      var desc = proto && Object.getOwnPropertyDescriptor(proto, 'value');
+      if (desc && desc.set) desc.set.call(info.el, val); else info.el.value = val;
+      info.el.dispatchEvent(new Event('input', { bubbles: true }));
+      info.el.dispatchEvent(new Event('change', { bubbles: true }));
+      return { text: 'Typed "' + val.replace(/</g,'&lt;') + '" into "' + String(info.label).replace(/</g,'&lt;') + '".', done: true };
+    }
+  },
+  ui_select: {
+    describe: "Choose an option in a numbered dropdown from the ELEMENTS list. Params: {\"elementId\":\"g#\",\"value\":\"<visible option text or its value>\"}.",
+    instant: function(p){ var info = _genieScanMap[p && p.elementId]; return !info || !info.sensitive; },
+    confirmText: function(p){
+      var info = _genieScanMap[p && p.elementId];
+      return 'Select "' + String((p && p.value) || '').replace(/</g,'&lt;') + '" in "' + String(info ? info.label : 'that dropdown').replace(/</g,'&lt;') + '"?';
+    },
+    run: async function(p){
+      var info = _genieScanMap[p && p.elementId];
+      if (!info || !info.el || info.el.tagName !== 'SELECT' || !document.body.contains(info.el)) throw new Error("That dropdown isn't on screen anymore.");
+      await genieMoveCursorTo(info.el);
+      var want = String((p && p.value) || '').trim().toLowerCase();
+      var matched = null;
+      for (var i = 0; i < info.el.options.length; i++) {
+        var o = info.el.options[i];
+        if (o.value.toLowerCase() === want || o.textContent.trim().toLowerCase() === want) { matched = o; break; }
+      }
+      if (!matched) throw new Error("I couldn't find that option in the dropdown.");
+      info.el.value = matched.value;
+      info.el.dispatchEvent(new Event('change', { bubbles: true }));
+      return { text: 'Selected "' + matched.textContent.trim().replace(/</g,'&lt;') + '".', done: true };
+    }
+  },
+  ui_scroll_to: {
+    describe: "Just scroll a numbered on-screen element into view and point at it, without clicking or typing — use this to show the member where something is. Params: {\"elementId\":\"g#\"}. Always instant, no confirmation needed.",
+    instant: true,
+    run: async function(p){
+      var info = _genieScanMap[p && p.elementId];
+      if (!info || !info.el || !document.body.contains(info.el)) throw new Error("I can't find that on screen anymore.");
+      await genieMoveCursorTo(info.el);
+      return { text: "There it is — pointed it out on screen for you.", done: true };
+    }
   }
 };
 var _genieFabPending = {};
@@ -14186,7 +14355,13 @@ function genieFabCancelAction(id){
 window.genieFabRunAction = genieFabRunAction;
 window.genieFabCancelAction = genieFabCancelAction;
 
+function genieActionInstant(act, params){ return typeof act.instant === 'function' ? !!act.instant(params || {}) : !!act.instant; }
+function genieLangName(){
+  var lang = (typeof MM_LANG !== 'undefined' && MM_LANG) ? MM_LANG : (typeof courseLang !== 'undefined' ? courseLang : 'en');
+  return lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Brazilian Portuguese' : 'English';
+}
 async function sendGenieFab() {
+  if (typeof genieAgentEligible === 'function' && !genieAgentEligible()) { toggleGenieFab(false); return; }
   var input = document.getElementById('genieFabInput');
   if (!input || !input.value.trim()) return;
   var q = input.value.trim(); input.value = '';
@@ -14200,10 +14375,14 @@ async function sendGenieFab() {
     var actionSpecs = Object.keys(MM_GENIE_ACTIONS)
       .filter(function(k){ return MM_GENIE_ACTIONS[k].describe; })
       .map(function(k){ return '- "' + k + '": ' + MM_GENIE_ACTIONS[k].describe; }).join('\n');
+    var elementList = typeof genieScanInteractive === 'function' ? genieScanInteractive() : '';
+    var langName = genieLangName();
     var prompt =
-      'You are Genie, the Money Masteries webapp assistant. You both ANSWER questions about the platform (three plans — Basic $19.99/mo, Pro $50/mo, Elite $99/mo — the affiliate/commission program, and every Master Tool: Genie Agent, My Store, Real Estate, Marketing, Markets, Creative, CRM, University, Community) AND, when asked, can actually perform a small set of actions on the member\'s behalf.\n' +
+      'You are Genie, the Money Masteries webapp assistant. You both ANSWER questions about the platform (three plans — Basic $19.99/mo, Pro $50/mo, Elite $99/mo — the affiliate/commission program, and every Master Tool: Genie Agent, My Store, Real Estate, Marketing, Markets, Creative, CRM, University, Community) AND can actually operate the app for the member — clicking, typing, and navigating on their behalf while they watch — so they never have to click through it themselves if they\'d rather just tell you what they want.\n' +
+      'LANGUAGE: the member has the site set to ' + langName + ' using the language switcher at the top of the page. Respond ONLY in ' + langName + ' — both in "reply" and when speaking out loud — no matter what language their message is written or spoken in, unless they explicitly ask you to switch languages.\n' +
       'The member is currently on: ' + screenId + ' — ' + screenHelp + '\n\n' +
-      'AVAILABLE ACTIONS (only use one if the member is clearly asking you to DO something, not just asking how something works):\n' + actionSpecs + '\n\n' +
+      'CURATED ACTIONS (only use one if the member is clearly asking you to DO something, not just asking how something works):\n' + actionSpecs + '\n\n' +
+      'ELEMENTS CURRENTLY VISIBLE ON THIS SCREEN (numbered — use ui_click / ui_type / ui_select / ui_scroll_to with these exact IDs when the member wants something done that isn\'t covered by a curated action above; NEVER invent an ID, and if what they want truly isn\'t listed, say so instead of guessing):\n' + (elementList || '(nothing detected)') + '\n\n' +
       'Respond with STRICT JSON ONLY (no markdown fences, no extra text before or after) in exactly this shape:\n' +
       '{"reply":"<short, friendly response to show the member, under 80 words>","action":null}\n' +
       'or, only when you have every required param for one action from what the member said:\n' +
@@ -14219,13 +14398,13 @@ async function sendGenieFab() {
     if (parsed && typeof parsed.reply === 'string') {
       var replyHtml = parsed.reply.replace(/</g, '&lt;').replace(/\n/g, '<br>');
       thinking.querySelector('div').innerHTML = replyHtml;
-      var hasInstantAction = parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe && MM_GENIE_ACTIONS[parsed.action.name].instant;
+      var hasInstantAction = parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe && genieActionInstant(MM_GENIE_ACTIONS[parsed.action.name], parsed.action.params);
       if (!hasInstantAction) genieFabSpeak(parsed.reply); // instant actions speak their own result below instead
       if (parsed.action && parsed.action.name && MM_GENIE_ACTIONS[parsed.action.name] && MM_GENIE_ACTIONS[parsed.action.name].describe) {
         var act = MM_GENIE_ACTIONS[parsed.action.name];
         var actParams = parsed.action.params || {};
-        if (act.instant) {
-          // safe, non-destructive, free actions (like navigation) run immediately, no confirm click needed
+        if (genieActionInstant(act, actParams)) {
+          // safe, non-destructive, free actions (like navigation or reading the screen) run immediately, no confirm click needed
           act.run(actParams).then(function(out){ genieFabBubble(out.text, 'bot', { speak: true }); }).catch(function(e){ genieFabBubble("Couldn't do that: " + String((e && e.message) || e).replace(/</g,'&lt;'), 'bot', { speak: true }); });
         } else {
           genieFabConfirmBubble(parsed.action.name, actParams, act.confirmText(actParams));
@@ -14251,10 +14430,14 @@ window.sendGenieFab = sendGenieFab;
 var _genieFabRecognition = null;
 var _genieFabListening = false;
 function _genieFabSpeechLang(){
-  var lang = (typeof courseLang !== 'undefined' ? courseLang : 'en');
+  // Follows the site-wide language switcher at the top of the page (MM_LANG)
+  // so Genie listens and speaks in whatever language the member picked there,
+  // not a separate setting they'd have to configure twice.
+  var lang = (typeof MM_LANG !== 'undefined' && MM_LANG) ? MM_LANG : (typeof courseLang !== 'undefined' ? courseLang : 'en');
   return lang === 'es' ? 'es-ES' : lang === 'pt' ? 'pt-BR' : 'en-US';
 }
 function genieFabMicToggle(){
+  if (typeof genieAgentEligible === 'function' && !genieAgentEligible()) { toggleGenieFab(false); return; }
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var micBtn = document.getElementById('genieFabMic');
   if (!SR) { if (micBtn) micBtn.classList.add('unsupported'); return; }
@@ -15710,6 +15893,20 @@ function suppMockHtml(){
 
 function studioEligible(){ var pl=(window.userData&&window.userData.plan)||'free'; return pl==='elite' || window.isMaster===true; }
 function eventsEligible(){ var pl=(window.userData&&window.userData.plan)||'free'; return pl==='pro' || pl==='elite' || window.isMaster===true; }
+// Ask Genie (the on-page AI agent) is a Pro/Elite perk — Basic ($19.99/mo) and
+// free/trial members don't get it.
+function genieAgentEligible(){ var pl=(window.userData&&window.userData.plan)||'free'; return pl==='pro' || pl==='elite' || window.isMaster===true; }
+window.genieAgentEligible = genieAgentEligible;
+function mmUpdateGenieFabAccess(){
+  var fab = document.getElementById('genieFab');
+  if (!fab) return;
+  var eligible = genieAgentEligible();
+  fab.classList.toggle('genie-fab-locked', !eligible);
+  var span = fab.querySelector('span');
+  if (span) span.textContent = eligible ? 'Ask Genie' : 'Ask Genie 🔒';
+  if (!eligible) { var panel = document.getElementById('genieFabPanel'); if (panel) panel.classList.remove('open'); }
+}
+window.mmUpdateGenieFabAccess = mmUpdateGenieFabAccess;
 // Pro/Elite (or the Master account) get every Master included. Everyone else
 // can still get in — one Master at a time — by buying that specific one for
 // $25 (see MASTER_PRODUCTS / buyProduct). ProsHub/CRM Master (the client CRM)
