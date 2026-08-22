@@ -8224,6 +8224,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <button class="rei-view" id="mmVIndicators" onclick="mmViewSwitch('indicators')">📐 Indicators</button>
         <button class="rei-view" id="mmVJournal" onclick="mmViewSwitch('journal')">📓 Trading Journal</button>
         <button class="rei-view" id="mmVAiTool" onclick="mmViewSwitch('aitool')">🧠 AI Trade Analyzer</button>
+        <button class="rei-view" id="mmVEvalBot" onclick="mmViewSwitch('evalbot')">🎯 Eval Pass Bot</button>
       </div>
 
       <div id="mmOverviewTab">
@@ -8391,6 +8392,50 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
         <div id="mmAiToolResult" style="display:none;margin-top:16px" class="mk-card"></div>
+      </div>
+
+      <div id="mmEvalBotTab" style="display:none">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">⚠️</div>
+          <div>
+            <b>Real money, real risk — and it's not us.</b> This runs against your own Topstep prop-firm evaluation account using your own API key, entirely on your own computer. It is not run, monitored, or guaranteed by Money Masteries. The risk/rule engine is unit-tested against Topstep's published rules; the trading strategies included are <b>not proven profitable</b> — nobody can hand you an edge. Trading futures involves substantial risk of loss. This is not financial advice, and you're responsible for every order it places once you turn on live mode.
+          </div>
+        </div>
+
+        <div class="payout-card">
+          <div class="po-title">🎯 EVAL PASS BOT v1.0</div>
+          <div class="po-sub">A futures trading bot built specifically to trade Topstep's $50K Trading Combine (MES — Micro E-mini S&amp;P 500) inside Topstep's own rules — a tested risk/rule engine (trailing max-loss limit, daily loss limit, consistency rule, position sizing) wrapped around three starter strategies, a pessimistic backtester, and a Monte Carlo tool that tells you how big an edge you actually need to pass.</div>
+          <div style="margin:14px 0"><a class="admin-save-btn" style="display:inline-block;text-decoration:none;text-align:center;font-size:.95rem;padding:12px 22px" href="https://raw.githubusercontent.com/Truperman/money-masteries-webapp/main/downloads/EVAL_PASS_BOT_v1.0.zip" target="_blank" rel="noopener noreferrer">⬇ Download EVAL_PASS_BOT_v1.0.zip (65 KB)</a></div>
+
+          <div style="font-size:.8rem;color:#a3a3b8;line-height:1.7">
+            <b style="color:#e5e7eb">What it actually is</b><br>
+            • <b>Rule engine</b> — implements Topstep's $50K Combine rules: $3,000 profit target, $2,000 trailing Max Loss Limit (locks at $50K balance), $1,000 Daily Loss Limit, max 5 contracts / 50 micros, best-day-≤-50%-of-total consistency rule, 2-day minimum. 32 unit tests check it against Topstep's documented spec.<br>
+            • <b>Backtester + Monte Carlo</b> — pessimistic fills, and a required-edge calculator so you know the win-rate/reward-risk you actually need before risking a paid evaluation.<br>
+            • <b>Three starter strategies</b> (opening range breakout, trend pullback, VWAP fade) — included as a framework to build on, <u>not</u> proven profitable on real data. The bot will faithfully execute a losing strategy just as well as a winning one.<br>
+            • <b>Live trading adapter</b> for TopstepX/ProjectX — starts in safe/dry-run mode by default and never sends a real order until the member explicitly types a confirmation phrase to enable it.<br><br>
+
+            <b style="color:#e5e7eb">What the member needs (their own, not provided by us)</b><br>
+            • Their own Topstep account with an active Trading Combine.<br>
+            • Their own TopstepX API key (TopstepX → Settings → API — $29/mo, or $14.50/mo with code <code>topstep</code>).<br>
+            • Python 3.9+ (already on Mac; Windows users install from python.org and tick "Add Python to PATH").<br><br>
+
+            <b style="color:#e5e7eb">How it works, step by step</b><br>
+            1. Unzip it anywhere on their own computer (Topstep requires trading to originate from your own device — no VPS, no VPN, no cloud server, and this bot is built to run that way).<br>
+            2. <b>Mac:</b> right-click "SETUP - double click me.command" → Open (first time only, to get past macOS's unidentified-developer warning) → it asks for the Topstep username + API key and saves them locally.<br>
+            &nbsp;&nbsp;<b>Windows:</b> double-click <code>setup.bat</code> (click "More info" → "Run anyway" the first time).<br>
+            3. Run it: Mac double-clicks "START THE BOT - double click me.command", Windows double-clicks <code>go.bat</code>. This is <b>safe mode</b> — it reads the real account balance and watches the market, but never places an order. Everything logs to <code>logs/session.log</code>.<br>
+            4. Recommended: leave it in safe mode at least two weeks and read the logs before trusting it with a paid evaluation.<br>
+            5. Only when ready: Mac runs <code>bash go.sh --live --risk 75</code>, Windows double-clicks <code>go-live.bat</code> — it requires typing a confirmation sentence first, so live orders can't turn on by accident.<br>
+            6. To stop: press Ctrl+C in the window so it closes any open position first. Closing the window instead leaves a trade running unattended.<br><br>
+
+            <b style="color:#e5e7eb">Rules worth knowing before running it</b><br>
+            • Must run on the member's own computer, kept awake for the session — Topstep prohibits VPS/VPN/remote servers for automation.<br>
+            • Never share the API key — it can place and cancel real orders on their account.<br>
+            • If more than one member runs this bot, Topstep-style prop firms shut down accounts that place near-identical trades — use a different symbol or strategy per person (covered in the bundled SETUP.md).<br><br>
+
+            Full details, every command, and the honest "what's tested vs. not" breakdown are in <code>README.md</code>, <code>SETUP.md</code>, and <code>START_HERE.txt</code> inside the download.
+          </div>
+        </div>
       </div>
     </div>
 
@@ -13970,7 +14015,7 @@ var MM_GENIE_SCREEN_HELP = {
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
   marketingmaster:   "Marketing Master — AI-assisted marketing content, plus REAL social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once the member connects an account here. This is open to every member including free/Basic — connecting isn't gated by plan, but IS a separately billed usage/activity fee (roughly $6/mo per connected account before the first 2 platform-wide, which are free) — not part of their membership price. If they ask about connecting, mention the fee honestly rather than implying it's included or free. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate. If the status line/elements show accounts aren't connected yet or posting isn't configured, say so honestly rather than claiming you posted something.",
-  marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A.",
+  marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A. Also has a Copy Trading Bot tab, and an 'Eval Pass Bot' tab (🎯) with a free downloadable Python bot (EVAL_PASS_BOT_v1.0.zip) for running your OWN Topstep $50K Combine evaluation locally, using your own Topstep API key — it's not run by us, starts in safe/dry-run mode, and its trading strategies are unproven (only the risk/rule engine is tested). If asked about it, describe it honestly and point them to that tab rather than claiming it's a guaranteed-profit tool.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
   crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
   communitymaster:   "Community Master — the live member feed, plus a link out to BizBuzz.",
@@ -14913,6 +14958,7 @@ function mmViewSwitch(which){
     indicators:{ panel:'mmIndicatorsTab', btn:'mmVIndicators' },
     journal:   { panel:'mmJournalTab',    btn:'mmVJournal' },
     aitool:    { panel:'mmAiToolTab',     btn:'mmVAiTool' },
+    evalbot:   { panel:'mmEvalBotTab',    btn:'mmVEvalBot' },
   };
   Object.keys(map).forEach(function(k){
     var el = document.getElementById(map[k].panel);
