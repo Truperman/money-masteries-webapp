@@ -8192,8 +8192,9 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="payout-card" style="margin-bottom:20px">
         <div class="po-title">🔗 Connect Your Social Accounts</div>
-        <div class="po-sub">Connect your real accounts, then post to them straight from here — or ask Genie to do it for you.</div>
-        <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#6b7280;margin:6px 0 12px">Loading…</div>
+        <div class="po-sub">Connect your real accounts, then post to them straight from here — or ask Genie to do it for you. Open to every member, including Basic/free — you get immediate access, no plan upgrade needed.</div>
+        <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#6b7280;margin:6px 0 4px">Loading…</div>
+        <div id="mmSocialFeeNote" style="font-size:.68rem;color:#9ca3af;margin:0 0 12px;font-style:italic"></div>
         <div id="mmSocialConnectGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
         <div id="mmSocialComposer"></div>
       </div>
@@ -13968,7 +13969,7 @@ var MM_GENIE_SCREEN_HELP = {
   universitymaster:  "University Master — video courses (day trading, real estate, e-commerce), the Revalidation service tab, and the Impact webapp tab.",
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
-  marketingmaster:   "Marketing Master — AI-assisted marketing content, plus REAL social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once the member connects an account here. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate. If the status line/elements show accounts aren't connected yet or posting isn't configured, say so honestly rather than claiming you posted something.",
+  marketingmaster:   "Marketing Master — AI-assisted marketing content, plus REAL social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once the member connects an account here. This is open to every member including free/Basic — connecting isn't gated by plan, but IS a separately billed usage/activity fee (roughly $6/mo per connected account before the first 2 platform-wide, which are free) — not part of their membership price. If they ask about connecting, mention the fee honestly rather than implying it's included or free. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate. If the status line/elements show accounts aren't connected yet or posting isn't configured, say so honestly rather than claiming you posted something.",
   marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
   crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
@@ -20442,15 +20443,21 @@ const MM_SOCIAL_PLATFORMS = [
   { key: 'youtube',   zernioKey: 'youtube',   label: 'YouTube',   color: '#FF0000',  icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#FF0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12z"/></svg>' },
 ];
 var _mmSocialAccounts = []; // last-fetched real connected accounts, [{_id/id, platform, username}]
+let _mmSocialBillableCount = 0;
+let _mmSocialPricePerAccount = 6;
 async function renderSocialConnectGrid(){
   const wrap = document.getElementById('mmSocialConnectGrid');
   const statusEl = document.getElementById('mmSocialConnectStatus');
+  const feeEl = document.getElementById('mmSocialFeeNote');
   if (!wrap) return;
   let accounts = [];
   let notConfigured = false;
   try {
     if (typeof window.callSocialAccounts !== 'function') throw new Error('demo');
-    accounts = (await window.callSocialAccounts()).accounts || [];
+    const res = await window.callSocialAccounts();
+    accounts = res.accounts || [];
+    _mmSocialBillableCount = res.billableAccountCount || 0;
+    _mmSocialPricePerAccount = res.pricePerAccountUsd || 6;
   } catch (e) {
     notConfigured = /not set up|not configured|ZERNIO_API_KEY/i.test(String(e && e.message)) || String(e.message||'').includes('demo');
   }
@@ -20460,6 +20467,11 @@ async function renderSocialConnectGrid(){
     statusEl.textContent = notConfigured
       ? "🧪 Real posting isn't finished setting up on the site owner's end yet — accounts can't connect until then."
       : (accounts.length ? '✅ Live — posts go out to your real connected accounts.' : 'Connect an account below, then post to it from the composer.');
+  }
+  if (feeEl) {
+    feeEl.textContent = notConfigured ? '' :
+      '💳 Connecting an account is a usage-based activity fee (not part of your plan), billed monthly per connected account — the first 2 connected platform-wide are free, currently ' +
+      _mmSocialBillableCount + ' of your account' + (_mmSocialBillableCount===1?'':'s') + ' billable at ~$' + _mmSocialPricePerAccount + '/mo each before markup. Posting itself is free once connected.';
   }
   const byPlatform = {};
   accounts.forEach(function(a){ (byPlatform[a.platform] = byPlatform[a.platform] || []).push(a); });
@@ -20478,6 +20490,13 @@ async function renderSocialConnectGrid(){
 }
 window.renderSocialConnectGrid = renderSocialConnectGrid;
 async function mmSocialConnectClick(zernioKey){
+  // Usage-fee disclosure — only shown once the free platform-wide slots are
+  // used up, so it doesn't nag members whose connection will actually be
+  // free. This is a real, separately-billed activity fee, not part of any
+  // membership plan — see mmSocialFeeNote / functions/index.js billing note.
+  if (_mmSocialBillableCount >= 2 || _mmSocialAccounts.length >= 2) {
+    if (!confirm('Connecting another account is billed as a usage-based activity fee (~$' + _mmSocialPricePerAccount + '/mo before markup), separate from your membership plan — the first 2 connected accounts platform-wide are free, and those are already taken. Continue connecting?')) return;
+  }
   // Open the tab synchronously (before the await) so browsers don't treat
   // it as an unrequested popup — then point it at the real auth URL once
   // we have it back from the backend.
