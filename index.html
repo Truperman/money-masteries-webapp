@@ -7266,7 +7266,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <div class="sidebar-section-label">Main</div>
     <div class="nav-item active" onclick="showScreen('dashboard')" id="nav-dashboard"><span class="nav-item-icon"><i class="fa-solid fa-house"></i></span> Dashboard</div>
-    <div class="nav-item" onclick="showScreen('aicoach')" id="nav-aicoach"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> ASK GENIE</div>
     <div class="sidebar-section-label">Plans</div>
     <div class="nav-item" onclick="showScreen('plans')" id="nav-plans"><span class="nav-item-icon"><i class="fa-solid fa-credit-card"></i></span> Plans &amp; Pricing</div>
     <div class="sidebar-section-label">Money</div>
@@ -13259,8 +13258,6 @@ window.showLoggedIn = function(user, data) {
   if (ms) ms.style.display = (data && data.plan === 'elite') ? 'flex' : 'none';
   var stu = document.getElementById('nav-studio');
   if (stu) stu.style.display = (data && data.plan === 'elite') ? 'flex' : 'none';
-  var ac = document.getElementById('nav-aicoach');
-  if (ac) ac.style.display = 'flex';
   // Master Tools: Pro & Elite get every Master included free. Everyone else still
   // sees all 6 named Masters in the nav (so they can buy any single one for a
   // one-time $25 — see mastersEligible()/buyProduct() in showScreen) with a 🔒
@@ -14021,8 +14018,7 @@ var MM_GENIE_SCREEN_HELP = {
   communitymaster:   "Community Master — the live member feed, plus a link out to BizBuzz.",
   commissions:       "Payouts/Bank — commission tree, payout requests, PayPal setup, and Elite Dividends (Elite members only).",
   plans:             "Plans & Pricing — compare Basic/Pro/Elite and upgrade or downgrade.",
-  account:           "My Account — profile, affiliate link, membership plan, share kit, and past purchases.",
-  aicoach:           "Ask Genie — this same chat, full-screen."
+  account:           "My Account — profile, affiliate link, membership plan, share kit, and past purchases."
 };
 function mmUpdateGenieFabContext(id){
   var sub = document.getElementById('genieFabSub');
@@ -14238,7 +14234,7 @@ window.genieScanInteractive = genieScanInteractive;
 // its name to the ACTIONS list baked into the prompt in sendGenieFab().
 var MM_GENIE_ACTIONS = {
   navigate_to_screen: {
-    describe: "Take the member to a different screen in the app. Params: {\"screen\":\"<one of: dashboard, geniemaster, universitymaster, mystoremaster, reimaster, marketingmaster, marketsmaster, creativemaster, crmmaster, communitymaster, commissions, plans, account, aicoach>\"}. Use this whenever the member asks to go to / open / take me to / show me a Master or section by name (map names loosely: 'real estate' -> reimaster, 'store' -> mystoremaster, 'crm' -> crmmaster, 'payouts'/'bank' -> commissions, 'pricing' -> plans, 'my account' -> account, 'university'/'courses' -> universitymaster, 'community' -> communitymaster, 'markets'/'trading' -> marketsmaster, 'marketing' -> marketingmaster, 'creative'/'video' -> creativemaster, 'genie agent' -> geniemaster). This just switches screens — it is instant and free, no confirmation needed.",
+    describe: "Take the member to a different screen in the app. Params: {\"screen\":\"<one of: dashboard, geniemaster, universitymaster, mystoremaster, reimaster, marketingmaster, marketsmaster, creativemaster, crmmaster, communitymaster, commissions, plans, account>\"}. Use this whenever the member asks to go to / open / take me to / show me a Master or section by name (map names loosely: 'real estate' -> reimaster, 'store' -> mystoremaster, 'crm' -> crmmaster, 'payouts'/'bank' -> commissions, 'pricing' -> plans, 'my account' -> account, 'university'/'courses' -> universitymaster, 'community' -> communitymaster, 'markets'/'trading' -> marketsmaster, 'marketing' -> marketingmaster, 'creative'/'video' -> creativemaster, 'genie agent' -> geniemaster). This just switches screens — it is instant and free, no confirmation needed.",
     instant: true,
     confirmText: function(p){ return "Taking you to " + (MM_GENIE_SCREEN_HELP[p.screen] ? p.screen : 'that screen') + "…"; },
     run: async function(p){
