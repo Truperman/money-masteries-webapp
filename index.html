@@ -2845,6 +2845,33 @@ a.course-card:visited{color:inherit}
 #nav-marketsmaster::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 20%,#2E7BFF55 40%,#FFD23F80 50%,#2E7BFF55 60%,transparent 80%);background-size:220% 100%;background-position:200% 0;animation:mm-nav-glimmer 3.4s ease-in-out infinite;z-index:0}
 #nav-marketsmaster > *{position:relative;z-index:1}
 @keyframes mm-nav-glimmer{0%{background-position:200% 0}55%{background-position:-40% 0}100%{background-position:-40% 0}}
+/* Markets Master nav icon — its own animated blue/yellow candlestick chart,
+   distinct from every other nav item's static Font Awesome glyph. Candles
+   flicker up/down like live price action while the whole mini-chart drifts
+   side to side, and each candle's body cycles blue -> yellow -> blue on a
+   staggered delay so the color sweeps across the row like a shimmer. */
+.mm-candle-icon{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+.mm-candle-svg{width:20px;height:20px;display:block;overflow:visible}
+.mm-candle-track{animation:mm-candle-drift 2.6s ease-in-out infinite}
+.mm-candle{transform-box:fill-box;transform-origin:50% 100%;animation:mm-candle-move 1.8s ease-in-out infinite}
+.mm-candle-body{fill:#2E7BFF;animation:mm-candle-color 2.4s ease-in-out infinite;filter:drop-shadow(0 0 2px currentColor)}
+.mm-candle-wick{stroke:#a9c2ef;stroke-width:1;opacity:.85}
+.mm-candle:nth-child(1){animation-delay:0s}
+.mm-candle:nth-child(2){animation-delay:.25s}
+.mm-candle:nth-child(3){animation-delay:.5s}
+.mm-candle:nth-child(4){animation-delay:.75s}
+.mm-candle:nth-child(5){animation-delay:1s}
+.mm-candle:nth-child(1) .mm-candle-body{animation-delay:0s}
+.mm-candle:nth-child(2) .mm-candle-body{animation-delay:.4s}
+.mm-candle:nth-child(3) .mm-candle-body{animation-delay:.8s}
+.mm-candle:nth-child(4) .mm-candle-body{animation-delay:1.2s}
+.mm-candle:nth-child(5) .mm-candle-body{animation-delay:1.6s}
+@keyframes mm-candle-drift{0%,100%{transform:translateX(0)}50%{transform:translateX(-2px)}}
+@keyframes mm-candle-move{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.62)}}
+@keyframes mm-candle-color{0%,45%{fill:#2E7BFF}50%,95%{fill:#FFD23F}100%{fill:#2E7BFF}}
+@media (prefers-reduced-motion: reduce){
+  .mm-candle-track,.mm-candle,.mm-candle-body{animation:none}
+}
 .mk-card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .22s,border-color .22s,box-shadow .22s;animation:card-rise .5s backwards}
 .mk-card:nth-child(1){animation-delay:.04s}.mk-card:nth-child(2){animation-delay:.09s}.mk-card:nth-child(3){animation-delay:.14s}.mk-card:nth-child(4){animation-delay:.19s}.mk-card:nth-child(5){animation-delay:.24s}.mk-card:nth-child(6){animation-delay:.29s}.mk-card:nth-child(7){animation-delay:.34s}.mk-card:nth-child(8){animation-delay:.39s}
 .mk-card:hover{transform:translateY(-5px);border-color:#2E7BFF50;box-shadow:0 14px 34px #00000070}
@@ -7294,7 +7321,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item master-tool-item" onclick="showScreen('mystoremaster')" id="nav-mystoremaster"><span class="nav-item-icon"><i class="fa-solid fa-store"></i></span> My Store Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon"><i class="fa-solid fa-city"></i></span> Real Estate Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon"><i class="fa-solid fa-rocket"></i></span> Marketing Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon"><i class="fa-solid fa-chart-line"></i></span> Markets Master</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon mm-candle-icon" aria-hidden="true"><svg class="mm-candle-svg" viewBox="0 0 22 20"><g class="mm-candle-track"><g class="mm-candle"><line class="mm-candle-wick" x1="2.5" y1="2" x2="2.5" y2="18"></line><rect class="mm-candle-body" x="1" y="7" width="3" height="8" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="6.5" y1="1" x2="6.5" y2="17"></line><rect class="mm-candle-body" x="5" y="4" width="3" height="10" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="10.5" y1="3" x2="10.5" y2="19"></line><rect class="mm-candle-body" x="9" y="9" width="3" height="6" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="14.5" y1="0" x2="14.5" y2="16"></line><rect class="mm-candle-body" x="13" y="3" width="3" height="9" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="18.5" y1="2" x2="18.5" y2="18"></line><rect class="mm-candle-body" x="17" y="8" width="3" height="7" rx=".6"></rect></g></g></svg></span> <span class="nav-item-label">Markets Master</span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('creativemaster')" id="nav-creativemaster"><span class="nav-item-icon"><i class="fa-solid fa-clapperboard"></i></span> Creative Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('crmmaster')" id="nav-crmmaster"><span class="nav-item-icon"><i class="fa-solid fa-toolbox"></i></span> CRM Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('communitymaster')" id="nav-communitymaster"><span class="nav-item-icon"><i class="fa-solid fa-comments"></i></span> Community Master</div>
