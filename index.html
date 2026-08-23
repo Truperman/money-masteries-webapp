@@ -14289,6 +14289,21 @@ var MM_GENIE_ACTIONS = {
       return { text: "Done — you're on " + (MM_GENIE_SCREEN_HELP[screen] || screen).split(' — ')[0] + " now.", done: true };
     }
   },
+  eval_bot_download: {
+    describe: "Take the member to Markets Master's 🎯 Eval Pass Bot tab and start downloading EVAL_PASS_BOT_v1.0.zip for them right now. Use this whenever they ask to download, get, install, or set up the (Topstep evaluation / trading / eval pass) bot — don't just tell them where it is, actually start the download. It's a free file, no payment or account changes involved, so this is instant and needs no confirmation. After it runs, immediately offer to walk them through setup step by step (you already know the exact install flow and common errors — see the deep knowledge for this screen) and keep helping across follow-up messages as they report progress or paste errors. Never ask for their Topstep API key or username at any point.",
+    instant: true,
+    run: function(){
+      if (typeof window.showScreen === 'function') window.showScreen('marketsmaster');
+      if (typeof window.mmViewSwitch === 'function') setTimeout(function(){ window.mmViewSwitch('evalbot'); }, 60);
+      // Same-tab navigation (not window.open) so it can't get popup-blocked —
+      // browsers download a .zip in place without leaving the app.
+      window.location.href = 'https://raw.githubusercontent.com/Truperman/money-masteries-webapp/main/downloads/EVAL_PASS_BOT_v1.0.zip';
+      return Promise.resolve({
+        text: "Started your download of EVAL_PASS_BOT_v1.0.zip — check your browser's download bar or Downloads folder. I've switched you to the 🎯 Eval Pass Bot tab too. Once it's unzipped, just tell me and I'll walk you through setup step by step (I'll never ask for your Topstep API key — the setup file asks for that on your own computer).",
+        done: true
+      });
+    }
+  },
   rei_search_leads: {
     describe: "Search Real Estate Master for distressed-property leads. Params: {\"geography\":{\"mode\":\"states\"|\"counties\"|\"city\",\"states\":[\"XX\"],\"counties\"?:[\"...\"],\"cities\"?:[\"...\"]}, \"strategy\"?:\"custom\"}. Requires at minimum a 2-letter US state code. This is a PAID action (billed per lead delivered) — never mark it ready unless the member gave you at least a state.",
     confirmText: function(p){
