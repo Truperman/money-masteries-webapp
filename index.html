@@ -333,6 +333,31 @@
     return res.data;
   };
 
+  // Elite-exclusive events — see functions/index.js getEliteEvents.
+  window.callGetEliteEvents = async () => {
+    const fn = httpsCallable(functionsClient, 'getEliteEvents');
+    const res = await fn();
+    return res.data;
+  };
+
+  // Cross-Master data sharing — see functions/index.js shareMasterItem /
+  // getMasterInbox / markMasterInboxItemRead.
+  window.callShareMasterItem = async (data) => {
+    const fn = httpsCallable(functionsClient, 'shareMasterItem');
+    const res = await fn(data);
+    return res.data;
+  };
+  window.callGetMasterInbox = async (toMaster) => {
+    const fn = httpsCallable(functionsClient, 'getMasterInbox');
+    const res = await fn({ toMaster });
+    return res.data;
+  };
+  window.callMarkMasterInboxItemRead = async (itemId) => {
+    const fn = httpsCallable(functionsClient, 'markMasterInboxItemRead');
+    const res = await fn({ itemId });
+    return res.data;
+  };
+
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
   // needing their own Firebase import wiring.
@@ -1648,7 +1673,16 @@ body{background:#0A0E1A;color:#e5e7eb;font-family:Inter,Segoe UI,sans-serif;min-
 .sidebar-section-label{padding:14px 20px 6px;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#4b5563;font-weight:600}
 
 /* MAIN */
-.main{flex:1;overflow-y:auto;min-height:calc(100vh - 60px)}
+.main{flex:1;overflow-y:auto;min-height:calc(100vh - 60px);position:relative}
+/* Master preview overlay — Basic/free members can SEE a locked Master's
+   real screen (dimmed/blurred behind this) but can't interact with it.
+   See showMasterPreviewOverlay()/hideMasterPreviewOverlay(). */
+#masterPreviewOverlay{position:absolute;inset:0;z-index:500;display:none;background:rgba(10,14,24,.72);backdrop-filter:blur(3px)}
+#masterPreviewOverlay .mpo-card{position:sticky;top:90px;max-width:420px;margin:0 auto;background:#111827;border:1px solid #2E7BFF55;border-radius:16px;padding:26px 24px;text-align:center;box-shadow:0 20px 50px -12px rgba(0,0,0,.6)}
+#masterPreviewOverlay .mpo-icon{font-size:2rem;margin-bottom:10px}
+#masterPreviewOverlay .mpo-title{font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:8px}
+#masterPreviewOverlay .mpo-body{font-size:.82rem;color:#a99bd6;line-height:1.5;margin-bottom:18px}
+#masterPreviewOverlay .mpo-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
 /* ── EMAIL AUTH BOX ── */
 .auth-box{max-width:400px;margin:26px auto 0;background:#111827cc;border:1px solid #1f2937;border-radius:16px;padding:22px 24px;text-align:left}
@@ -7376,6 +7410,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- SCREENS -->
   <main class="main">
+    <div id="masterPreviewOverlay">
+      <div class="mpo-card">
+        <div class="mpo-icon">🔒</div>
+        <div class="mpo-title" id="mpoTitle">You're previewing this Master</div>
+        <div class="mpo-body" id="mpoBody">Basic members can see every Master but need Pro, Elite, or a one-time $25 unlock to actually use this one. CRM Master and Community Master are included free for everyone.</div>
+        <div class="mpo-btns">
+          <button class="bm-add-btn" id="mpoUnlockBtn" onclick="mpoUnlockThis()">Unlock for $25</button>
+          <button class="bm-add-btn" style="background:#7c3aed" onclick="openUpgradeModal('pro')">Upgrade to Pro/Elite</button>
+        </div>
+      </div>
+    </div>
 
     <!-- DASHBOARD -->
     <div class="screen active" id="screen-dashboard" data-sbg="dashboard">
@@ -7437,6 +7482,18 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-diagram-project"></i></div><div class="qa-label">My Network</div></div>
         <div class="qa-tile" onclick="showScreen('communitymaster')"><div class="qa-icon"><i class="fa-solid fa-video"></i></div><div class="qa-label">Live Events</div></div>
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="qa-label">My Earnings</div></div>
+      </div>
+
+      <!-- ESSENTIALS — the Masters every member gets full real access to
+           regardless of plan (CRM Master, Community Master), surfaced here
+           so Basic/free members immediately see what's included rather
+           than having to discover it in the sidebar. Pro/Elite members see
+           the same tiles too — Essentials is "always included," not a
+           downgrade indicator. -->
+      <div class="dash-section-label"><i class="fa-solid fa-star"></i> Essentials</div>
+      <div class="quick-actions">
+        <div class="qa-tile" onclick="showScreen('crmmaster')"><div class="qa-icon"><i class="fa-solid fa-address-book"></i></div><div class="qa-label">CRM Master</div></div>
+        <div class="qa-tile" onclick="showScreen('communitymaster')"><div class="qa-icon"><i class="fa-solid fa-people-group"></i></div><div class="qa-label">Community Master</div></div>
       </div>
 
       <!-- LIVE ACTIVITY FEED -->
@@ -8121,6 +8178,14 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
 
+      <!-- ELITE EXCLUSIVE EVENTS — real plan==='elite' gate (see
+           getEliteEvents in functions/index.js), not just descriptive
+           copy. Non-Elite members see an upgrade prompt in its place. -->
+      <div id="eliteEventsSection" style="margin-top:26px">
+        <div class="events-section-label">🌟 Elite Exclusive Events</div>
+        <div id="eliteEventsList" class="mpm-sub">Loading…</div>
+      </div>
+
       <!-- LIVE EVENTS (moved from the former standalone Live Events screen) -->
       <div class="screen-title" style="font-size:1.1rem;margin-top:26px">🎥 <span>Live Events</span></div>
 
@@ -8266,6 +8331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-marketingmaster" data-sbg="marketingmaster">
       <div class="screen-title"><i class="fa-solid fa-rocket"></i> <span>Marketing Master</span></div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
+      <div id="mktMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
       <div class="mk-grid" style="margin-bottom:18px">
         <div class="mk-card">
           <span class="mk-badge purple">ADD-ON</span>
@@ -8558,7 +8624,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <video id="cmVideoResultPlayer" controls style="width:100%;border-radius:10px;margin-top:8px;background:#000;aspect-ratio:auto"></video>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
               <a id="cmVideoDownloadLink" class="admin-save-btn" style="text-decoration:none;background:rgba(255,255,255,.08)" href="#" download>⬇️ Download</a>
-              <button class="admin-save-btn cm-gen-btn" onclick="showScreen('marketingmaster'); if(typeof showNotifToast==='function')showNotifToast('🚀 Ready to publish','Head to Marketing Master to post this wherever you\'d like.')">🚀 Send to Marketing Master</button>
+              <button class="admin-save-btn cm-gen-btn" onclick="cmSendToMaster('marketingmaster')">🚀 Send to Marketing Master</button>
+              <button class="admin-save-btn cm-gen-btn" style="background:#14b8a6" onclick="cmSendToMaster('mystoremaster')">🛍️ Send to My Store Master</button>
+              <span id="cmSendStatus" style="font-size:.72rem;color:#8ba0c4;align-self:center"></span>
             </div>
           </div>
         </div>
@@ -9685,6 +9753,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ══════════════════ MY STORE MASTER (Create Product + My Store + Marketplace) ══════════════════ -->
     <div class="screen" id="screen-mystoremaster" data-sbg="mystore">
       <div class="screen-title"><i class="fa-solid fa-store"></i> My Store <span>Master</span></div>
+      <div id="storeMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
       <div class="rei-view-bar" style="margin-bottom:16px">
         <button class="rei-view active" id="msmVStore" onclick="msmSwitch('store')">🛍️ My Store</button>
         <button class="rei-view" id="msmVStudio" onclick="msmSwitch('studio')">🎨 Create Product <span class="pro-tag" style="background:#a855f7;color:#fff;margin-left:4px">ELITE</span></button>
@@ -10608,7 +10677,8 @@ function showScreen(id) {
   if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); if (typeof renderPayoutRequestStatus === 'function') renderPayoutRequestStatus(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
   if (id === 'marketsmaster') setTimeout(function(){ if (typeof renderEliteTools === 'function') renderEliteTools(); if (typeof renderMarketsMaster === 'function') renderMarketsMaster(); }, 30);
-  if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid(); }, 30);
+  if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid(); if (typeof renderMasterInbox === 'function') renderMasterInbox('marketingmaster', 'mktMasterInbox'); }, 30);
+  if (id === 'mystoremaster') setTimeout(function(){ if (typeof renderMasterInbox === 'function') renderMasterInbox('mystoremaster', 'storeMasterInbox'); }, 30);
   if (id === 'creativemaster') setTimeout(function(){ if (typeof cmLoadLibrary === 'function') cmLoadLibrary(); }, 30);
   if (id === 'crmmaster') setTimeout(function(){ if (typeof renderProsHub === 'function') renderProsHub(); if (typeof renderJarvisChips === 'function') renderJarvisChips('proshub'); }, 30);
   if (id === 'marketplace')  setTimeout(function(){ if (typeof renderMarketplace === 'function') renderMarketplace(); }, 30);
@@ -10616,7 +10686,7 @@ function showScreen(id) {
   if (id === 'mystoremaster') setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
   if (id === 'mystore')      setTimeout(function(){ if (typeof renderMyStore === 'function') renderMyStore(); }, 30);
   if (id === 'universitymaster') setTimeout(function(){ if (typeof buildRevalLink === 'function') buildRevalLink(); }, 30);
-  if (id === 'communitymaster')  setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); }, 20);
+  if (id === 'communitymaster')  setTimeout(function(){ if (typeof renderCommunity === 'function') renderCommunity(); if (typeof renderEliteEvents === 'function') renderEliteEvents(); }, 20);
   if (id === 'admin')        { if (typeof switchAdminTab === 'function') switchAdminTab('overview'); }
   if (id === 'admin')        setTimeout(function(){ if (typeof renderMasterProducts === 'function') renderMasterProducts(); if (typeof renderIntroVideoManager === 'function') renderIntroVideoManager(); if (typeof renderMasterToolsManager === 'function') renderMasterToolsManager(); if (typeof adminLoadRevalLeads === 'function') adminLoadRevalLeads(); var mmk=document.getElementById('mmAdminKey'); if(mmk) mmk.value = window.MARKETS_MASTER_KEY || ''; var dcfg = window.MM_REAL_REVSHARE || window.REVENUE_SHARE_CONFIG || {}; var dp=document.getElementById('divAdminPct'); if(dp) dp.value = dcfg.poolPct != null ? dcfg.poolPct : 10; var db2=document.getElementById('divAdminBalance'); if(db2) db2.value = dcfg.poolBalance != null ? dcfg.poolBalance : 4820; var dd=document.getElementById('divAdminDividend'); if(dd) dd.value = dcfg.monthlyDividend != null ? dcfg.monthlyDividend : 385; var dec=document.getElementById('divAdminEliteCount'); if(dec) dec.value = dcfg.eliteCount != null ? dcfg.eliteCount : 14; if (typeof renderShowcaseButton === 'function') renderShowcaseButton(); if (typeof loadPayoutRequests === 'function') loadPayoutRequests(); if (typeof loadAiUsageSummary === 'function') loadAiUsageSummary(); if (typeof loadGenieOrders === 'function') loadGenieOrders(); if (typeof adminFillShareCampaignForm === 'function') adminFillShareCampaignForm(); if (typeof adminLoadDiscountCodes === 'function') adminLoadDiscountCodes(); }, 80);
   if (id === 'reimaster')    setTimeout(function(){ if (typeof renderReiMaster === 'function') renderReiMaster(); if (typeof renderJarvisChips === 'function') renderJarvisChips('reimaster'); if (typeof reiLoadSavedLeads === 'function') reiLoadSavedLeads(); }, 30);
@@ -12372,16 +12442,19 @@ window.showScreen = function(id) {
     if (typeof showNotifToast === 'function') showNotifToast('💎 Elite feature', 'The Product Creator is an Elite perk. Upgrade to invent and sell your own products.');
     return;
   }
-  var MASTER_SCREENS = ['reimaster','marketingmaster','marketsmaster','businessmaster','financialmaster','creativemaster','crmmaster'];
-  if (MASTER_SCREENS.indexOf(id) !== -1 && typeof mastersEligible === 'function' && !mastersEligible(id)) {
-    // Every Master (including ProsHub/CRM Master): offer the $25
-    // single-Master unlock, with an upgrade link right in that same modal
-    // for anyone who'd rather get all of them.
-    if (typeof buyProduct === 'function') buyProduct('master-' + id);
-    if (typeof showNotifToast === 'function') showNotifToast('🔒 Pro, Elite, or $25', 'Unlock just this Master for $25 one-time — or upgrade to Pro/Elite to get every Master included.');
-    return;
-  }
+  // CRM Master and Community Master are free, full-access Essentials for
+  // every member regardless of plan — never gated. All other Masters:
+  // Basic/free members can navigate in and SEE the real screen, but get a
+  // non-interactive preview overlay on top (see showMasterPreviewOverlay)
+  // instead of being blocked from entering at all.
+  var MASTER_SCREENS = ['reimaster','marketingmaster','marketsmaster','businessmaster','financialmaster','creativemaster'];
+  var mpoLocked = MASTER_SCREENS.indexOf(id) !== -1 && typeof mastersEligible === 'function' && !mastersEligible(id);
   _origShow(id);
+  if (mpoLocked) {
+    if (typeof showMasterPreviewOverlay === 'function') showMasterPreviewOverlay(id);
+  } else if (typeof hideMasterPreviewOverlay === 'function') {
+    hideMasterPreviewOverlay();
+  }
   if (id === 'commissions') buildCompTable();
 };
 
@@ -13416,8 +13489,7 @@ window.showLoggedIn = function(user, data) {
   var mastersUnlocked = (data && (data.plan === 'pro' || data.plan === 'elite')) || window.isMaster === true;
   [['nav-reimaster','reimaster','fa-city','Real Estate Master'],['nav-marketingmaster','marketingmaster','fa-rocket','Marketing Master'],
    ['nav-marketsmaster','marketsmaster','fa-chart-line','Markets Master'],
-   ['nav-creativemaster','creativemaster','fa-clapperboard','Creative Master'],
-   ['nav-crmmaster','crmmaster','fa-toolbox','CRM Master']].forEach(function(row){
+   ['nav-creativemaster','creativemaster','fa-clapperboard','Creative Master']].forEach(function(row){
     var el = document.getElementById(row[0]);
     if (!el) return;
     el.style.display = 'flex';
@@ -13427,9 +13499,10 @@ window.showLoggedIn = function(user, data) {
     if (labelSpan) { labelSpan.textContent = baseLabel + (unlocked ? '' : ' 🔒'); }
     else { el.innerHTML = '<span class="nav-item-icon"><i class="fa-solid ' + row[2] + '"></i></span> <span class="nav-item-label">' + baseLabel + (unlocked ? '' : ' 🔒') + '</span>'; }
   });
-  // Genie Agent Master, My Store Master, University Master, Community Master — organizational
-  // Masters, not individually-purchasable tools, so always visible once logged in (no lock badge).
-  ['nav-geniemaster', 'nav-mystoremaster', 'nav-universitymaster', 'nav-communitymaster'].forEach(function(id){
+  // Genie Agent Master, My Store Master, University Master, Community Master,
+  // CRM Master — free Essentials/organizational Masters, not gated by plan,
+  // so always visible once logged in with no lock badge.
+  ['nav-geniemaster', 'nav-mystoremaster', 'nav-universitymaster', 'nav-communitymaster', 'nav-crmmaster'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.style.display = 'flex';
   });
@@ -15812,6 +15885,42 @@ async function abmActivate(){
     if (typeof showNotifToast === 'function') showNotifToast('⚠ Activation error', e.message || 'Could not start Active Business activation — please try again.');
   }
 }
+
+/** Elite-exclusive events list in Community Master — real plan==='elite'
+ *  gate enforced server-side by getEliteEvents; non-Elite members see an
+ *  upgrade prompt instead of the (admin-managed) event list. */
+function eeEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+async function renderEliteEvents(){
+  var listEl = document.getElementById('eliteEventsList');
+  if (!listEl) return;
+  listEl.textContent = 'Loading…';
+  try {
+    var res = await window.callGetEliteEvents();
+    if (!res.eligible) {
+      listEl.innerHTML = '<div class="fm-card" style="text-align:center">' +
+        '<div class="mpm-title" style="margin-bottom:6px">🌟 Elite members get personal invites to live, in-person and VIP virtual events</div>' +
+        '<div class="mpm-sub" style="margin-bottom:14px">Upgrade to Elite to be invited automatically — no separate signup needed.</div>' +
+        '<button class="bm-add-btn" style="background:#7c3aed" onclick="openUpgradeModal(\'elite\')">Upgrade to Elite</button></div>';
+      return;
+    }
+    if (!res.events || !res.events.length) {
+      listEl.innerHTML = '<div class="mpm-sub">No exclusive events scheduled right now — check back soon.</div>';
+      return;
+    }
+    listEl.innerHTML = res.events.map(function(e){
+      return '<div class="event-card">' +
+        '<div class="event-date-box"><div class="event-date-month">' + eeEsc((e.dateLabel || '').split(' ')[0] || 'TBD') + '</div>' +
+        '<div class="event-date-day">' + eeEsc((e.dateLabel || '').split(' ').slice(1).join(' ')) + '</div></div>' +
+        '<div class="event-info"><div class="event-title">' + eeEsc(e.title) + '</div>' +
+        '<div class="event-desc">' + eeEsc(e.description) + '</div>' +
+        (e.rsvpUrl ? '<div class="event-actions"><a class="event-rsvp-btn" href="' + eeEsc(e.rsvpUrl) + '" target="_blank" rel="noopener">RSVP →</a></div>' : '') +
+        '</div></div>';
+    }).join('');
+  } catch (e) {
+    listEl.textContent = 'Could not load Elite events right now.';
+  }
+}
+
 async function bmRenewLicense(btn){
   var row = btn.closest('tr');
   var name = row.cells[0].textContent;
@@ -16112,8 +16221,10 @@ var MASTER_PRODUCTS = [
   { id:'master-reimaster',        screenId:'reimaster',        type:'master', emoji:'🏘️', name:'Real Estate Master — Individual Access',        price:25, desc:'One-time unlock for Real Estate Master — real-estate deal analysis, lead tools & AI investing coach. Included free with Pro or Elite.' },
   { id:'master-marketingmaster',  screenId:'marketingmaster',  type:'master', emoji:'🚀', name:'Marketing Master — Individual Access',  price:25, desc:'One-time unlock for Marketing Master — the full marketing tool suite. Included free with Pro or Elite.' },
   { id:'master-marketsmaster',    screenId:'marketsmaster',    type:'master', emoji:'📈', name:'Markets Master — Individual Access',    price:25, desc:'One-time unlock for Markets Master — live market data & AI market assistant. Included free with Pro or Elite.' },
-  { id:'master-creativemaster', screenId:'creativemaster', type:'master', emoji:'🎬', name:'Creative Master — Individual Access', price:25, desc:'One-time unlock for Creative Master — AI video generation via SkyReels, plus the Production Master toolkit (website/domain/software requests). Included free with Pro or Elite.' },
-  { id:'master-crmmaster', screenId:'crmmaster', type:'master', emoji:'🧰', name:'CRM Master — Individual Access', price:25, desc:'One-time unlock for CRM Master — clients, projects, invoices, an AI assistant grounded in your data, an API for your own AI agents, plus the Administrative Master toolkit. Included free with Pro or Elite.' }
+  { id:'master-creativemaster', screenId:'creativemaster', type:'master', emoji:'🎬', name:'Creative Master — Individual Access', price:25, desc:'One-time unlock for Creative Master — AI video generation via SkyReels, plus the Production Master toolkit (website/domain/software requests). Included free with Pro or Elite.' }
+  // CRM Master used to be here as a $25 unlock — it's now free for every
+  // member (see MASTER_SCREENS in showScreen / Essentials tiles on the
+  // dashboard), so it's no longer sold as an individual product.
 ];
 window.MASTER_PRODUCTS = MASTER_PRODUCTS;
 function getAllProducts() { return DEFAULT_PRODUCTS.concat(MASTER_PRODUCTS).concat(window.UPLOADED_PRODUCTS); }
@@ -16381,6 +16492,31 @@ function mastersEligible(id){
   return typeof hasPurchased === 'function' && hasPurchased('master-' + id);
 }
 function eliteDividendsEligible(){ var pl=(window.userData&&window.userData.plan)||'free'; return pl==='elite' || window.isMaster===true; }
+
+var MASTER_DISPLAY_NAMES = {
+  reimaster: 'Real Estate Master', marketingmaster: 'Marketing Master', marketsmaster: 'Markets Master',
+  businessmaster: 'Business Master', financialmaster: 'Financial Master', creativemaster: 'Creative Master',
+};
+var __mpoCurrentMasterId = null;
+function showMasterPreviewOverlay(id){
+  var ov = document.getElementById('masterPreviewOverlay');
+  if (!ov) return;
+  __mpoCurrentMasterId = id;
+  var name = MASTER_DISPLAY_NAMES[id] || 'This Master';
+  var titleEl = document.getElementById('mpoTitle');
+  var bodyEl = document.getElementById('mpoBody');
+  if (titleEl) titleEl.textContent = 'You\'re previewing ' + name;
+  if (bodyEl) bodyEl.textContent = 'Basic members can see every Master but need Pro, Elite, or a one-time $25 unlock to actually use ' + name + '. CRM Master and Community Master are included free for everyone.';
+  ov.style.display = 'block';
+}
+function hideMasterPreviewOverlay(){
+  var ov = document.getElementById('masterPreviewOverlay');
+  if (ov) ov.style.display = 'none';
+  __mpoCurrentMasterId = null;
+}
+function mpoUnlockThis(){
+  if (__mpoCurrentMasterId && typeof buyProduct === 'function') buyProduct('master-' + __mpoCurrentMasterId);
+}
 function renderStudio(){
   var bw = document.getElementById('psBases');
   if (bw) bw.innerHTML = activeBases().map(function(b){
@@ -20497,6 +20633,9 @@ async function cmGenerateVideo(){
       if (player) player.src = result.videoUrl;
       if (dl) dl.href = result.videoUrl;
       if (resultWrap) resultWrap.style.display = 'block';
+      window.__cmLastVideoResult = { videoUrl: result.videoUrl, prompt: prompt };
+      const sendStatus = document.getElementById('cmSendStatus');
+      if (sendStatus) sendStatus.textContent = '';
       if (typeof showNotifToast === 'function') showNotifToast('🎬 Video ready', 'Billed ~$' + (result.billedCost || 0).toFixed(2) + ' for this generation.');
     }
   } catch (e) {
@@ -20507,6 +20646,65 @@ async function cmGenerateVideo(){
   }
 }
 window.cmGenerateVideo = cmGenerateVideo;
+
+/** Real cross-Master data hand-off: sends Creative Master's last generated
+ *  video to another Master's inbox (see functions/index.js shareMasterItem
+ *  / getMasterInbox). toMaster is the receiving screen's id. */
+async function cmSendToMaster(toMaster){
+  const v = window.__cmLastVideoResult;
+  const statusEl = document.getElementById('cmSendStatus');
+  if (!v || !v.videoUrl) {
+    if (typeof showNotifToast === 'function') showNotifToast('Nothing to send yet', 'Generate a video first.');
+    return;
+  }
+  if (statusEl) statusEl.textContent = 'Sending…';
+  try {
+    await window.callShareMasterItem({
+      fromMaster: 'creativemaster',
+      toMaster: toMaster,
+      itemType: 'video',
+      payload: v.videoUrl,
+      caption: v.prompt || '',
+    });
+    if (statusEl) statusEl.textContent = '✓ Sent';
+    const label = toMaster === 'marketingmaster' ? 'Marketing Master' : 'My Store Master';
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Sent to ' + label, 'Open ' + label + ' to see it in the inbox.');
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '';
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not send', e.message || 'Please try again.');
+  }
+}
+window.cmSendToMaster = cmSendToMaster;
+
+/** Renders a "Received from other Masters" inbox strip — used by any
+ *  Master screen that can be a cross-Master send target. containerId must
+ *  point at an element already in that screen's DOM. */
+async function renderMasterInbox(toMaster, containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  try {
+    const res = await window.callGetMasterInbox(toMaster);
+    const items = (res && res.items) || [];
+    if (!items.length) { el.style.display = 'none'; return; }
+    const esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    el.style.display = 'block';
+    el.innerHTML = '<div class="mpm-title" style="margin-bottom:8px">📥 Received from other Masters</div>' +
+      '<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">' +
+      items.map(function(it){
+        const fromLabel = it.fromMaster === 'creativemaster' ? 'Creative Master' : eeEsc(it.fromMaster);
+        if (it.itemType === 'video') {
+          return '<div style="flex:0 0 220px;background:#111827;border:1px solid #1f2937;border-radius:10px;padding:8px">' +
+            '<video src="' + esc(it.payload) + '" controls style="width:100%;border-radius:6px;background:#000"></video>' +
+            '<div style="font-size:.68rem;color:#8ba0c4;margin-top:6px">From ' + fromLabel + (it.caption ? ' — ' + esc(it.caption).slice(0,60) : '') + '</div></div>';
+        }
+        return '<div style="flex:0 0 220px;background:#111827;border:1px solid #1f2937;border-radius:10px;padding:10px;font-size:.75rem;color:#e5e7eb">' +
+          '<div style="color:#8ba0c4;font-size:.68rem;margin-bottom:4px">From ' + fromLabel + '</div>' + esc(it.caption || it.payload).slice(0,160) + '</div>';
+      }).join('') + '</div>';
+  } catch (e) {
+    el.style.display = 'none';
+  }
+}
+window.renderMasterInbox = renderMasterInbox;
 
 function cmHandleVideoError(e){
   const code = (e && e.code) || '';
