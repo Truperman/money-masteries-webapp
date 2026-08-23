@@ -13540,6 +13540,12 @@ window.showLoggedIn = function(user, data) {
 // ── DYNAMIC DASHBOARD ─────────────────────────────────────────────────────────
 function initDashboardDynamics(user, data) {
   renderRankCard(data);
+  // Business Essentials tile grid — showLoggedIn()/initDashboardDynamics()
+  // runs on initial page load (the Dashboard is the default screen and
+  // never goes through showScreen('dashboard') on first login), so this
+  // call is what actually populates the tile grid the first time a member
+  // sees the Dashboard. showScreen('dashboard') re-renders it on later nav.
+  if (typeof renderBusinessEssentialsTiles === 'function') renderBusinessEssentialsTiles();
   // Time-based greeting
   var h = new Date().getHours();
   var g = h < 5 ? 'Burning the midnight oil' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
