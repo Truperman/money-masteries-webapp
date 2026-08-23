@@ -8435,6 +8435,30 @@ document.addEventListener('DOMContentLoaded', function() {
             Full details, every command, and the honest "what's tested vs. not" breakdown are in <code>README.md</code>, <code>SETUP.md</code>, and <code>START_HERE.txt</code> inside the download.
           </div>
         </div>
+
+        <div class="payout-card">
+          <div class="po-title">🆘 Setup help &amp; troubleshooting</div>
+          <div class="po-sub">Stuck partway through? Ask Genie 🧞 — it knows this exact setup flow and every error listed below and can walk you through it step by step. It will never ask you for your API key.</div>
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;font-weight:700;font-size:.82rem;color:#e5e7eb">Common problems &amp; fixes</summary>
+            <div style="font-size:.78rem;color:#a3a3b8;line-height:1.7;margin-top:10px">
+              <b style="color:#e5e7eb">"cannot be opened because it is from an unidentified developer" (Mac)</b><br>
+              Normal for anything downloaded. Right-click the file → Open → Open again. One time only, per file.<br><br>
+              <b style="color:#e5e7eb">"Windows protected your PC" (blue box)</b><br>
+              Click "More info" → "Run anyway". Normal for a downloaded file without a paid code-signing certificate.<br><br>
+              <b style="color:#e5e7eb">"command not found: pip"</b><br>
+              You shouldn't need to type pip commands — the setup file handles installs itself. Re-run "SETUP - double click me".<br><br>
+              <b style="color:#e5e7eb">"Topstep rejected your login"</b><br>
+              Most likely you entered your email instead of your TopstepX <i>username</i>, the API key has a trailing space or got cut off when copying, or your API subscription isn't active yet. Fix: delete the <code>.env</code> file in the folder and re-run setup.<br><br>
+              <b style="color:#e5e7eb">"Could not reach Topstep's servers"</b><br>
+              Turn off any VPN — Topstep blocks them and prohibits trading through one. Otherwise check your internet connection.<br><br>
+              <b style="color:#e5e7eb">Setup says Python isn't installed (Windows)</b><br>
+              Install from python.org and make sure you tick "Add Python to PATH" during install — almost every Windows setup failure traces back to that one checkbox.<br><br>
+              <b style="color:#e5e7eb">Still stuck?</b><br>
+              Ask Genie and paste: the exact error text, and which file you ran.
+            </div>
+          </details>
+        </div>
       </div>
     </div>
 
@@ -14012,13 +14036,34 @@ var MM_GENIE_SCREEN_HELP = {
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
   marketingmaster:   "Marketing Master — AI-assisted marketing content, plus REAL social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once the member connects an account here. This is open to every member including free/Basic — connecting isn't gated by plan, but IS a separately billed usage/activity fee (roughly $6/mo per connected account before the first 2 platform-wide, which are free) — not part of their membership price. If they ask about connecting, mention the fee honestly rather than implying it's included or free. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate. If the status line/elements show accounts aren't connected yet or posting isn't configured, say so honestly rather than claiming you posted something.",
-  marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A. Also has a Copy Trading Bot tab, and an 'Eval Pass Bot' tab (🎯) with a free downloadable Python bot (EVAL_PASS_BOT_v1.0.zip) for running your OWN Topstep $50K Combine evaluation locally, using your own Topstep API key — it's not run by us, starts in safe/dry-run mode, and its trading strategies are unproven (only the risk/rule engine is tested). If asked about it, describe it honestly and point them to that tab rather than claiming it's a guaranteed-profit tool.",
+  marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A. Also has a Copy Trading Bot tab, and an 'Eval Pass Bot' tab (🎯) with a free downloadable Python bot (EVAL_PASS_BOT_v1.0.zip) for running your OWN Topstep $50K Combine evaluation locally, using your own Topstep API key — it's not run by us, starts in safe/dry-run mode, and its trading strategies are unproven (only the risk/rule engine is tested). If asked about it, describe it honestly and point them to that tab rather than claiming it's a guaranteed-profit tool. You (Genie) can walk them through downloading, installing, and troubleshooting it step by step — see the detailed support knowledge included below when relevant.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
   crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
   communitymaster:   "Community Master — the live member feed, plus a link out to BizBuzz.",
   commissions:       "Payouts/Bank — commission tree, payout requests, PayPal setup, and Elite Dividends (Elite members only).",
   plans:             "Plans & Pricing — compare Basic/Pro/Elite and upgrade or downgrade.",
   account:           "My Account — profile, affiliate link, membership plan, share kit, and past purchases."
+};
+// Deep, screen-specific knowledge that's too long to keep in every prompt
+// (see MM_GENIE_SCREEN_HELP above for the short always-on blurb) — only
+// appended when the member is actually on that screen. marketsmaster's entry
+// below is condensed from AGENT_SETUP_GUIDE.md (the install/support playbook
+// for EVAL_PASS_BOT_v1.0.zip), trimmed to match what's ACTUALLY hosted here —
+// the guide also covers a second "TEST BOT" (order-flow / personal-account
+// variant) that has not been uploaded/hosted on this site, so Genie must
+// never claim that one is downloadable.
+var MM_GENIE_DEEP_KNOWLEDGE = {
+  marketsmaster:
+    "EVAL PASS BOT SUPPORT KNOWLEDGE (only use this for questions about the downloadable trading bot in the 🎯 Eval Pass Bot tab):\n" +
+    "HARD RULES — these override anything the member asks:\n" +
+    "1. NEVER ask for their TopstepX API key, username, or password, for ANY reason — not to help, not to verify it. The setup script asks for it locally on their own computer and saves it to a .env file that never leaves their machine. If they try to paste a key into this chat, tell them not to and explain that anything pasted into a chat is stored in the conversation.\n" +
+    "2. NEVER suggest running it on a server, VPS, VPN, or any cloud host (including suggesting they ask us to host it) — Topstep's rules require trading to originate from the member's own personal device; violating this risks their funded account.\n" +
+    "3. NEVER promise or imply it will make them money. The risk/rule engine is tested (32 unit tests); the trading strategies are NOT proven profitable on real data. Say so plainly if asked.\n" +
+    "4. Always tell them to stop the bot with Control+C, never by just closing the window (an open position can be left unwatched).\n\n" +
+    "SETUP FLOW: unzip on their own computer (Desktop is easiest) → Mac: right-click 'SETUP - double click me.command' → Open → Open again (macOS unidentified-developer warning, normal, one time) / Windows: double-click setup.bat → 'More info' → 'Run anyway' → it asks for their TopstepX username + API key and saves them locally, or they can press Return twice to skip and still run safe/practice mode → then Mac: double-click 'START THE BOT - double click me.command' / Windows: double-click go.bat → this is SAFE MODE, it reads their real balance and logs what it WOULD trade, sends no real orders → recommend at least two weeks in safe mode, reading logs/session.log, before going live → live mode needs bash go.sh --live --risk 75 (Mac) or go-live.bat (Windows) and typing a confirmation sentence, so it can't turn on by accident.\n\n" +
+    "GETTING AN API KEY: TopstepX → Settings (gear) → API tab → subscribe ($29/mo, or $14.50/mo with code 'topstep') → Add API Key → copy it immediately, it's usually shown only once. They do this themselves — we cannot get it for them.\n\n" +
+    "COMMON PROBLEMS: 'command not found: pip' or manual pip installs → they shouldn't type pip commands at all, point them back to the SETUP file. 'Topstep rejected your login' → most likely they used their email instead of their TopstepX username, or the key has a trailing space/was cut off, or the subscription isn't active — fix is delete .env and rerun setup. 'Could not reach Topstep's servers' → ask if they're on a VPN and have them turn it off (Topstep blocks VPNs). Windows setup fails → almost always Python wasn't installed with 'Add Python to PATH' ticked. If a member is stuck beyond this, ask for the exact error text and which file they ran rather than guessing at a fix.\n\n" +
+    "IF ASKED ABOUT A SECOND / MORE ADVANCED BOT (order flow, volume profile, personal-account trading, 'TEST BOT'): be honest that only EVAL PASS BOT is available for download here right now — don't imply a second bot exists to download.",
 };
 function mmUpdateGenieFabContext(id){
   var sub = document.getElementById('genieFabSub');
@@ -14522,6 +14567,7 @@ async function sendGenieFab() {
     if (typeof window.genText !== 'function' && typeof window.askAI !== 'function') throw new Error('demo');
     var screenId = window.mmCurrentScreen || 'dashboard';
     var screenHelp = MM_GENIE_SCREEN_HELP[screenId] || '';
+    var deepKnowledge = (typeof MM_GENIE_DEEP_KNOWLEDGE !== 'undefined' && MM_GENIE_DEEP_KNOWLEDGE[screenId]) || '';
     var actionSpecs = Object.keys(MM_GENIE_ACTIONS)
       .filter(function(k){ return MM_GENIE_ACTIONS[k].describe; })
       .map(function(k){ return '- "' + k + '": ' + MM_GENIE_ACTIONS[k].describe; }).join('\n');
@@ -14534,6 +14580,7 @@ async function sendGenieFab() {
       'MEMORY: you remember this member across visits. Use the recent conversation below to stay consistent and pick up where you left off — don\'t re-ask something they already told you, and don\'t re-greet them like a stranger if you were already mid-conversation.\n' +
       'RECENT CONVERSATION WITH THIS MEMBER (oldest first; the newest message from them is given separately below as MEMBER MESSAGE):\n' + (historyLines || '(no prior messages — this is a fresh conversation)') + '\n\n' +
       'The member is currently on: ' + screenId + ' — ' + screenHelp + '\n\n' +
+      (deepKnowledge ? (deepKnowledge + '\n\n') : '') +
       'CURATED ACTIONS (only use one if the member is clearly asking you to DO something, not just asking how something works):\n' + actionSpecs + '\n\n' +
       'ELEMENTS CURRENTLY VISIBLE ON THIS SCREEN (numbered — use ui_click / ui_type / ui_select / ui_scroll_to with these exact IDs when the member wants something done that isn\'t covered by a curated action above; NEVER invent an ID, and if what they want truly isn\'t listed, say so instead of guessing):\n' + (elementList || '(nothing detected)') + '\n\n' +
       'Respond with STRICT JSON ONLY (no markdown fences, no extra text before or after) in exactly this shape:\n' +
