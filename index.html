@@ -309,6 +309,30 @@
     return res.data;
   };
 
+  // Active Business — see functions/index.js getMyActiveBusiness /
+  // getActiveBusinessPricing / recordActiveBusinessAgreement /
+  // createActiveBusinessCheckoutSession / activeBusinessCheckoutWebhook.
+  window.callGetMyActiveBusiness = async () => {
+    const fn = httpsCallable(functionsClient, 'getMyActiveBusiness');
+    const res = await fn();
+    return res.data;
+  };
+  window.callGetActiveBusinessPricing = async () => {
+    const fn = httpsCallable(functionsClient, 'getActiveBusinessPricing');
+    const res = await fn();
+    return res.data;
+  };
+  window.callRecordActiveBusinessAgreement = async (data) => {
+    const fn = httpsCallable(functionsClient, 'recordActiveBusinessAgreement');
+    const res = await fn(data);
+    return res.data;
+  };
+  window.callCreateActiveBusinessCheckoutSession = async (data) => {
+    const fn = httpsCallable(functionsClient, 'createActiveBusinessCheckoutSession');
+    const res = await fn(data);
+    return res.data;
+  };
+
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
   // needing their own Firebase import wiring.
@@ -8860,6 +8884,30 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <button class="bm-add-btn" onclick="showScreen('crmmaster')" style="background:#14b8a6">🧰 Open CRM Master</button>
       </div>
+
+      <div class="fm-section-label">⚡ Active Business</div>
+      <div class="fm-card" id="abmCard">
+        <div id="abmLoading" class="mpm-sub">Loading your Active Business status…</div>
+
+        <div id="abmInactive" style="display:none">
+          <div class="mpm-title" style="margin-bottom:6px" id="abmPitchHeadline">$50/mo in platform credit included</div>
+          <div class="mpm-sub" style="margin-bottom:14px" id="abmPitchBody">Turn on Active Business to unlock usage-based AI, video, lead, and phone tools across the app — the platform credit covers most members' typical month outright.</div>
+          <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:.78rem;color:#a99bd6;margin-bottom:14px">
+            <input type="checkbox" id="abmAgreeCheck" style="margin-top:2px">
+            <span id="abmTrueUpDisclosure">If your account is ever billed a true-up, it's shown as its own line item — "Active Business minimum monthly spend" — never combined with any other charge. $0 due today.</span>
+          </label>
+          <button class="bm-add-btn" id="abmActivateBtn" onclick="abmActivate()">🚀 Activate Active Business</button>
+        </div>
+
+        <div id="abmActive" style="display:none">
+          <div class="bm-kv-grid">
+            <div class="bm-kv-row"><span>Status</span><span style="color:#22c55e;font-weight:700">✓ Active</span></div>
+            <div class="bm-kv-row"><span>Wallet Balance</span><span id="abmWalletBalance"></span></div>
+            <div class="bm-kv-row"><span>Monthly Minimum</span><span id="abmMinimum"></span></div>
+            <div class="bm-kv-row"><span>Next Review</span><span id="abmNextTrueUp"></span></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- FINANCIAL MASTER (demo) -->
@@ -15680,6 +15728,89 @@ async function renderBusinessMaster(){
     }).join('');
   }
 
+  renderActiveBusiness();
+}
+
+/**
+ * Active Business card (Business Master screen). Fetches status via
+ * getMyActiveBusiness (auto-provisions the member's business doc on first
+ * call), and separately fetches current pricing/pitch copy so the signup
+ * pitch always reflects whatever the admin has configured — never
+ * hardcoded here. See functions/index.js for the backend side.
+ */
+window.__abmBusinessId = null;
+async function renderActiveBusiness(){
+  var loadingEl = document.getElementById('abmLoading');
+  var inactiveEl = document.getElementById('abmInactive');
+  var activeEl = document.getElementById('abmActive');
+  if (!loadingEl) return; // screen not in DOM yet
+  try {
+    var status = await window.callGetMyActiveBusiness();
+    window.__abmBusinessId = status.businessId;
+    loadingEl.style.display = 'none';
+
+    if (status.activeBusinessStatus === 'active') {
+      inactiveEl.style.display = 'none';
+      activeEl.style.display = '';
+      var walletEl = document.getElementById('abmWalletBalance');
+      if (walletEl) walletEl.textContent = (status.walletBalanceCredits || 0).toLocaleString() + ' Credits';
+      var minEl = document.getElementById('abmMinimum');
+      if (minEl) minEl.textContent = status.minimumMonthlyUsdAtSignup != null ? ('$' + status.minimumMonthlyUsdAtSignup + '/mo') : '—';
+      var nextEl = document.getElementById('abmNextTrueUp');
+      if (nextEl) {
+        var ts = status.nextTrueUpAt && status.nextTrueUpAt._seconds ? new Date(status.nextTrueUpAt._seconds * 1000) : null;
+        nextEl.textContent = ts ? ts.toLocaleDateString() : '—';
+      }
+    } else {
+      activeEl.style.display = 'none';
+      inactiveEl.style.display = '';
+      try {
+        var pricing = (await window.callGetActiveBusinessPricing()).pricing;
+        if (pricing) {
+          var h = document.getElementById('abmPitchHeadline');
+          var b = document.getElementById('abmPitchBody');
+          var t = document.getElementById('abmTrueUpDisclosure');
+          if (h && pricing.pitchHeadline) h.textContent = pricing.pitchHeadline;
+          if (b && pricing.pitchBody) b.textContent = pricing.pitchBody;
+          if (t && pricing.trueUpDisclosureText) t.textContent = pricing.trueUpDisclosureText + ' $0 due today.';
+        }
+      } catch (eCopy) {
+        // Non-fatal — the static fallback copy already in the HTML stays as-is.
+      }
+    }
+  } catch (e) {
+    loadingEl.textContent = 'Could not load Active Business status — please refresh and try again.';
+  }
+}
+
+async function abmActivate(){
+  var btn = document.getElementById('abmActivateBtn');
+  var check = document.getElementById('abmAgreeCheck');
+  if (!check || !check.checked) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Please confirm', 'Check the box to agree before activating Active Business.');
+    return;
+  }
+  if (!window.__abmBusinessId) { return; }
+  var originalHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Opening secure checkout…'; }
+  try {
+    var disclosureText = document.getElementById('abmTrueUpDisclosure') ? document.getElementById('abmTrueUpDisclosure').textContent : '';
+    var headlineText = document.getElementById('abmPitchHeadline') ? document.getElementById('abmPitchHeadline').textContent : '';
+    var bodyText = document.getElementById('abmPitchBody') ? document.getElementById('abmPitchBody').textContent : '';
+    var agreementText = headlineText + ' ' + bodyText + ' ' + disclosureText;
+
+    await window.callRecordActiveBusinessAgreement({
+      businessId: window.__abmBusinessId,
+      agreementText: agreementText,
+      version: 'v1',
+    });
+    var res = await window.callCreateActiveBusinessCheckoutSession({ businessId: window.__abmBusinessId });
+    if (res && res.url) { window.location.href = res.url; return; }
+    throw new Error('No checkout URL returned.');
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Activation error', e.message || 'Could not start Active Business activation — please try again.');
+  }
 }
 async function bmRenewLicense(btn){
   var row = btn.closest('tr');
