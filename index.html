@@ -358,6 +358,19 @@
     return res.data;
   };
 
+  // Business Essentials tile registry — see functions/index.js
+  // getTileRegistry / requestTileEarlyAccess.
+  window.callGetTileRegistry = async () => {
+    const fn = httpsCallable(functionsClient, 'getTileRegistry');
+    const res = await fn();
+    return res.data;
+  };
+  window.callRequestTileEarlyAccess = async (tileId) => {
+    const fn = httpsCallable(functionsClient, 'requestTileEarlyAccess');
+    const res = await fn({ tileId });
+    return res.data;
+  };
+
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
   // needing their own Firebase import wiring.
@@ -2725,6 +2738,20 @@ td .admnt-preview{margin-top:4px}
 .qa-icon{font-size:1.5rem;margin-bottom:8px}
 .qa-label{font-size:.75rem;font-weight:700;color:#9ca3af}
 .qa-tile:hover .qa-label{color:#2E7BFF}
+/* Business Essentials tile grid */
+.tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.tile-grid-empty{color:#6b7280;font-size:.8rem;grid-column:1/-1}
+.service-tile{position:relative;background:#111827;border:1px solid #1f2937;border-radius:14px;padding:16px 14px;text-align:center;user-select:none;transition:transform .2s,border-color .2s,box-shadow .2s}
+.service-tile.is-live{cursor:pointer}
+.service-tile.is-live:hover{transform:translateY(-4px);border-color:#2E7BFF55;box-shadow:0 10px 24px #00000060}
+.service-tile.is-live:hover .qa-label{color:#2E7BFF}
+.service-tile.is-soon{opacity:.72}
+.tile-status-badge{position:absolute;top:8px;right:8px;font-size:.58rem;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:20px}
+.tile-status-badge.live{background:#14532d;color:#86efac}
+.tile-status-badge.soon{background:#1f2937;color:#9ca3af}
+.tile-notify-btn{margin-top:8px;font-size:.62rem;font-weight:700;color:#2E7BFF;background:none;border:1px solid #2E7BFF55;border-radius:20px;padding:3px 10px;cursor:pointer}
+.tile-notify-btn:hover{background:#2E7BFF20}
+.tile-notify-btn[disabled]{color:#6b7280;border-color:#374151;cursor:default}
 .activity-card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;margin-bottom:24px}
 .activity-title{font-size:.95rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .activity-live{display:inline-block;width:8px;height:8px;background:#2E7BFF;border-radius:50%;animation:live-pulse 1.6s ease-in-out infinite}
@@ -7484,17 +7511,15 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="qa-label">My Earnings</div></div>
       </div>
 
-      <!-- ESSENTIALS — the Masters every member gets full real access to
-           regardless of plan (CRM Master, Community Master), surfaced here
-           so Basic/free members immediately see what's included rather
-           than having to discover it in the sidebar. Pro/Elite members see
-           the same tiles too — Essentials is "always included," not a
-           downgrade indicator. -->
-      <div class="dash-section-label"><i class="fa-solid fa-star"></i> Essentials</div>
-      <div class="quick-actions">
-        <div class="qa-tile" onclick="showScreen('crmmaster')"><div class="qa-icon"><i class="fa-solid fa-address-book"></i></div><div class="qa-label">CRM Master</div></div>
-        <div class="qa-tile" onclick="showScreen('communitymaster')"><div class="qa-icon"><i class="fa-solid fa-people-group"></i></div><div class="qa-label">Community Master</div></div>
-      </div>
+      <!-- BUSINESS ESSENTIALS — the service tile grid, driven live from the
+           tileRegistry backend config so tiles can be added/edited/reordered
+           by the admin without a code deploy. Live tiles open the real
+           screen; not-yet-built tiles show a "Notify me" demand signal so
+           we know what to build next. This replaces the old 2-tile
+           "Essentials" shortcut (CRM + Community) — those two are still in
+           here, just as regular tiles among the rest. -->
+      <div class="dash-section-label"><i class="fa-solid fa-star"></i> Business Essentials</div>
+      <div id="businessEssentialsSection" class="tile-grid">Loading…</div>
 
       <!-- LIVE ACTIVITY FEED -->
       <div class="activity-card">
@@ -19319,6 +19344,7 @@ window.showScreen = function(id) {
         if (num > 0) animateCounter(el, num, 800);
       });
     }, 300);
+    if (typeof renderBusinessEssentialsTiles === 'function') renderBusinessEssentialsTiles();
   }
 };
 
@@ -20705,6 +20731,59 @@ async function renderMasterInbox(toMaster, containerId){
   }
 }
 window.renderMasterInbox = renderMasterInbox;
+
+/** Business Essentials tile grid — Phase 1 of the tile system. Renders
+ *  from the live tileRegistry config (admin-editable, no deploy needed to
+ *  add/reorder/reprice tiles). "live" tiles navigate to the real screen;
+ *  "coming_soon" tiles show a Notify Me button that records demand so we
+ *  know what to build next. This is deliberately simple — no lifecycle
+ *  states, no dependency orchestration yet; those come in a later phase. */
+async function renderBusinessEssentialsTiles(){
+  var el = document.getElementById('businessEssentialsSection');
+  if (!el) return;
+  try {
+    var res = await window.callGetTileRegistry();
+    var tiles = (res && res.tiles) || [];
+    tiles = tiles.slice().sort(function(a,b){ return (a.displayOrder||0) - (b.displayOrder||0); });
+    if (!tiles.length) { el.innerHTML = '<div class="tile-grid-empty">No services configured yet.</div>'; return; }
+    el.innerHTML = tiles.map(function(t){
+      var isLive = t.status === 'live';
+      var safeId = eeEsc(t.id);
+      var badge = isLive
+        ? '<span class="tile-status-badge live">LIVE</span>'
+        : '<span class="tile-status-badge soon">COMING SOON</span>';
+      var action = isLive
+        ? (t.route ? "showScreen('" + safeId.replace(/'/g,"") + "')" : '')
+        : '';
+      var body = '<div class="qa-icon">' + (t.icon || '🧩') + '</div>' +
+        '<div class="qa-label">' + eeEsc(t.name) + '</div>';
+      if (!isLive) {
+        body += '<button class="tile-notify-btn" data-tile-id="' + safeId + '" onclick="mmNotifyTileInterest(this,\'' + safeId.replace(/'/g,"") + '\')">Notify me</button>';
+      }
+      var clickAttr = isLive && t.route ? " onclick=\"showScreen('" + eeEsc(t.route).replace(/'/g,"") + "')\"" : '';
+      return '<div class="service-tile ' + (isLive ? 'is-live' : 'is-soon') + '"' + clickAttr + ' title="' + eeEsc(t.description || '') + '">' +
+        badge + body + '</div>';
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="tile-grid-empty">Could not load Business Essentials right now.</div>';
+  }
+}
+window.renderBusinessEssentialsTiles = renderBusinessEssentialsTiles;
+
+async function mmNotifyTileInterest(btn, tileId){
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try {
+    await window.callRequestTileEarlyAccess(tileId);
+    btn.textContent = '✓ We\'ll notify you';
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Notify me';
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not send', e.message || 'Please try again.');
+  }
+}
+window.mmNotifyTileInterest = mmNotifyTileInterest;
 
 function cmHandleVideoError(e){
   const code = (e && e.code) || '';
