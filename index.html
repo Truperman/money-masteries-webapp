@@ -351,6 +351,14 @@
     return res.data;
   };
 
+  // Genie Blueprint Section F/G/H/J — generalized tile status, Setup
+  // Planner, merchant payment links, and the Daily Cockpit.
+  window.callGetTileStatuses = async () => (await httpsCallable(functionsClient, 'getTileStatuses')()).data;
+  window.callSetTileStatus = async (data) => (await httpsCallable(functionsClient, 'setTileStatus')(data)).data;
+  window.callGetMySetupPlan = async () => (await httpsCallable(functionsClient, 'getMySetupPlan')()).data;
+  window.callCreateGainPaymentLink = async (data) => (await httpsCallable(functionsClient, 'createGainPaymentLink')(data)).data;
+  window.callGetMyDailyBrief = async () => (await httpsCallable(functionsClient, 'getMyDailyBrief')()).data;
+
   // Elite-exclusive events — see functions/index.js getEliteEvents.
   window.callGetEliteEvents = async () => {
     const fn = httpsCallable(functionsClient, 'getEliteEvents');
@@ -1838,6 +1846,12 @@ body{background:#0A0E1A;color:#e5e7eb;font-family:Inter,Segoe UI,sans-serif;min-
 .next-action-desc{font-size:.83rem;color:#9ca3af;line-height:1.6;margin-bottom:14px}
 .next-action-btn{background:#4ade80;color:#000;border:none;padding:10px 22px;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;transition:.2s}
 .next-action-btn:hover{background:#22c55e}
+
+/* ── DAILY BUSINESS COCKPIT — Genie Blueprint Section J ──────────────────── */
+.daily-brief-card{background:linear-gradient(135deg,#0f1e33,#111827);border:1px solid #2E7BFF44;border-radius:16px;padding:20px 22px;margin-bottom:24px}
+.daily-brief-eyebrow{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:8px}
+.daily-brief-text{font-size:.95rem;line-height:1.5;color:#e5e7eb}
+.daily-brief-stats{display:flex;gap:16px;margin-top:12px;font-family:inherit;font-size:.82rem;color:#9aa8c7;font-weight:600}
 
 /* ── THE GAINZ PLAN — dashboard widget ─────────────────────────────────── */
 .gainz-card{background:linear-gradient(135deg,#1a1330,#111827);border:1px solid #7c3aed55;border-radius:16px;padding:22px;margin-bottom:24px}
@@ -7684,6 +7698,13 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="dash-datetime" id="dashDateTime"></div>
       </div>
 
+      <!-- DAILY BUSINESS COCKPIT — Genie Blueprint Section J. One-line "here's
+           what happened" summary generated once a day server-side (see
+           generateDailyBriefs in functions/index.js), rendered by
+           mmRenderDailyBrief() near the bottom of the page. Hidden until a
+           real brief has loaded, so there's never an empty flash. -->
+      <div class="daily-brief-card" id="dailyBriefCard" style="display:none"></div>
+
       <!-- THE GAINZ PLAN — Pro members start at 40% commission; completing
            these 3 steps (or upgrading to Elite) unlocks the full 50%. -->
       <div class="gainz-card" id="gainzPlanCard" style="display:none"></div>
@@ -8007,6 +8028,14 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div class="bank-panel active" id="bpanel-bank">
+
+      <!-- Genie Blueprint Section I: new commission stream disclosure —
+           qualifying-gross-profit commissions (30/40/50% by your plan) now
+           accrue automatically as your referred businesses' billed usage
+           settles, alongside your existing membership commissions below. -->
+      <div style="background:rgba(46,123,255,.08);border:1px solid rgba(46,123,255,.3);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:.85rem;line-height:1.5;color:#c7d2e6">
+        💡 <b>New:</b> you now also earn a commission on the real usage profit MoneyMasteries makes from businesses you referred — not just their membership fee. Free members earn 30%, Pro 40%, Elite 50% of that qualifying profit, credited automatically as it settles. It shows up in Pending Payout below alongside everything else.
+      </div>
 
       <!-- INCOME SNAPSHOT — moved here from the Dashboard so Payouts/Bank is
            the one place members check their earnings, not split across
@@ -14813,6 +14842,24 @@ var MM_GENIE_ACTIONS = {
       return { text: "Done — you're on " + (MM_GENIE_SCREEN_HELP[screen] || screen).split(' — ')[0] + " now.", done: true };
     }
   },
+  // ── Genie Blueprint Section B: unified Genie router ────────────────────
+  // Lets Genie answer a specialist question RIGHT HERE in the Genie panel —
+  // without making the member go find and open a separate screen first —
+  // by routing the question to the same specialist "Jarvis" persona/prompt
+  // that screen's own chat already uses (window.askMasterJarvis). The
+  // member only ever talks to "Genie"; which specialist actually answers is
+  // an implementation detail they never have to think about.
+  ask_specialist: {
+    describe: "Answer a business question using the right specialist knowledge, without leaving the Genie panel or navigating anywhere. Params: {\"specialist\":\"<one of: reimaster, businessmaster, financialmaster, proshub, marketingmaster, productionmaster>\", \"question\":\"...\"}. Pick the specialist by topic: reimaster for real estate investing/deal analysis, businessmaster for general operations/HR/compliance coaching, financialmaster for cash flow/bookkeeping/tax-prep questions, proshub for CRM/client/invoice/job-pricing questions for a contractor or service business, marketingmaster for content/ad copy/platform strategy, productionmaster for website/domain/hosting/AI-video build questions. Use this for almost any substantive business question the member asks — it's instant, free (billed the same as any other Genie message, no extra confirmation needed), and lets you answer directly instead of just pointing them to a screen.",
+    instant: true,
+    confirmText: function(p){ return "Let me check on that…"; },
+    run: async function(p){
+      if (!p.specialist || typeof window.askMasterJarvis !== 'function') throw new Error("I couldn't reach that specialist right now.");
+      var lang = (typeof _genieFabSpeechLang === 'function') ? _genieFabSpeechLang().split('-')[0] : 'en';
+      var reply = await window.askMasterJarvis(p.specialist, p.question || '', lang);
+      return { text: reply || "I wasn't able to get an answer on that just now — try rephrasing?", done: true };
+    }
+  },
   eval_bot_download: {
     describe: "Take the member to Markets Master's 🤖 Trading Bots tab and start downloading EVAL_PASS_BOT_v1.1.zip (the EVAL PASS BOT) for them right now. Use this whenever they ask to download, get, install, or set up the Topstep evaluation / eval pass bot. Don't just tell them where it is, actually start the download. It's a free file, no payment or account changes involved, so this is instant and needs no confirmation. After it runs, immediately offer to walk them through setup step by step (you already know the exact install flow and common errors — see the deep knowledge for this screen) and keep helping across follow-up messages as they report progress or paste errors. Never ask for their Topstep API key or username at any point.",
     instant: true,
@@ -21071,6 +21118,7 @@ async function renderBusinessEssentialsTiles(){
     var results = await Promise.all([
       window.callGetTileRegistry(),
       (window.callGetGainPlan ? window.callGetGainPlan().catch(function(){ return null; }) : Promise.resolve(null)),
+      (window.mmLoadTileStatuses ? window.mmLoadTileStatuses() : Promise.resolve(null)),
     ]);
     var res = results[0], gainRes = results[1];
     if (gainRes) mmGainPlanCache = gainRes;
@@ -21152,6 +21200,7 @@ async function renderBusinessEssentialsTiles(){
 
     renderGainPlanBanner();
     mmMaybePromptGainPlan();
+    mmRenderDailyBrief();
   } catch (e) {
     el.innerHTML = '<div class="tile-grid-empty">Could not load Business Essentials right now.</div>';
   }
@@ -21180,6 +21229,31 @@ function mmMaybePromptGainPlan(){
 }
 window.mmMaybePromptGainPlan = mmMaybePromptGainPlan;
 function MM_GAIN_STEP_LABEL_TEXT(status){ return MM_GAIN_STEP_STATUS_LABEL[status] || 'PENDING'; }
+
+// ── Genie Blueprint Section J: Daily Business Cockpit ───────────────────────
+var mmDailyBriefShownThisSession = false;
+async function mmRenderDailyBrief(){
+  var card = document.getElementById('dailyBriefCard');
+  if (!card || mmDailyBriefShownThisSession || typeof window.callGetMyDailyBrief !== 'function') return;
+  try {
+    var res = await window.callGetMyDailyBrief();
+    var brief = res && res.brief;
+    if (!brief || !brief.text) { card.style.display = 'none'; return; }
+    mmDailyBriefShownThisSession = true;
+    var statLine = (typeof brief.billedTotal === 'number')
+      ? '<div class="daily-brief-stats">' +
+          '<span>$' + brief.billedTotal.toFixed(2) + ' in usage</span>' +
+          (brief.newLeadsCount ? '<span>' + brief.newLeadsCount + ' new lead' + (brief.newLeadsCount===1?'':'s') + '</span>' : '') +
+        '</div>'
+      : '';
+    card.innerHTML =
+      '<div class="daily-brief-eyebrow">🧞 Good morning from Genie</div>' +
+      '<div class="daily-brief-text">' + eeEsc(brief.text) + '</div>' +
+      statLine;
+    card.style.display = 'block';
+  } catch (e) { console.warn('mmRenderDailyBrief failed', e); }
+}
+window.mmRenderDailyBrief = mmRenderDailyBrief;
 
 // ── Genie Blueprint Section C: mandatory payment-method-on-file step ───────
 // Runs once per login, right after showLoggedIn. If this account hasn't
@@ -21331,6 +21405,7 @@ function mmOpenTileDetail(tileId){
   var isNextTile = t.gainStep && t.gainStep === nextGainStep;
 
   var actions = '';
+  var genericTileNote = '';
   var safeId = tileId.replace(/'/g,"");
 
   if (t.activationType === 'gain_questionnaire') {
@@ -21353,10 +21428,20 @@ function mmOpenTileDetail(tileId){
     }
   } else if (t.activationType === 'gain_merchant') {
     actions = '<button class="tile-detail-btn primary" onclick="mmStartGainMerchant(this)">' + (gainStatus === 'complete' ? 'Manage merchant account' : 'Connect Stripe') + '</button>';
+    if (gainStatus === 'complete') actions += '<button class="tile-detail-btn ghost" onclick="mmCloseTileDetail();mmOpenPaymentLinkForm()">Create a payment link</button>';
     if (gainStatus === 'pending') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'merchant\',\'skipped\')">Skip this step</button>';
     if (gainStatus === 'skipped') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'merchant\',\'pending\')">Undo skip</button>';
   } else if (isLive && t.route) {
+    // Genie Blueprint Section F: generalized Activate / Already Have / Skip
+    // for every other live tile, not just the GAIN$ subset — reads/writes
+    // businesses/{id}.tileStatus via setTileStatus, independent of gainPlan.
+    var genStatus = (mmTileStatusCache && mmTileStatusCache[tileId] && mmTileStatusCache[tileId].status) || null;
+    genericTileNote = genStatus === 'already_have' ? 'You told Genie you already have this set up elsewhere.'
+      : genStatus === 'skipped' ? 'Skipped for now — Genie may bring this back up if it becomes relevant.' : '';
     actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();showScreen(\'' + t.route.replace(/'/g,"") + '\')">Open</button>';
+    if (genStatus !== 'already_have') actions += '<button class="tile-detail-btn ghost" onclick="mmSetTileStatusPrompted(\'' + safeId + '\',\'already_have\')">I already have this</button>';
+    if (genStatus !== 'skipped') actions += '<button class="tile-detail-btn skip" onclick="mmSetGenericTileStatus(\'' + safeId + '\',\'skipped\')">Not right now</button>';
+    if (genStatus) actions += '<button class="tile-detail-btn ghost" onclick="mmSetGenericTileStatus(\'' + safeId + '\',\'pending\')">Undo</button>';
   } else if (!isLive) {
     actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmNotifyTileInterest(null,\'' + safeId + '\')">Notify me when it\'s ready</button>';
   }
@@ -21371,7 +21456,8 @@ function mmOpenTileDetail(tileId){
     (t.gainStep
       ? '<div class="tile-detail-note">Step ' + (MM_GAIN_STEP_ORDER.indexOf(t.gainStep) + 1) + ' of ' + MM_GAIN_STEP_ORDER.length + ' in your GAIN$ Plan' +
         (isNextTile ? ' — <strong style="color:#facc15">this is your next step</strong>.' : '.') + '</div>'
-      : '');
+      : '') +
+    (genericTileNote ? '<div class="tile-detail-note">' + eeEsc(genericTileNote) + '</div>' : '');
 
   modal.classList.add('open');
 }
@@ -21440,6 +21526,65 @@ async function mmSetGainStep(step, status){
   }
 }
 window.mmSetGainStep = mmSetGainStep;
+
+// ── Genie Blueprint Section F: generic tile status (any live tile) ─────────
+var mmTileStatusCache = {};
+async function mmLoadTileStatuses(){
+  try {
+    var res = await window.callGetTileStatuses();
+    mmTileStatusCache = (res && res.tileStatus) || {};
+    window.mmBillingStatusCache = res && res.billingStatus || null;
+  } catch (e) { console.warn('mmLoadTileStatuses failed', e); }
+}
+window.mmLoadTileStatuses = mmLoadTileStatuses;
+
+async function mmSetGenericTileStatus(tileId, status, connectNote){
+  try {
+    await window.callSetTileStatus({ tileId: tileId, status: status, connectNote: connectNote || '' });
+    mmTileStatusCache[tileId] = { status: status, connectNote: connectNote || '' };
+    mmCloseTileDetail();
+    renderBusinessEssentialsTiles();
+    if (typeof showNotifToast === 'function') {
+      showNotifToast(status === 'already_have' ? '✓ Noted' : (status === 'skipped' ? '⏭ Skipped' : '↺ Reset'), '');
+    }
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not update', e.message || 'Please try again.');
+  }
+}
+window.mmSetGenericTileStatus = mmSetGenericTileStatus;
+
+// "I already have this" — asks one quick optional question so Genie has
+// something concrete to reference later (spec item 23), rather than just
+// silently marking it done with no context.
+function mmSetTileStatusPrompted(tileId, status){
+  var note = window.prompt("Got it — quick note so Genie remembers (optional): where is it, or what do you use today?", "");
+  mmSetGenericTileStatus(tileId, status, note || '');
+}
+window.mmSetTileStatusPrompted = mmSetTileStatusPrompted;
+
+// ── Genie Blueprint Section H: Payments — create a real payment link ───────
+function mmOpenPaymentLinkForm(){
+  var amount = window.prompt("Amount to charge (USD), e.g. 150.00:");
+  if (!amount) return;
+  var amt = parseFloat(amount);
+  if (!amt || amt <= 0) { if (typeof showNotifToast === 'function') showNotifToast('⚠ Invalid amount', 'Enter a positive number like 150.00'); return; }
+  var description = window.prompt("What's this payment for? (shown to your customer)", "Payment to your business") || "Payment to your business";
+  mmCreatePaymentLink(amt, description);
+}
+window.mmOpenPaymentLinkForm = mmOpenPaymentLinkForm;
+async function mmCreatePaymentLink(amountUsd, description){
+  try {
+    var res = await window.callCreateGainPaymentLink({ amountUsd: amountUsd, description: description });
+    if (res && res.url) {
+      try { await navigator.clipboard.writeText(res.url); } catch (e) {}
+      if (typeof showNotifToast === 'function') showNotifToast('✓ Payment link created', 'Copied to your clipboard — send it to your customer: ' + res.url);
+      else window.prompt('Payment link created — copy it below:', res.url);
+    }
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not create payment link', e.message || 'Please try again.');
+  }
+}
+window.mmCreatePaymentLink = mmCreatePaymentLink;
 
 async function mmStartGainMerchant(btn){
   if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
