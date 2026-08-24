@@ -2808,7 +2808,7 @@ td .admnt-preview{margin-top:4px}
 .qa-tile:hover .qa-label{color:#2E7BFF}
 /* Business Essentials tile grid — glass tiles, grouped by category, drag-to-reorder */
 .tile-category{margin-bottom:6px}
-.tile-category-label{font-size:.68rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px}
+.tile-category-label{font-size:.8rem;font-weight:800;color:#e5e7eb;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;padding-left:10px;border-left:3px solid #2E7BFF;line-height:1.2}
 .tile-category:first-child .tile-category-label{margin-top:0}
 .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:8px}
 .tile-grid-empty{color:#6b7280;font-size:.8rem;grid-column:1/-1}
@@ -2826,7 +2826,8 @@ td .admnt-preview{margin-top:4px}
 .tile-status-badge.live{background:rgba(20,83,45,.85);color:#86efac}
 .tile-status-badge.live::before{animation:live-pulse-dot 1.6s ease-in-out infinite}
 .tile-status-badge.soon{background:rgba(31,41,55,.85);color:#9ca3af}
-.tile-status-badge.pending{background:rgba(120,53,15,.85);color:#fdba74}
+.tile-status-badge.pending{background:rgba(127,29,29,.9);color:#fca5a5}
+.tile-status-badge.pending::before{animation:live-pulse-dot 1.6s ease-in-out infinite}
 .tile-status-badge.skipped{background:rgba(31,41,55,.85);color:#9ca3af}
 .tile-status-badge.complete{background:rgba(20,83,45,.85);color:#86efac}
 .tile-status-badge.complete::before{animation:live-pulse-dot 1.6s ease-in-out infinite}
@@ -2837,9 +2838,9 @@ td .admnt-preview{margin-top:4px}
 .service-tile.gain-tile{border-color:rgba(250,204,21,.18)}
 .service-tile.gain-tile.is-skipped{opacity:.62}
 .service-tile.gain-tile.is-complete{border-color:rgba(74,222,128,.35)}
-.gain-step-num{position:absolute;top:6px;left:7px;width:20px;height:20px;border-radius:50%;background:rgba(250,204,21,.16);border:1px solid rgba(250,204,21,.45);color:#fde68a;font-size:.66rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.gain-step-num{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:#1c1200;border:2px solid #facc15;color:#fde68a;font-size:.8rem;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .service-tile.gain-tile.is-next{border-color:#facc15;animation:gainNextPulse 2.2s ease-in-out infinite}
-.service-tile.gain-tile.is-next .gain-step-num{background:#facc15;color:#1c1200;border-color:#facc15}
+.service-tile.gain-tile.is-next .gain-step-num{background:#facc15;color:#1c1200;border-color:#fff7d6}
 @keyframes gainNextPulse{0%,100%{box-shadow:0 0 0 1px rgba(250,204,21,.5) inset,0 8px 22px rgba(250,204,21,.12)}50%{box-shadow:0 0 0 1px rgba(250,204,21,.9) inset,0 10px 28px rgba(250,204,21,.35)}}
 .gain-next-flag{margin-top:6px;font-size:.58rem;font-weight:800;color:#facc15;letter-spacing:.03em;text-transform:uppercase}
 
@@ -2858,8 +2859,8 @@ td .admnt-preview{margin-top:4px}
 .service-tile.is-live:hover::after{opacity:1;animation:tileShimmerSweep 1.1s ease forwards}
 @keyframes tileShimmerSweep{from{background-position:120% 0}to{background-position:-20% 0}}
 .service-tile.is-live:hover{transform:translateY(-6px) scale(1.035)}
-.service-tile.gain-tile:not(.is-skipped):not(.is-complete){animation:gainInviteGlow 3.4s ease-in-out infinite}
-@keyframes gainInviteGlow{0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.28)}50%{box-shadow:0 4px 18px rgba(0,0,0,.28),0 0 22px rgba(250,204,21,.16)}}
+.service-tile.gain-tile.is-pending-glow{border-color:rgba(239,68,68,.35);animation:gainInviteGlow 3.4s ease-in-out infinite}
+@keyframes gainInviteGlow{0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.28)}50%{box-shadow:0 4px 18px rgba(0,0,0,.28),0 0 22px rgba(239,68,68,.28)}}
 .tile-tap-hint{position:absolute;bottom:8px;left:0;right:0;font-size:.58rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:#2E7BFF;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
 .service-tile.gain-tile .tile-tap-hint{color:#facc15}
 .service-tile.is-live:hover .tile-tap-hint{opacity:1;transform:translateY(0)}
@@ -2877,7 +2878,7 @@ td .admnt-preview{margin-top:4px}
 .gain-banner.gain-done .gain-banner-fill{background:linear-gradient(90deg,#22c55e,#86efac)}
 
 /* ── Tile detail / GAIN$ step modal (reuses .modal-overlay/.modal shell) ─ */
-.tile-detail-modal{max-width:460px;text-align:left}
+.tile-detail-modal{position:relative;max-width:460px;text-align:left}
 .tile-detail-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
 .tile-detail-icon{font-size:2.1rem;line-height:1}
 .tile-detail-name{font-size:1.08rem;font-weight:800;margin-bottom:4px}
@@ -10808,6 +10809,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <label class="gain-q-check"><input type="checkbox" id="gainQWebsite"> I already have a website</label>
     <label class="gain-q-check"><input type="checkbox" id="gainQSocial"> I'm already set up on social media</label>
     <label class="gain-q-check"><input type="checkbox" id="gainQPayments"> I already accept card payments</label>
+    <label class="gain-q-check"><input type="checkbox" id="gainQEIN" onchange="var f=document.getElementById('gainQEINNumberField'); if(f) f.style.display=this.checked?'block':'none'"> I already have an EIN (Employer ID Number)</label>
+    <div class="gain-q-field" id="gainQEINNumberField" style="display:none"><label>EIN (optional)</label><input type="text" id="gainQEINNumber" maxlength="20" placeholder="XX-XXXXXXX"></div>
     <div class="gain-q-field"><label>What are you trying to achieve?</label><textarea id="gainQGoals" maxlength="1000" placeholder="Tell your AI agents what you're going for"></textarea></div>
     <div class="tile-detail-actions">
       <button class="tile-detail-btn primary" id="gainQSubmitBtn" onclick="mmSubmitGainQuestionnaire()">Save &amp; continue</button>
@@ -21096,7 +21099,7 @@ async function renderBusinessEssentialsTiles(){
           '<div class="qa-icon">' + (t.icon || '🧩') + '</div>' +
           '<div class="qa-label">' + eeEsc(t.name) + '</div>' +
           (isNext ? '<div class="gain-next-flag">↓ Next step</div>' : '') +
-          (isLive ? '<div class="tile-tap-hint">Tap to open →</div>' : '');
+          (isLive && !isNext ? '<div class="tile-tap-hint">Tap to open →</div>' : '');
 
         var tileClasses = 'service-tile ' + (isLive ? 'is-live' : 'is-soon');
         if (t.gainStep) {
@@ -21104,6 +21107,7 @@ async function renderBusinessEssentialsTiles(){
           if (gainStatus === 'skipped') tileClasses += ' is-skipped';
           if (gainStatus === 'complete') tileClasses += ' is-complete';
           if (isNext) tileClasses += ' is-next';
+          else if (gainStatus === 'pending') tileClasses += ' is-pending-glow';
         }
 
         // Every tile — GAIN$ Plan or otherwise — opens the detail modal on
@@ -21123,11 +21127,34 @@ async function renderBusinessEssentialsTiles(){
     }).join('');
 
     renderGainPlanBanner();
+    mmMaybePromptGainPlan();
   } catch (e) {
     el.innerHTML = '<div class="tile-grid-empty">Could not load Business Essentials right now.</div>';
   }
 }
 window.renderBusinessEssentialsTiles = renderBusinessEssentialsTiles;
+
+// Every login (once per session, not on every re-render) — if any GAIN$
+// step is still pending, open it right in front of the member so they
+// keep moving through the plan until every step is live or deliberately
+// skipped, instead of leaving it as a banner they can ignore forever.
+var mmGainPromptShownThisSession = false;
+function mmMaybePromptGainPlan(){
+  if (mmGainPromptShownThisSession) return;
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || null;
+  if (!gainPlan) return;
+  var nextStep = MM_GAIN_STEP_ORDER.find(function(s){ return !gainPlan[s] || gainPlan[s].status === 'pending'; });
+  if (!nextStep) { mmGainPromptShownThisSession = true; return; }
+  var nextTile = (mmTileRegistryCache || []).find(function(t){ return t.gainStep === nextStep; });
+  if (!nextTile) return;
+  mmGainPromptShownThisSession = true;
+  setTimeout(function(){
+    if (document.getElementById('screen-dashboard') && document.getElementById('screen-dashboard').classList.contains('active')) {
+      mmOpenTileDetail(nextTile.id);
+    }
+  }, 1400);
+}
+window.mmMaybePromptGainPlan = mmMaybePromptGainPlan;
 function MM_GAIN_STEP_LABEL_TEXT(status){ return MM_GAIN_STEP_STATUS_LABEL[status] || 'PENDING'; }
 
 // ── GAIN$ Plan progress banner (Dashboard) ──────────────────────────────
@@ -21187,7 +21214,13 @@ function mmOpenTileDetail(tileId){
   var safeId = tileId.replace(/'/g,"");
 
   if (t.activationType === 'gain_questionnaire') {
-    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenGainQuestionnaire()">Start</button>';
+    var q = (mmGainPlanCache && mmGainPlanCache.questionnaire) || null;
+    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenGainQuestionnaire()">' + (gainStatus === 'complete' ? 'Edit answers' : 'Start') + '</button>';
+    if (gainStatus === 'complete' && q && !q.hasEIN) {
+      actions += '<button class="tile-detail-btn ghost" onclick="mmCloseTileDetail();mmLaunchGainPrompt(\'ein\')">Get AI Help getting an EIN</button>';
+    }
+    if (gainStatus === 'pending') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'questionnaire\',\'skipped\')">Skip this step</button>';
+    if (gainStatus !== 'pending') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'questionnaire\',\'pending\')">Undo / redo</button>';
   } else if (t.activationType === 'navigate_prompt') {
     if (gainStatus !== 'complete') {
       actions += '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmLaunchGainPrompt(\'' + safeId + '\')">Get AI Help</button>';
@@ -21236,25 +21269,38 @@ function mmMasterLabel(route){
 // Navigates to the tile's Master screen and, once there, drops the tile's
 // preset prompt into that Master's chat input and sends it — this is the
 // "AI agent helps you do it" action for register/website/hosting/social.
-function mmLaunchGainPrompt(tileId){
-  var t = (mmTileRegistryCache || []).find(function(x){ return x.id === tileId; });
-  if (!t || !t.route) return;
-  showScreen(t.route);
-  var tries = 0;
-  var timer = setInterval(function(){
-    tries++;
-    var input = document.querySelector('#screen-' + t.route + ' textarea, #screen-' + t.route + ' input[type="text"].chat-input, #screen-' + t.route + ' .chat-input-box textarea');
-    var sendBtn = document.querySelector('#screen-' + t.route + ' .chat-send-btn, #screen-' + t.route + ' [onclick*="Send"]');
-    if (input) {
-      clearInterval(timer);
-      input.value = t.prompt || ('Help me with ' + t.name + '.');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.focus();
-      if (sendBtn) sendBtn.click();
-    } else if (tries > 20) {
-      clearInterval(timer);
-    }
-  }, 150);
+// Maps each GAIN$ step (plus the special 'ein' follow-up) to the Master AI
+// screen/tab/chat that actually handles it. Built from the real screen
+// structure — register goes to Business Master's own Jarvis chat;
+// website/hosting both live under Creative Master's "Production" tab,
+// where Production Master's chat already knows websites/domains; social
+// goes to Marketing Master's chat. Uses the app's own jarvisAskQuick()
+// helper (drops the prompt into that Master's real chat input and sends
+// it), not a guessed DOM selector — so this is exactly "answer the AI
+// agent's questions via chat" for real, not a dead click.
+var MM_GAIN_STEP_CHAT = {
+  register: { screen: 'businessmaster', masterKey: 'businessmaster' },
+  website:  { screen: 'creativemaster', masterKey: 'productionmaster', tab: 'production' },
+  hosting:  { screen: 'creativemaster', masterKey: 'productionmaster', tab: 'production' },
+  social:   { screen: 'marketingmaster', masterKey: 'marketingmaster' },
+  ein:      { screen: 'businessmaster', masterKey: 'businessmaster' },
+};
+function mmLaunchGainPrompt(tileIdOrKey){
+  var t = (mmTileRegistryCache || []).find(function(x){ return x.id === tileIdOrKey; });
+  var key = t ? t.gainStep : tileIdOrKey;
+  var cfg = MM_GAIN_STEP_CHAT[key];
+  if (!cfg) return;
+  var prompt = (key === 'ein')
+    ? 'Help me apply for an EIN (Employer Identification Number) for my business.'
+    : ((t && t.prompt) || ('Help me with ' + (t ? t.name : key) + '.'));
+
+  showScreen(cfg.screen);
+  setTimeout(function(){
+    if (cfg.tab && typeof cmViewSwitch === 'function') cmViewSwitch(cfg.tab);
+    setTimeout(function(){
+      if (typeof jarvisAskQuick === 'function') jarvisAskQuick(cfg.masterKey, prompt);
+    }, cfg.tab ? 150 : 0);
+  }, 200);
 }
 window.mmLaunchGainPrompt = mmLaunchGainPrompt;
 
@@ -21311,6 +21357,10 @@ function mmOpenGainQuestionnaire(){
   setChk('gainQWebsite', q.hasWebsite);
   setChk('gainQSocial', q.hasSocial);
   setChk('gainQPayments', q.acceptsPayments);
+  setChk('gainQEIN', q.hasEIN);
+  setVal('gainQEINNumber', q.einNumber);
+  var einField = document.getElementById('gainQEINNumberField');
+  if (einField) einField.style.display = q.hasEIN ? 'block' : 'none';
   setVal('gainQGoals', q.goals);
   modal.classList.add('open');
 }
@@ -21333,6 +21383,8 @@ async function mmSubmitGainQuestionnaire(){
     hasWebsite: chk('gainQWebsite'),
     hasSocial: chk('gainQSocial'),
     acceptsPayments: chk('gainQPayments'),
+    hasEIN: chk('gainQEIN'),
+    einNumber: val('gainQEINNumber'),
     goals: val('gainQGoals'),
   };
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
