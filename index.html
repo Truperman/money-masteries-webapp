@@ -677,6 +677,7 @@
     function setBadge(on){
       var el = document.getElementById('aiThinkingBadge');
       if (el) el.classList.toggle('active', on);
+      if (typeof window.mmSigmaSetActive === 'function') window.mmSigmaSetActive(on);
     }
     window.mmAIThinkingBegin = function(){ activeCount++; setBadge(true); };
     window.mmAIThinkingEnd = function(){ activeCount = Math.max(0, activeCount - 1); if (activeCount === 0) setBadge(false); };
@@ -2758,31 +2759,15 @@ td .admnt-preview{margin-top:4px}
 /* ── DYNAMIC DASHBOARD ── */
 .dash-hero{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px}
 .dash-hero-kicker{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2E7BFF;margin-bottom:4px}
-/* AI Thinking indicator — floating 3D neon glyph, off by default, lights
-   up while an AI Master call is in flight (see mmAIThinkingBegin/End). */
-.ai-thinking-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:40px;height:48px;perspective:480px;opacity:0;transform:scale(.6);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
-.ai-thinking-wrap.active{opacity:1;transform:scale(1)}
-.ai-thinking-glyph{
-  font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:1.9rem;line-height:1;color:#fff3d0;
-  transform-style:preserve-3d;
-  animation:aiSpinFloat 2.6s linear infinite,aiHueGlow 4.2s ease-in-out infinite;
-}
-.ai-thinking-wrap:not(.active) .ai-thinking-glyph{animation-play-state:paused}
-.ai-thinking-wrap::before,.ai-thinking-wrap::after{content:'';position:absolute;width:6px;height:6px;border-radius:50%;opacity:.9}
-.ai-thinking-wrap::before{top:2px;right:2px;background:#7ee8fa;box-shadow:0 0 8px #7ee8fa}
-.ai-thinking-wrap::after{bottom:2px;left:2px;background:#ff8ad8;box-shadow:0 0 8px #ff8ad8}
-@keyframes aiSpinFloat{
-  0%{transform:translateY(0) rotateY(0deg)}
-  50%{transform:translateY(-5px) rotateY(180deg)}
-  100%{transform:translateY(0) rotateY(360deg)}
-}
-@keyframes aiHueGlow{
-  0%,100%{filter:hue-rotate(0deg) brightness(1.05);text-shadow:0 0 6px #ffd76a,0 0 14px #ffb02e,0 0 26px #ff9d00}
-  50%{filter:hue-rotate(35deg) brightness(1.3);text-shadow:0 0 8px #ffe08a,0 0 20px #ffb02e,0 0 36px #ff9d00}
-}
+/* AI Thinking indicator — the real "neon sigma" 3D object (WebGL/Three.js,
+   ported from the design canvas), floating in the header. Off by default,
+   fades in and its render loop starts only while an AI Master call is in
+   flight (see mmAIThinkingBegin/End + mmSigmaBadge.js below). */
+.ai-thinking-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:52px;opacity:0;transform:scale(.6) translateY(4px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
+.ai-thinking-wrap.active{opacity:1;transform:scale(1) translateY(0)}
+#aiThinkingCanvas{width:44px;height:52px;display:block}
 @media (prefers-reduced-motion:reduce){
-  .ai-thinking-glyph{animation:none}
-  .ai-thinking-wrap.active .ai-thinking-glyph{text-shadow:0 0 10px #ffb02e,0 0 22px #ff9d00}
+  .ai-thinking-wrap{transition:opacity .2s ease}
 }
 .dash-datetime{font-size:.78rem;color:#6b7280;font-family:monospace}
 .dash-datetime b{color:#2E7BFF}
@@ -7566,7 +7551,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  around window.askAI / window.genText — see script near the
                  bottom of the page. -->
             <div class="ai-thinking-wrap" id="aiThinkingBadge" title="Genie is thinking…">
-              <div class="ai-thinking-glyph">Σ</div>
+              <canvas id="aiThinkingCanvas" width="88" height="104"></canvas>
             </div>
           </div>
         </div>
@@ -21899,6 +21884,215 @@ function reiCalc(){
 }
 </script>
 
+<script>
+// ── Neon Sigma — the AI Thinking 3D object ──────────────────────────────
+// This is the actual object from the Claude Design canvas ("neon-sigma")
+// David built: an extruded glass "Σ" with gold/cyan/fuchsia neon edge
+// tubes, flickering electricity bolts, drifting $ sprites, and a
+// hue-shifting gold glow, floating and rotating on its own. The design
+// canvas rendered it through a proprietary <three-d-stage> web component
+// (renderer/camera/env setup we don't have source for) — this is the same
+// geometry, materials, and animation logic, reimplemented on raw Three.js
+// so it can run standalone inside the app's header badge.
+// Three.js is lazy-loaded (dynamic import) only the first time the badge
+// actually activates, so pages that never trigger an AI call never pay
+// for the ~600KB module.
+(function(){
+  var built = false, active = false, raf = null, frameFn = null;
+
+  async function build(){
+    if (built) return;
+    built = true;
+    var THREE;
+    try { THREE = await import('https://unpkg.com/three@0.184.0/build/three.module.js'); }
+    catch (e) { built = false; return; }
+    var canvas = document.getElementById('aiThinkingCanvas');
+    if (!canvas) { built = false; return; }
+
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(88, 104, false);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(32, 88 / 104, 0.1, 10);
+    camera.position.set(0, 0, 2.9);
+
+    // Dark night environment so the glass has something to reflect —
+    // same procedural gradient sky as the original.
+    var envScene = new THREE.Scene();
+    var envMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      vertexShader: 'varying vec3 vPos; void main(){ vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: 'varying vec3 vPos; void main(){ float h = normalize(vPos).y * 0.5 + 0.5; vec3 c = mix(vec3(0.004,0.005,0.025), vec3(0.05,0.06,0.20), h); float strip = smoothstep(0.03, 0.0, abs(normalize(vPos).y - 0.3)) * 0.7; gl_FragColor = vec4(c + strip * vec3(0.3,0.35,0.9), 1.0); }'
+    });
+    envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), envMat));
+    var pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+    pmrem.dispose();
+
+    // --- sigma outline (clockwise, y-up, meters) — exact from the original ---
+    var OUTLINE = [
+      [-0.40, 0.55], [0.40, 0.55], [0.40, 0.40], [-0.18, 0.40],
+      [0.14, 0.00], [-0.18, -0.40], [0.40, -0.40], [0.40, -0.55],
+      [-0.44, -0.55], [-0.44, -0.48], [-0.04, 0.00], [-0.44, 0.48],
+      [-0.44, 0.55]
+    ];
+    var DEPTH = 0.16;
+
+    var shape = new THREE.Shape();
+    shape.moveTo(OUTLINE[0][0], OUTLINE[0][1]);
+    for (var i = 1; i < OUTLINE.length; i++) shape.lineTo(OUTLINE[i][0], OUTLINE[i][1]);
+    shape.closePath();
+
+    var body = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(shape, { depth: DEPTH, bevelEnabled: false }),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x101014, metalness: 0.2, roughness: 0.15, transmission: 0.75,
+        thickness: 0.05, ior: 1.5, specularIntensity: 1.5, iridescence: 0.6,
+        clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.8, side: THREE.DoubleSide
+      })
+    );
+    body.geometry.translate(0, 0, -DEPTH / 2);
+
+    function outlineCurve(z){
+      var path = new THREE.CurvePath();
+      for (var i2 = 0; i2 < OUTLINE.length; i2++){
+        var a = OUTLINE[i2], b = OUTLINE[(i2 + 1) % OUTLINE.length];
+        path.add(new THREE.LineCurve3(new THREE.Vector3(a[0], a[1], z), new THREE.Vector3(b[0], b[1], z)));
+      }
+      return path;
+    }
+    var neonCyan = new THREE.MeshStandardMaterial({ color: 0x0a0a0c, metalness: 0.7, roughness: 0.25, envMapIntensity: 2.0, toneMapped: false });
+    var neonFuchsia = new THREE.MeshStandardMaterial({ color: 0xffd873, emissive: 0xffb200, emissiveIntensity: 3.5, metalness: 0, roughness: 0.4, toneMapped: false });
+    var R = 0.011;
+    var frontEdge = new THREE.Mesh(new THREE.TubeGeometry(outlineCurve(DEPTH / 2), 128, R, 8, true), neonCyan);
+    var backEdge = new THREE.Mesh(new THREE.TubeGeometry(outlineCurve(-DEPTH / 2), 128, R, 8, true), neonFuchsia);
+    var posts = new THREE.Group();
+    var cornerBlue = new THREE.MeshStandardMaterial({ color: 0x7ac8ff, emissive: 0x2288ff, emissiveIntensity: 2.6, metalness: 0, roughness: 0.4, toneMapped: false });
+    var cornerFuchsia = new THREE.MeshStandardMaterial({ color: 0xff7ae0, emissive: 0xff1493, emissiveIntensity: 2.6, metalness: 0, roughness: 0.4, toneMapped: false });
+    OUTLINE.forEach(function(pt, idx){
+      var post = new THREE.Mesh(new THREE.CylinderGeometry(R, R, DEPTH, 8), idx % 2 ? cornerFuchsia : cornerBlue);
+      post.rotation.x = Math.PI / 2;
+      post.position.set(pt[0], pt[1], 0);
+      posts.add(post);
+    });
+    var haloMatC = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.5, depthWrite: false });
+    var haloMatF = new THREE.MeshBasicMaterial({ color: 0xffb200, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+    var haloF = new THREE.Mesh(new THREE.TubeGeometry(outlineCurve(DEPTH / 2), 128, R * 2.2, 8, true), haloMatC);
+    var haloB = new THREE.Mesh(new THREE.TubeGeometry(outlineCurve(-DEPTH / 2), 128, R * 3.2, 8, true), haloMatF);
+    var haloWide = new THREE.Mesh(new THREE.TubeGeometry(outlineCurve(-DEPTH / 2), 128, R * 7, 8, true), new THREE.MeshBasicMaterial({ color: 0xffb200, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false }));
+
+    var glowLight = new THREE.PointLight(0xffc040, 2, 3);
+    glowLight.position.set(0, 0, 0.4);
+    var glowLight2 = new THREE.PointLight(0xffb200, 3, 3);
+    glowLight2.position.set(0, -0.2, -0.4);
+
+    var boltMat = new THREE.LineBasicMaterial({ color: 0xfff3c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    var SPINE = [[-0.42, 0.47], [0.4, 0.47], [-0.16, 0.0], [0.4, -0.47], [-0.42, -0.47], [0.28, 0.0]];
+    var bolts = [];
+    for (var b = 0; b < 3; b++){
+      var g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 12), 3));
+      bolts.push(new THREE.Line(g, boltMat));
+    }
+    function rewireBolt(line){
+      var a = SPINE[(Math.random() * SPINE.length) | 0];
+      var b2 = SPINE[(Math.random() * SPINE.length) | 0];
+      if (b2 === a) b2 = SPINE[(SPINE.indexOf(a) + 1) % SPINE.length];
+      var p = line.geometry.attributes.position;
+      for (var k = 0; k < 12; k++){
+        var u = k / 11, j = Math.sin(u * Math.PI);
+        p.setXYZ(k,
+          a[0] + (b2[0] - a[0]) * u + (Math.random() - 0.5) * 0.12 * j,
+          a[1] + (b2[1] - a[1]) * u + (Math.random() - 0.5) * 0.12 * j,
+          (Math.random() - 0.5) * DEPTH * 0.8 * j);
+      }
+      p.needsUpdate = true;
+    }
+    bolts.forEach(rewireBolt);
+    var arcLight = new THREE.PointLight(0xfff3c0, 0, 1.5);
+
+    function dollarTexture(){
+      var cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      var ctx = cv.getContext('2d');
+      ctx.font = 'bold 48px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = '#ffb200'; ctx.shadowBlur = 12;
+      ctx.fillStyle = '#ffd873'; ctx.fillText('$', 32, 34);
+      return new THREE.CanvasTexture(cv);
+    }
+    var dollarTex = dollarTexture();
+    var dollars = [];
+    for (var d = 0; d < 6; d++){
+      var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dollarTex, transparent: true, opacity: 0, depthWrite: false }));
+      sp.scale.setScalar(0.06);
+      sp.userData = { life: 0, vel: new THREE.Vector3() };
+      dollars.push(sp);
+    }
+    function spawnDollar(sp){
+      var pt = OUTLINE[(Math.random() * OUTLINE.length) | 0];
+      sp.position.set(pt[0], pt[1], (Math.random() - 0.5) * DEPTH);
+      sp.userData.vel.set((Math.random() - 0.5) * 0.25, 0.25 + Math.random() * 0.3, (Math.random() - 0.5) * 0.25);
+      sp.userData.life = 1;
+      sp.scale.setScalar(0.045 + Math.random() * 0.035);
+    }
+
+    var sigmaGroup = new THREE.Group();
+    sigmaGroup.add(body, frontEdge, backEdge, posts, haloF, haloB, haloWide, glowLight, glowLight2, arcLight);
+    bolts.forEach(function(l){ sigmaGroup.add(l); });
+    dollars.forEach(function(s){ sigmaGroup.add(s); });
+    sigmaGroup.scale.setScalar(1.75); // fill the small badge frame
+    scene.add(sigmaGroup);
+
+    var t0 = performance.now();
+    var goldHue = 0.1, goldHueTarget = 0.1;
+    frameFn = function(){
+      if (!active) { raf = null; return; }
+      var t = (performance.now() - t0) / 1000;
+      sigmaGroup.rotation.y = 0.65 * Math.sin(t * 0.3);
+      sigmaGroup.rotation.x = 0.04 * Math.sin(t * 0.7);
+      sigmaGroup.position.y = 0.06 * Math.sin(t * 0.9); // floating bob
+      if (Math.random() < 0.08) bolts.forEach(rewireBolt);
+      var on = Math.random() < 0.45;
+      boltMat.opacity = on ? 0.55 + Math.random() * 0.45 : Math.max(0, boltMat.opacity - 0.15);
+      arcLight.intensity = boltMat.opacity * 4;
+      arcLight.position.set((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.8, 0);
+      var pulse2 = 3.2 + 0.9 * Math.sin(t * 1.3) + (on ? 0.8 : 0);
+      neonFuchsia.emissiveIntensity = pulse2;
+      // the gold jumps to a new random hue every so often, easing between jumps
+      if (Math.random() < 0.015) goldHueTarget = Math.random() * 0.18 + (Math.random() < 0.25 ? 0.5 + Math.random() * 0.45 : 0);
+      goldHue += (goldHueTarget - goldHue) * 0.04;
+      neonFuchsia.emissive.setHSL(goldHue, 1, 0.5);
+      neonFuchsia.color.setHSL(goldHue, 0.9, 0.66);
+      haloMatF.color.setHSL(goldHue, 1, 0.5);
+      haloWide.material.color.setHSL(goldHue, 1, 0.5);
+      glowLight2.color.setHSL(goldHue, 1, 0.55);
+      haloMatF.opacity = 0.26 + 0.1 * Math.sin(t * 1.3) + (on ? 0.1 : 0);
+      // money: occasionally launch a $, drift the live ones up and fade
+      if (Math.random() < 0.05) { var idle = dollars.find(function(dd){ return dd.userData.life <= 0; }); if (idle) spawnDollar(idle); }
+      dollars.forEach(function(dd){
+        if (dd.userData.life > 0) {
+          dd.userData.life -= 0.012;
+          dd.position.addScaledVector(dd.userData.vel, 0.016);
+          dd.material.opacity = Math.min(1, dd.userData.life * 2);
+        } else dd.material.opacity = 0;
+      });
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(frameFn);
+    };
+  }
+
+  window.mmSigmaSetActive = function(on){
+    active = !!on;
+    if (active) {
+      build().then(function(){
+        if (active && !raf && frameFn) raf = requestAnimationFrame(frameFn);
+      });
+    }
+  };
+})();
+</script>
 
 </body>
 </html>
