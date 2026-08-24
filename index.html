@@ -666,6 +666,34 @@
   // (askMarketsMaster, and the new per-Master "Jarvis" assistants below) can
   // call the same model-fallback logic instead of duplicating it.
   window.genText = genText;
+
+  // ── AI Thinking indicator — wraps the two central AI call points
+  // (window.askAI, window.genText) so ANY Master's AI request (Dr. Gainz,
+  // Genie Fab, Markets/Master Jarvis assistants — they all funnel through
+  // one of these two) lights up the floating badge in the Dashboard
+  // header. Counter-based so overlapping calls don't turn it off early.
+  (function(){
+    var activeCount = 0;
+    function setBadge(on){
+      var el = document.getElementById('aiThinkingBadge');
+      if (el) el.classList.toggle('active', on);
+    }
+    window.mmAIThinkingBegin = function(){ activeCount++; setBadge(true); };
+    window.mmAIThinkingEnd = function(){ activeCount = Math.max(0, activeCount - 1); if (activeCount === 0) setBadge(false); };
+
+    var _origAskAI = window.askAI;
+    window.askAI = async function(){
+      window.mmAIThinkingBegin();
+      try { return await _origAskAI.apply(this, arguments); }
+      finally { window.mmAIThinkingEnd(); }
+    };
+    var _origGenText = window.genText;
+    window.genText = async function(){
+      window.mmAIThinkingBegin();
+      try { return await _origGenText.apply(this, arguments); }
+      finally { window.mmAIThinkingEnd(); }
+    };
+  })();
   window.askDrGainz = async (question, context, lang) => {
     const langName = lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Brazilian Portuguese' : 'English';
     const prompt =
@@ -2730,6 +2758,32 @@ td .admnt-preview{margin-top:4px}
 /* ── DYNAMIC DASHBOARD ── */
 .dash-hero{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px}
 .dash-hero-kicker{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2E7BFF;margin-bottom:4px}
+/* AI Thinking indicator — floating 3D neon glyph, off by default, lights
+   up while an AI Master call is in flight (see mmAIThinkingBegin/End). */
+.ai-thinking-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:40px;height:48px;perspective:480px;opacity:0;transform:scale(.6);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+.ai-thinking-wrap.active{opacity:1;transform:scale(1)}
+.ai-thinking-glyph{
+  font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:1.9rem;line-height:1;color:#fff3d0;
+  transform-style:preserve-3d;
+  animation:aiSpinFloat 2.6s linear infinite,aiHueGlow 4.2s ease-in-out infinite;
+}
+.ai-thinking-wrap:not(.active) .ai-thinking-glyph{animation-play-state:paused}
+.ai-thinking-wrap::before,.ai-thinking-wrap::after{content:'';position:absolute;width:6px;height:6px;border-radius:50%;opacity:.9}
+.ai-thinking-wrap::before{top:2px;right:2px;background:#7ee8fa;box-shadow:0 0 8px #7ee8fa}
+.ai-thinking-wrap::after{bottom:2px;left:2px;background:#ff8ad8;box-shadow:0 0 8px #ff8ad8}
+@keyframes aiSpinFloat{
+  0%{transform:translateY(0) rotateY(0deg)}
+  50%{transform:translateY(-5px) rotateY(180deg)}
+  100%{transform:translateY(0) rotateY(360deg)}
+}
+@keyframes aiHueGlow{
+  0%,100%{filter:hue-rotate(0deg) brightness(1.05);text-shadow:0 0 6px #ffd76a,0 0 14px #ffb02e,0 0 26px #ff9d00}
+  50%{filter:hue-rotate(35deg) brightness(1.3);text-shadow:0 0 8px #ffe08a,0 0 20px #ffb02e,0 0 36px #ff9d00}
+}
+@media (prefers-reduced-motion:reduce){
+  .ai-thinking-glyph{animation:none}
+  .ai-thinking-wrap.active .ai-thinking-glyph{text-shadow:0 0 10px #ffb02e,0 0 22px #ff9d00}
+}
 .dash-datetime{font-size:.78rem;color:#6b7280;font-family:monospace}
 .dash-datetime b{color:#2E7BFF}
 .quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
@@ -6746,6 +6800,30 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
 }
 @media (prefers-reduced-motion: reduce){ #dashLiquidBg{ transition:none; animation:none; } }
 
+/* Cockpit HUD overlay — faint corner brackets + horizon line + edge
+   vignette layered above the background photo on every screen, so the
+   whole app reads as "viewed from a cockpit in flight" rather than a
+   plain photo backdrop. Kept very low-opacity so it never competes with
+   real content. */
+#mmCockpitHud{position:fixed;inset:0;z-index:0;pointer-events:none}
+#mmCockpitHud::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, transparent 45%, rgba(4,8,16,.5) 100%);
+}
+.mm-hud-corner{position:absolute;width:46px;height:46px;border:1px solid rgba(150,205,255,.16);opacity:.8}
+.mm-hud-corner.tl{top:16px;left:16px;border-right:none;border-bottom:none;border-top-left-radius:6px}
+.mm-hud-corner.tr{top:16px;right:16px;border-left:none;border-bottom:none;border-top-right-radius:6px}
+.mm-hud-corner.bl{bottom:16px;left:16px;border-right:none;border-top:none;border-bottom-left-radius:6px}
+.mm-hud-corner.br{bottom:16px;right:16px;border-left:none;border-top:none;border-bottom-right-radius:6px}
+.mm-hud-horizon{
+  position:absolute;left:8%;right:8%;top:38%;height:1px;
+  background:linear-gradient(90deg, transparent, rgba(160,210,255,.18) 30%, rgba(160,210,255,.28) 50%, rgba(160,210,255,.18) 70%, transparent);
+  animation: mmHudDrift 46s ease-in-out infinite alternate;
+}
+@keyframes mmHudDrift{ 0%{ top:34%; opacity:.5 } 100%{ top:42%; opacity:.85 } }
+@media (max-width:700px){ .mm-hud-corner{display:none} }
+@media (prefers-reduced-motion: reduce){ .mm-hud-horizon{ animation:none; top:38%; } }
+
 /* Landing hero — rotating background slideshow (11 curated luxury lifestyle
    photos: jets, supercars, superyachts, skylines, estates) behind the public
    marketing hero. Two stacked photo layers crossfade back and forth so a new
@@ -7398,7 +7476,16 @@ document.addEventListener('DOMContentLoaded', function() {
 <canvas id="sbgCanvas" aria-hidden="true"></canvas>
 <div id="sbgLayer" class="screen-bg-layer" aria-hidden="true"></div>
 <div id="bgGrid" class="bg-grid" aria-hidden="true"></div>
-<div id="dashLiquidBg" class="visible" data-lg-screen="dashboard" style="background-image:linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%), url('https://loremflickr.com/1600/1000/city,skyline,dusk?lock=101');background-position:center 35%" aria-hidden="true"></div>
+<div id="dashLiquidBg" class="visible" data-lg-screen="dashboard" style="background-image:linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%), url('https://loremflickr.com/1600/1000/aerial,city,skyline,dusk?lock=301');background-position:center 45%" aria-hidden="true"></div>
+<!-- COCKPIT HUD OVERLAY — sits above the background photo on every screen
+     to reinforce "flying" over the city rather than just viewing a photo:
+     a soft vignette plus faint corner HUD brackets, like a heads-up
+     display frame. Fixed, non-interactive, always on. -->
+<div id="mmCockpitHud" aria-hidden="true">
+  <span class="mm-hud-corner tl"></span><span class="mm-hud-corner tr"></span>
+  <span class="mm-hud-corner bl"></span><span class="mm-hud-corner br"></span>
+  <span class="mm-hud-horizon"></span>
+</div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
   <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
@@ -7469,13 +7556,22 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="dash-hero">
         <div>
           <div class="dash-hero-kicker">✨ Essentials</div>
-          <div class="screen-title" style="margin-bottom:0"><span id="dashGreeting">Welcome back</span>, <span id="dashName">there</span> 👋</div>
+          <div class="screen-title" style="margin-bottom:0;display:flex;align-items:center;gap:10px">
+            <span><span id="dashGreeting">Welcome back</span>, <span id="dashName">there</span> 👋</span>
+            <!-- AI THINKING INDICATOR — a small floating 3D neon glyph that
+                 lights up whenever an AI Master (Dr. Gainz, Genie Fab,
+                 Markets/Master Jarvis assistants) is actually working, so
+                 the member can see at a glance the AI is thinking, not
+                 stalled. Toggled by window.mmAIThinkingBegin/End(), wrapped
+                 around window.askAI / window.genText — see script near the
+                 bottom of the page. -->
+            <div class="ai-thinking-wrap" id="aiThinkingBadge" title="Genie is thinking…">
+              <div class="ai-thinking-glyph">Σ</div>
+            </div>
+          </div>
         </div>
         <div class="dash-datetime" id="dashDateTime"></div>
       </div>
-
-      <!-- YOUR RANK -->
-      <div id="rankCard"></div>
 
       <!-- THE GAINZ PLAN — Pro members start at 40% commission; completing
            these 3 steps (or upgrading to Elite) unlocks the full 50%. -->
@@ -7825,6 +7921,10 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="stat-sub" id="statPointsValue">Redeemable value: $0.00</div>
         </div>
       </div>
+
+      <!-- YOUR RANK — moved here from the Dashboard alongside Your Snapshot,
+           so all of a member's standing/earnings live in one place. -->
+      <div id="rankCard"></div>
 
       <div id="paypalNudgeBanner" class="reval-disclaimer" style="display:none;background:#1c1a0d;border-color:#facc1550;color:#facc15;margin-bottom:18px;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
         <span>⚠️ <b>Add your PayPal email</b> so we can pay your commissions — you won't get paid without it.</span>
@@ -10627,20 +10727,28 @@ document.addEventListener('DOMContentLoaded', function() {
 // it doesn't change on every visit/reload — recognizable per Master, not random).
 // Screens with no entry here simply don't show the photo layer (falls back to
 // the screen's existing background theme).
+// Retheme (was: per-Master luxury lifestyle photos) — now every screen
+// shares one "flying over the city" world: aerial skylines, cloud decks,
+// and airplane/cockpit-window views, so navigating the app feels like
+// moving through one continuous flight rather than jumping rooms.
 var MM_LG_SCREEN_PHOTOS = {
-  dashboard:        { kw: 'superyacht,luxury',          lock: 301, pos: 'center 45%' },
-  aicoach:          { kw: 'lamborghini,supercar',        lock: 301, pos: 'center 55%' },
-  geniemaster:      { kw: 'rollsroyce,luxury',            lock: 301, pos: 'center 55%' },
-  universitymaster: { kw: 'private,jet,airplane',         lock: 401, pos: 'center 45%' },
-  mystoremaster:    { kw: 'champagne,celebration,luxury', lock: 302, pos: 'center 40%' },
-  reimaster:        { kw: 'luxury,mansion,interior',      lock: 302, pos: 'center 40%' },
-  marketingmaster:  { kw: 'lamborghini,supercar',         lock: 302, pos: 'center 55%' },
-  marketsmaster:    { kw: 'rollsroyce,luxury',            lock: 302, pos: 'center 55%' },
-  creativemaster:   { kw: 'infinity,pool,luxury',         lock: 301, pos: 'center 45%' },
-  crmmaster:        { kw: 'luxury,villa,pool',            lock: 301, pos: 'center 40%' },
-  communitymaster:  { kw: 'superyacht,luxury',            lock: 302, pos: 'center 45%' },
-  commissions:      { kw: 'ferrari,luxury',               lock: 301, pos: 'center 55%' },
-  plans:            { kw: 'private,jet,airplane',         lock: 402, pos: 'center 45%' }
+  dashboard:        { kw: 'aerial,city,skyline,dusk',      lock: 301, pos: 'center 45%' },
+  aicoach:          { kw: 'airplane,cockpit,sky',           lock: 301, pos: 'center 55%' },
+  geniemaster:      { kw: 'clouds,aerial,sunset',           lock: 301, pos: 'center 55%' },
+  universitymaster: { kw: 'private,jet,airplane,sky',       lock: 401, pos: 'center 45%' },
+  mystoremaster:    { kw: 'city,lights,aerial,night',       lock: 302, pos: 'center 40%' },
+  reimaster:        { kw: 'aerial,city,skyscrapers',        lock: 302, pos: 'center 40%' },
+  marketingmaster:  { kw: 'clouds,sky,aerial,sunrise',      lock: 302, pos: 'center 55%' },
+  marketsmaster:    { kw: 'city,skyline,night,aerial',      lock: 302, pos: 'center 55%' },
+  creativemaster:   { kw: 'clouds,aerial,golden,hour',      lock: 301, pos: 'center 45%' },
+  crmmaster:        { kw: 'aerial,city,downtown',           lock: 301, pos: 'center 40%' },
+  communitymaster:  { kw: 'city,lights,aerial,dusk',        lock: 302, pos: 'center 45%' },
+  commissions:      { kw: 'aerial,skyline,financial,district', lock: 301, pos: 'center 55%' },
+  plans:            { kw: 'airplane,wing,clouds,sky',       lock: 402, pos: 'center 45%' },
+  businessmaster:   { kw: 'aerial,city,harbor,dusk',        lock: 303, pos: 'center 45%' },
+  financialmaster:  { kw: 'city,skyline,night,lights',      lock: 303, pos: 'center 50%' },
+  account:          { kw: 'clouds,aerial,horizon',          lock: 403, pos: 'center 45%' },
+  admin:            { kw: 'city,skyline,aerial,control,tower', lock: 304, pos: 'center 50%' }
 };
 function mmUpdateLiquidGlassBg(id){
   var el = document.getElementById('dashLiquidBg');
