@@ -2843,6 +2843,27 @@ td .admnt-preview{margin-top:4px}
 @keyframes gainNextPulse{0%,100%{box-shadow:0 0 0 1px rgba(250,204,21,.5) inset,0 8px 22px rgba(250,204,21,.12)}50%{box-shadow:0 0 0 1px rgba(250,204,21,.9) inset,0 10px 28px rgba(250,204,21,.35)}}
 .gain-next-flag{margin-top:6px;font-size:.58rem;font-weight:800;color:#facc15;letter-spacing:.03em;text-transform:uppercase}
 
+/* ── GAIN$ Plan section header — replaces the plain category label ──── */
+.gain-plan-kicker{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#4ade80;margin-bottom:4px}
+.gain-plan-headline{font-size:1.15rem;font-weight:800;color:#fde68a;margin-bottom:4px;letter-spacing:-.01em}
+.gain-plan-sub{font-size:.76rem;color:#9ca3af;margin-bottom:12px;max-width:560px;line-height:1.4}
+
+/* ── Make every clickable tile actively invite a click ───────────────
+   A slow ambient shimmer sweep on live/GAIN$ tiles (subtle at rest),
+   a bigger lift + brighter glow + visible "Tap to open →" hint on hover,
+   and an eager idle glow specifically on the GAIN$ tiles since those are
+   the ones we most want members to walk through. */
+.service-tile.is-live{overflow:hidden}
+.service-tile.is-live::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.10) 50%,transparent 60%);background-size:220% 220%;background-position:120% 0;opacity:0;transition:opacity .25s;pointer-events:none}
+.service-tile.is-live:hover::after{opacity:1;animation:tileShimmerSweep 1.1s ease forwards}
+@keyframes tileShimmerSweep{from{background-position:120% 0}to{background-position:-20% 0}}
+.service-tile.is-live:hover{transform:translateY(-6px) scale(1.035)}
+.service-tile.gain-tile:not(.is-skipped):not(.is-complete){animation:gainInviteGlow 3.4s ease-in-out infinite}
+@keyframes gainInviteGlow{0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.28)}50%{box-shadow:0 4px 18px rgba(0,0,0,.28),0 0 22px rgba(250,204,21,.16)}}
+.tile-tap-hint{position:absolute;bottom:8px;left:0;right:0;font-size:.58rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:#2E7BFF;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.service-tile.gain-tile .tile-tap-hint{color:#facc15}
+.service-tile.is-live:hover .tile-tap-hint{opacity:1;transform:translateY(0)}
+
 /* ── GAIN$ Plan progress banner (Dashboard) ─────────────────────────── */
 .gain-banner{position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border:1px solid rgba(250,204,21,.25);border-radius:16px;padding:16px 18px;margin-bottom:18px;cursor:pointer;transition:border-color .2s,transform .2s}
 .gain-banner:hover{transform:translateY(-2px);border-color:rgba(250,204,21,.5)}
@@ -21074,7 +21095,8 @@ async function renderBusinessEssentialsTiles(){
         var body = cornerMark +
           '<div class="qa-icon">' + (t.icon || '🧩') + '</div>' +
           '<div class="qa-label">' + eeEsc(t.name) + '</div>' +
-          (isNext ? '<div class="gain-next-flag">↓ Next step</div>' : '');
+          (isNext ? '<div class="gain-next-flag">↓ Next step</div>' : '') +
+          (isLive ? '<div class="tile-tap-hint">Tap to open →</div>' : '');
 
         var tileClasses = 'service-tile ' + (isLive ? 'is-live' : 'is-soon');
         if (t.gainStep) {
@@ -21091,7 +21113,12 @@ async function renderBusinessEssentialsTiles(){
           ' ondragstart="mmTileDragStart(event)" ondragover="mmTileDragOver(event)" ondrop="mmTileDrop(event)" ondragend="mmTileDragEnd(event)"' +
           ' onclick="mmOpenTileDetail(\'' + safeId + '\')" title="' + eeEsc(t.description || '') + '">' + badge + body + '</div>';
       }).join('');
-      return '<div class="tile-category"><div class="tile-category-label">' + eeEsc(cat) + '</div>' +
+      var headerHtml = (cat === 'GAIN$ Plan')
+        ? '<div class="gain-plan-kicker">✅ Essential for Set Up</div>' +
+          '<div class="gain-plan-headline">Follow the GAIN$ Plan</div>' +
+          '<div class="gain-plan-sub">Every tile below is essential to your business — take them in order, or skip any and come back later.</div>'
+        : '<div class="tile-category-label">' + eeEsc(cat) + '</div>';
+      return '<div class="tile-category">' + headerHtml +
         '<div class="tile-grid" data-tile-category="' + eeEsc(cat) + '">' + tilesHtml + '</div></div>';
     }).join('');
 
