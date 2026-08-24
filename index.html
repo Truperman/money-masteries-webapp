@@ -332,6 +332,24 @@
     const res = await fn(data);
     return res.data;
   };
+  window.callEnsureBusinessProvisioned = async () => {
+    const fn = httpsCallable(functionsClient, 'ensureBusinessProvisioned');
+    const res = await fn();
+    return res.data;
+  };
+
+  // Genie Blueprint / general usage billing engine — see functions/index.js
+  // getUsageBillingConfig / createPaymentMethodSetupSession / getMyBillingStatus.
+  window.callGetMyBillingStatus = async () => {
+    const fn = httpsCallable(functionsClient, 'getMyBillingStatus');
+    const res = await fn();
+    return res.data;
+  };
+  window.callCreatePaymentMethodSetupSession = async (data) => {
+    const fn = httpsCallable(functionsClient, 'createPaymentMethodSetupSession');
+    const res = await fn(data);
+    return res.data;
+  };
 
   // Elite-exclusive events — see functions/index.js getEliteEvents.
   window.callGetEliteEvents = async () => {
@@ -564,6 +582,12 @@
       window.userData     = data;
       window.affCode      = data.affiliateCode || makeAffCode(user.uid);
       showLoggedIn(user, data);
+      // Genie Blueprint Section C: payment method required before the member
+      // can fully use the app. Runs after showLoggedIn so the dashboard is
+      // already rendered underneath — this shows as a blocking overlay, not
+      // a separate page, so returning members who already have a card on
+      // file see no delay at all (the status check below no-ops instantly).
+      if (typeof mmEnsureBillingSetup === 'function') mmEnsureBillingSetup();
       // Site-visit engagement: real "earned while away" celebration + cosmetic
       // per-visit banner. Fires once per app load — see mmCheckSiteVisitEngagement.
       if (typeof mmCheckSiteVisitEngagement === 'function') mmCheckSiteVisitEngagement(user, data);
@@ -21156,6 +21180,102 @@ function mmMaybePromptGainPlan(){
 }
 window.mmMaybePromptGainPlan = mmMaybePromptGainPlan;
 function MM_GAIN_STEP_LABEL_TEXT(status){ return MM_GAIN_STEP_STATUS_LABEL[status] || 'PENDING'; }
+
+// ── Genie Blueprint Section C: mandatory payment-method-on-file step ───────
+// Runs once per login, right after showLoggedIn. If this account hasn't
+// completed payment-method setup yet, blocks the dashboard behind a single
+// transparent screen: agree to billing terms, then add a card via Stripe
+// (a real SetupIntent flow — nothing is charged here). Skips entirely for
+// an account that already has a payment method on file, so returning
+// members never see this again.
+var MM_BILLING_AGREEMENT_TEXT = "Add your payment method once so MoneyMasteries can activate and manage business services as you use them. Nothing is charged today. Once you start using billable services (AI, website, hosting, phone, marketing, and similar), usage is tracked in real time and automatically billed to this payment method: your first automatic charge happens within 72 hours of your first billable activity (or sooner if your unbilled usage reaches your account's usage limit), and settlements continue automatically after that on your billing cycle. You'll always be able to see current usage, upcoming charges, and past invoices in your MoneyMasteries billing dashboard, and you can cancel or update your payment method at any time.";
+var mmBillingModalShown = false;
+
+function mmBillingSetupModalHtml(cancelled){
+  return (
+    '<div id="mmBillingSetupOverlay" style="position:fixed;inset:0;z-index:99999;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;">' +
+      '<div style="width:100%;max-width:480px;background:#0f1a2e;border:1px solid #24365c;border-radius:16px;padding:28px 26px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);">' +
+        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:10px;">Start free</div>' +
+        '<h2 style="margin:0 0 12px;font-size:1.4rem;line-height:1.25;">Add your payment method</h2>' +
+        (cancelled ? '<div style="background:rgba(240,184,70,.12);border:1px solid rgba(240,184,70,.4);color:#f0b846;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-bottom:14px;">Payment method setup was cancelled — you\'ll need to complete this step to continue.</div>' : '') +
+        '<p style="margin:0 0 16px;font-size:.92rem;line-height:1.55;color:#a9bdda;">No upfront charge just to begin. ' + MM_BILLING_AGREEMENT_TEXT + '</p>' +
+        '<label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 18px;font-size:.85rem;line-height:1.4;color:#eaf1ff;cursor:pointer;">' +
+          '<input type="checkbox" id="mmBillingAgreeCheck" style="margin-top:3px;width:16px;height:16px;flex:0 0 auto;">' +
+          '<span>I agree to MoneyMasteries\' usage-based billing terms above.</span>' +
+        '</label>' +
+        '<button id="mmBillingContinueBtn" disabled onclick="mmStartPaymentMethodSetup()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2457c9;color:#fff;font-weight:700;font-size:.95rem;cursor:not-allowed;opacity:.5;transition:opacity .15s;">Add payment method — $0 charged today</button>' +
+        '<div id="mmBillingSetupError" style="display:none;margin-top:10px;font-size:.82rem;color:#ff8a80;"></div>' +
+        '<div style="text-align:center;margin-top:16px;">' +
+          '<a href="#" onclick="mmBillingSignOut();return false;" style="font-size:.78rem;color:#7f97c2;text-decoration:underline;">Not right now — sign out</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function mmShowBillingSetupModal(cancelled){
+  if (document.getElementById('mmBillingSetupOverlay')) return;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = mmBillingSetupModalHtml(!!cancelled);
+  document.body.appendChild(wrap.firstChild);
+  var check = document.getElementById('mmBillingAgreeCheck');
+  var btn = document.getElementById('mmBillingContinueBtn');
+  check.addEventListener('change', function(){
+    btn.disabled = !check.checked;
+    btn.style.opacity = check.checked ? '1' : '.5';
+    btn.style.cursor = check.checked ? 'pointer' : 'not-allowed';
+  });
+}
+
+window.mmBillingSignOut = function(){
+  try { if (window.FB && window.FB.signOut && window.FB.auth) window.FB.signOut(window.FB.auth); } catch(e){}
+  location.reload();
+};
+
+window.mmStartPaymentMethodSetup = async function(){
+  var btn = document.getElementById('mmBillingContinueBtn');
+  var errEl = document.getElementById('mmBillingSetupError');
+  if (errEl) errEl.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Setting up…'; }
+  try {
+    var prov = await window.callEnsureBusinessProvisioned();
+    var businessId = prov && prov.businessId;
+    if (!businessId) throw new Error('Could not set up your business profile.');
+    await window.callRecordActiveBusinessAgreement({ businessId: businessId, agreementText: MM_BILLING_AGREEMENT_TEXT, version: 'v1' });
+    var session = await window.callCreatePaymentMethodSetupSession({ businessId: businessId });
+    if (session && session.url) {
+      window.location.href = session.url; // Stripe-hosted setup — returns to ?payment_method_setup=1
+    } else {
+      throw new Error('Could not start payment setup.');
+    }
+  } catch (e) {
+    if (errEl) { errEl.textContent = (e && e.message) || 'Something went wrong — please try again.'; errEl.style.display = 'block'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Add payment method — $0 charged today'; }
+  }
+};
+
+// Called once from onAuthStateChanged, right after showLoggedIn. Checks the
+// account's real billing status (not a cached local flag) so this never
+// falsely blocks a returning member due to stale local state.
+async function mmEnsureBillingSetup(){
+  if (mmBillingModalShown) return;
+  var params = new URLSearchParams(location.search);
+  var cancelled = params.get('payment_method_setup_cancelled') === '1';
+  if (params.get('payment_method_setup') === '1') {
+    if (typeof showNotifToast === 'function') showNotifToast('✅ Payment method added', 'You\'re all set — MoneyMasteries will only bill for services you actually use.');
+    try { history.replaceState(null, '', location.pathname); } catch(e){}
+  }
+  try {
+    var status = await window.callGetMyBillingStatus();
+    if (status && status.billing && status.billing.paymentMethodOnFile) return; // already set up — nothing to do
+  } catch (e) {
+    console.warn('mmEnsureBillingSetup: billing status check failed, not blocking dashboard', e);
+    return; // fail open — never trap a member out of the app over a transient error
+  }
+  mmBillingModalShown = true;
+  mmShowBillingSetupModal(cancelled);
+}
+window.mmEnsureBillingSetup = mmEnsureBillingSetup;
 
 // ── GAIN$ Plan progress banner (Dashboard) ──────────────────────────────
 function renderGainPlanBanner(){
