@@ -2837,6 +2837,11 @@ td .admnt-preview{margin-top:4px}
 .service-tile.gain-tile{border-color:rgba(250,204,21,.18)}
 .service-tile.gain-tile.is-skipped{opacity:.62}
 .service-tile.gain-tile.is-complete{border-color:rgba(74,222,128,.35)}
+.gain-step-num{position:absolute;top:6px;left:7px;width:20px;height:20px;border-radius:50%;background:rgba(250,204,21,.16);border:1px solid rgba(250,204,21,.45);color:#fde68a;font-size:.66rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.service-tile.gain-tile.is-next{border-color:#facc15;animation:gainNextPulse 2.2s ease-in-out infinite}
+.service-tile.gain-tile.is-next .gain-step-num{background:#facc15;color:#1c1200;border-color:#facc15}
+@keyframes gainNextPulse{0%,100%{box-shadow:0 0 0 1px rgba(250,204,21,.5) inset,0 8px 22px rgba(250,204,21,.12)}50%{box-shadow:0 0 0 1px rgba(250,204,21,.9) inset,0 10px 28px rgba(250,204,21,.35)}}
+.gain-next-flag{margin-top:6px;font-size:.58rem;font-weight:800;color:#facc15;letter-spacing:.03em;text-transform:uppercase}
 
 /* ── GAIN$ Plan progress banner (Dashboard) ─────────────────────────── */
 .gain-banner{position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border:1px solid rgba(250,204,21,.25);border-radius:16px;padding:16px 18px;margin-bottom:18px;cursor:pointer;transition:border-color .2s,transform .2s}
@@ -21027,6 +21032,13 @@ async function renderBusinessEssentialsTiles(){
     tiles = tiles.slice().sort(function(a,b){ return (a.displayOrder||0) - (b.displayOrder||0); });
     mmTileRegistryCache = tiles;
     if (!tiles.length) { el.innerHTML = '<div class="tile-grid-empty">No services configured yet.</div>'; return; }
+
+    // The next obvious step to take — the first GAIN$ step still pending,
+    // in fixed logical order (1→6). Independent of any drag-to-reorder the
+    // member has done, so the "NEXT" flag always points at the real next
+    // step even if they've dragged tiles around visually.
+    var mmNextGainStep = MM_GAIN_STEP_ORDER.find(function(s){ return !gainPlan[s] || gainPlan[s].status === 'pending'; }) || null;
+
     tiles = mmApplyTileOrderPrefs(tiles);
 
     // Group into fixed categories, in a sensible fixed category order —
@@ -21055,15 +21067,21 @@ async function renderBusinessEssentialsTiles(){
           badge = '<span class="tile-status-badge soon">COMING SOON</span>';
         }
 
-        var body = '<div class="tile-grip">⠿</div>' +
+        var isNext = t.gainStep && t.gainStep === mmNextGainStep;
+        var cornerMark = t.gainStep
+          ? '<div class="gain-step-num">' + (MM_GAIN_STEP_ORDER.indexOf(t.gainStep) + 1) + '</div>'
+          : '<div class="tile-grip">⠿</div>';
+        var body = cornerMark +
           '<div class="qa-icon">' + (t.icon || '🧩') + '</div>' +
-          '<div class="qa-label">' + eeEsc(t.name) + '</div>';
+          '<div class="qa-label">' + eeEsc(t.name) + '</div>' +
+          (isNext ? '<div class="gain-next-flag">↓ Next step</div>' : '');
 
         var tileClasses = 'service-tile ' + (isLive ? 'is-live' : 'is-soon');
         if (t.gainStep) {
           tileClasses += ' gain-tile';
           if (gainStatus === 'skipped') tileClasses += ' is-skipped';
           if (gainStatus === 'complete') tileClasses += ' is-complete';
+          if (isNext) tileClasses += ' is-next';
         }
 
         // Every tile — GAIN$ Plan or otherwise — opens the detail modal on
@@ -21098,10 +21116,16 @@ function renderGainPlanBanner(){
   var isDone = done >= total;
   el.style.display = '';
   el.className = 'gain-banner' + (isDone ? ' gain-done' : '');
+  var nextStep = MM_GAIN_STEP_ORDER.find(function(s){ return !gainPlan[s] || gainPlan[s].status === 'pending'; });
+  var nextTile = nextStep && (mmTileRegistryCache || []).find(function(t){ return t.gainStep === nextStep; });
+  var nextLine = (!isDone && nextTile)
+    ? '<div class="gain-banner-count">Next: Step ' + (MM_GAIN_STEP_ORDER.indexOf(nextStep) + 1) + ' — ' + eeEsc(nextTile.name) + '</div>'
+    : '<div class="gain-banner-count">' + done + ' of ' + total + ' steps</div>';
+
   el.innerHTML =
     '<div class="gain-banner-top">' +
       '<div class="gain-banner-title">' + (isDone ? '✅ GAIN$ Plan complete' : '💰 Your GAIN$ Plan') + '</div>' +
-      '<div class="gain-banner-count">' + done + ' of ' + total + ' steps</div>' +
+      nextLine +
     '</div>' +
     '<div class="gain-banner-track"><div class="gain-banner-fill" style="width:' + pct + '%"></div></div>';
 }
@@ -21128,6 +21152,9 @@ function mmOpenTileDetail(tileId){
   if (gainStatus) badgeHtml = '<span class="tile-status-badge ' + gainStatus + '" style="position:static">' + MM_GAIN_STEP_LABEL_TEXT(gainStatus) + '</span>';
   else if (isLive) badgeHtml = '<span class="tile-status-badge live" style="position:static">LIVE</span>';
   else badgeHtml = '<span class="tile-status-badge soon" style="position:static">COMING SOON</span>';
+
+  var nextGainStep = t.gainStep && MM_GAIN_STEP_ORDER.find(function(s){ return !gainPlan[s] || gainPlan[s].status === 'pending'; });
+  var isNextTile = t.gainStep && t.gainStep === nextGainStep;
 
   var actions = '';
   var safeId = tileId.replace(/'/g,"");
@@ -21161,7 +21188,10 @@ function mmOpenTileDetail(tileId){
     '</div>' +
     '<div class="tile-detail-desc">' + eeEsc(t.description || '') + '</div>' +
     '<div class="tile-detail-actions" id="tileDetailActions">' + actions + '</div>' +
-    (t.gainStep ? '<div class="tile-detail-note">Part of your GAIN$ Plan — the guided path every business should follow first.</div>' : '');
+    (t.gainStep
+      ? '<div class="tile-detail-note">Step ' + (MM_GAIN_STEP_ORDER.indexOf(t.gainStep) + 1) + ' of ' + MM_GAIN_STEP_ORDER.length + ' in your GAIN$ Plan' +
+        (isNextTile ? ' — <strong style="color:#facc15">this is your next step</strong>.' : '.') + '</div>'
+      : '');
 
   modal.classList.add('open');
 }
