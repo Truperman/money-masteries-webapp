@@ -425,6 +425,28 @@
     return res.data;
   };
 
+  // POS / POS Terminal — see functions/index.js createTerminalLocation /
+  // createTerminalConnectionToken / registerTerminalReader /
+  // getMyTerminalReaders / createPosPaymentIntent / collectTerminalPayment /
+  // getPosPaymentStatus / getMyPosTransactions.
+  window.callCreateTerminalLocation = async (data) => (await httpsCallable(functionsClient, 'createTerminalLocation')(data)).data;
+  window.callCreateTerminalConnectionToken = async () => (await httpsCallable(functionsClient, 'createTerminalConnectionToken')()).data;
+  window.callRegisterTerminalReader = async (data) => (await httpsCallable(functionsClient, 'registerTerminalReader')(data)).data;
+  window.callGetMyTerminalReaders = async () => (await httpsCallable(functionsClient, 'getMyTerminalReaders')()).data;
+  window.callCreatePosPaymentIntent = async (data) => (await httpsCallable(functionsClient, 'createPosPaymentIntent')(data)).data;
+  window.callCollectTerminalPayment = async (data) => (await httpsCallable(functionsClient, 'collectTerminalPayment')(data)).data;
+  window.callGetPosPaymentStatus = async (data) => (await httpsCallable(functionsClient, 'getPosPaymentStatus')(data)).data;
+  window.callGetMyPosTransactions = async () => (await httpsCallable(functionsClient, 'getMyPosTransactions')()).data;
+
+  // Business Phone / SMS / AI Receptionist — see functions/index.js
+  // provisionBusinessPhoneNumber / setMyPhoneInteriorContacts /
+  // setAiReceptionistEnabled / sendBusinessSms.
+  window.callGetMyPhoneStatus = async () => (await httpsCallable(functionsClient, 'getMyPhoneStatus')()).data;
+  window.callProvisionBusinessPhoneNumber = async (data) => (await httpsCallable(functionsClient, 'provisionBusinessPhoneNumber')(data || {})).data;
+  window.callSetMyPhoneInteriorContacts = async (data) => (await httpsCallable(functionsClient, 'setMyPhoneInteriorContacts')(data)).data;
+  window.callSetAiReceptionistEnabled = async (data) => (await httpsCallable(functionsClient, 'setAiReceptionistEnabled')(data)).data;
+  window.callSendBusinessSms = async (data) => (await httpsCallable(functionsClient, 'sendBusinessSms')(data)).data;
+
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
   // needing their own Firebase import wiring.
@@ -7036,6 +7058,12 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
   }
 }
 </style>
+
+<!-- Stripe.js — powers the POS (online manual card entry) checkout's Card
+     Element. POS Terminal (physical reader) collection is fully server-side
+     (stripe.terminal.readers.processPaymentIntent) and doesn't need this,
+     but Stripe.js is loaded once here for the online POS flow. -->
+<script src="https://js.stripe.com/v3/"></script>
 
 </head>
 <body>
@@ -21406,6 +21434,7 @@ function mmOpenTileDetail(tileId){
 
   var actions = '';
   var genericTileNote = '';
+  var extraPanelId = '';
   var safeId = tileId.replace(/'/g,"");
 
   if (t.activationType === 'gain_questionnaire') {
@@ -21442,6 +21471,16 @@ function mmOpenTileDetail(tileId){
     if (genStatus !== 'already_have') actions += '<button class="tile-detail-btn ghost" onclick="mmSetTileStatusPrompted(\'' + safeId + '\',\'already_have\')">I already have this</button>';
     if (genStatus !== 'skipped') actions += '<button class="tile-detail-btn skip" onclick="mmSetGenericTileStatus(\'' + safeId + '\',\'skipped\')">Not right now</button>';
     if (genStatus) actions += '<button class="tile-detail-btn ghost" onclick="mmSetGenericTileStatus(\'' + safeId + '\',\'pending\')">Undo</button>';
+  } else if (t.activationType === 'pos_checkout') {
+    extraPanelId = 'mmPosCheckoutPanel';
+  } else if (t.activationType === 'pos_terminal') {
+    extraPanelId = 'mmPosTerminalPanel';
+  } else if (t.activationType === 'business_phone') {
+    extraPanelId = 'mmBusinessPhonePanel';
+  } else if (t.activationType === 'business_sms') {
+    extraPanelId = 'mmBusinessSmsPanel';
+  } else if (t.activationType === 'ai_receptionist') {
+    extraPanelId = 'mmAiReceptionistPanel';
   } else if (!isLive) {
     actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmNotifyTileInterest(null,\'' + safeId + '\')">Notify me when it\'s ready</button>';
   }
@@ -21457,9 +21496,16 @@ function mmOpenTileDetail(tileId){
       ? '<div class="tile-detail-note">Step ' + (MM_GAIN_STEP_ORDER.indexOf(t.gainStep) + 1) + ' of ' + MM_GAIN_STEP_ORDER.length + ' in your GAIN$ Plan' +
         (isNextTile ? ' — <strong style="color:#facc15">this is your next step</strong>.' : '.') + '</div>'
       : '') +
-    (genericTileNote ? '<div class="tile-detail-note">' + eeEsc(genericTileNote) + '</div>' : '');
+    (genericTileNote ? '<div class="tile-detail-note">' + eeEsc(genericTileNote) + '</div>' : '') +
+    (extraPanelId ? '<div id="' + extraPanelId + '" style="margin-top:16px">Loading…</div>' : '');
 
   modal.classList.add('open');
+
+  if (extraPanelId === 'mmPosCheckoutPanel') mmRenderPosCheckoutPanel();
+  else if (extraPanelId === 'mmPosTerminalPanel') mmRenderPosTerminalPanel();
+  else if (extraPanelId === 'mmBusinessPhonePanel') mmRenderBusinessPhonePanel();
+  else if (extraPanelId === 'mmBusinessSmsPanel') mmRenderBusinessSmsPanel();
+  else if (extraPanelId === 'mmAiReceptionistPanel') mmRenderAiReceptionistPanel();
 }
 window.mmOpenTileDetail = mmOpenTileDetail;
 function mmCloseTileDetail(){
@@ -21467,6 +21513,381 @@ function mmCloseTileDetail(){
   if (modal) modal.classList.remove('open');
 }
 window.mmCloseTileDetail = mmCloseTileDetail;
+
+// ── Payments: Stripe publishable key (public by design, safe in frontend) ──
+// This is David's real live publishable key from the Money Masteries Stripe
+// account. POS Terminal (physical reader) does NOT need this — that flow is
+// fully server-side.
+var MM_STRIPE_PUBLISHABLE_KEY = 'pk_live_51Q4khOCSkEeAdrbrGLgvWtrBggV5kWBAfzcWoSZyPdvbTBEVWTWUrDFoj1Xs5RPntVnwhBD2AKIVPNROwHj94VcU0072UeUyNQ';
+
+// ── POS: online, no-hardware card checkout ──────────────────────────────
+var mmPosStripe = null, mmPosCard = null;
+async function mmRenderPosCheckoutPanel(){
+  var el = document.getElementById('mmPosCheckoutPanel');
+  if (!el) return;
+  try {
+    var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+    var merchantReady = gainPlan.merchant && gainPlan.merchant.status === 'complete';
+    if (!merchantReady) {
+      el.innerHTML = '<div class="tile-detail-note">Set up Merchant Services first so payments land in your account.</div>' +
+        '<div class="tile-detail-actions"><button class="tile-detail-btn primary" onclick="mmStartGainMerchant(this)">Connect Stripe</button></div>';
+      return;
+    }
+    el.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<label style="font-size:.8rem;color:#9ca3af">Amount (USD)</label>' +
+        '<input id="mmPosAmount" type="number" min="0.50" step="0.01" placeholder="150.00" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+        '<label style="font-size:.8rem;color:#9ca3af">What\'s this for?</label>' +
+        '<input id="mmPosDesc" type="text" placeholder="Payment to your business" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+        '<div id="mmPosCardWrap" style="display:none">' +
+          '<label style="font-size:.8rem;color:#9ca3af">Card details</label>' +
+          '<div id="mmPosCardElement" style="padding:12px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;margin-top:6px"></div>' +
+        '</div>' +
+        '<div class="tile-detail-actions" id="mmPosActionRow">' +
+          '<button class="tile-detail-btn primary" onclick="mmPosCreateCharge(this)">Enter card details</button>' +
+        '</div>' +
+        '<div id="mmPosMsg" style="font-size:.8rem;color:#9ca3af"></div>' +
+      '</div>';
+  } catch (e) {
+    el.innerHTML = '<div class="tile-detail-note">Could not load — ' + eeEsc(e.message || 'try again') + '</div>';
+  }
+}
+window.mmRenderPosCheckoutPanel = mmRenderPosCheckoutPanel;
+
+async function mmPosCreateCharge(btn){
+  var amountEl = document.getElementById('mmPosAmount');
+  var descEl = document.getElementById('mmPosDesc');
+  var msgEl = document.getElementById('mmPosMsg');
+  var amount = parseFloat(amountEl && amountEl.value);
+  if (!amount || amount <= 0) { if (msgEl) msgEl.textContent = 'Enter a valid amount first.'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+  try {
+    var res = await window.callCreatePosPaymentIntent({ amountUsd: amount, description: (descEl && descEl.value) || 'Payment to your business', method: 'card' });
+    if (!window.Stripe) throw new Error('Payments script did not load — check your connection and try again.');
+    mmPosStripe = window.Stripe(MM_STRIPE_PUBLISHABLE_KEY, { stripeAccount: res.accountId });
+    var elements = mmPosStripe.elements();
+    mmPosCard = elements.create('card', { style: { base: { color: '#e5e7eb', '::placeholder': { color: '#6b7280' } } } });
+    var wrap = document.getElementById('mmPosCardWrap');
+    if (wrap) wrap.style.display = 'block';
+    mmPosCard.mount('#mmPosCardElement');
+    var row = document.getElementById('mmPosActionRow');
+    if (row) row.innerHTML = '<button class="tile-detail-btn primary" onclick="mmPosConfirmCharge(this,\'' + res.clientSecret + '\',\'' + res.paymentIntentId + '\')">Charge $' + amount.toFixed(2) + '</button>';
+    if (msgEl) msgEl.textContent = 'Enter the card number above, then confirm.';
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not start checkout.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Enter card details'; }
+  }
+}
+window.mmPosCreateCharge = mmPosCreateCharge;
+
+async function mmPosConfirmCharge(btn, clientSecret, paymentIntentId){
+  var msgEl = document.getElementById('mmPosMsg');
+  if (btn) { btn.disabled = true; btn.textContent = 'Charging…'; }
+  try {
+    var result = await mmPosStripe.confirmCardPayment(clientSecret, { payment_method: { card: mmPosCard } });
+    if (result.error) throw new Error(result.error.message || 'Card was declined.');
+    if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+      if (typeof showNotifToast === 'function') showNotifToast('✓ Payment received', 'The card was charged successfully.');
+      mmCloseTileDetail();
+    } else {
+      // getPosPaymentStatus also flips the ledger record once succeeded —
+      // covers async payment methods that don't resolve instantly above.
+      await window.callGetPosPaymentStatus({ paymentIntentId: paymentIntentId });
+      if (typeof showNotifToast === 'function') showNotifToast('Payment submitted', 'Check Recent Transactions shortly to confirm it went through.');
+      mmCloseTileDetail();
+    }
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not charge the card.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Try again'; }
+  }
+}
+window.mmPosConfirmCharge = mmPosConfirmCharge;
+
+// ── POS Terminal: physical card reader checkout ─────────────────────────
+async function mmRenderPosTerminalPanel(){
+  var el = document.getElementById('mmPosTerminalPanel');
+  if (!el) return;
+  try {
+    var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+    var merchantReady = gainPlan.merchant && gainPlan.merchant.status === 'complete';
+    if (!merchantReady) {
+      el.innerHTML = '<div class="tile-detail-note">Set up Merchant Services first so payments land in your account.</div>' +
+        '<div class="tile-detail-actions"><button class="tile-detail-btn primary" onclick="mmStartGainMerchant(this)">Connect Stripe</button></div>';
+      return;
+    }
+    var readersRes = await window.callGetMyTerminalReaders();
+    var readers = (readersRes && readersRes.readers) || [];
+    var readerOptions = readers.map(function(r){ return '<option value="' + r.readerId + '">' + eeEsc(r.label || r.readerId) + (r.deviceType ? ' (' + eeEsc(r.deviceType) + ')' : '') + '</option>'; }).join('');
+    var readerList = readers.length
+      ? '<div style="font-size:.78rem;color:#9ca3af;margin-top:4px">Registered readers: ' + readers.map(function(r){ return eeEsc(r.label || r.readerId); }).join(', ') + '</div>'
+      : '<div style="font-size:.78rem;color:#9ca3af;margin-top:4px">No reader registered yet — power on your Stripe reader, it will show a registration code, then use the form below to add it.</div>';
+
+    el.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:14px">' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:.85rem;margin-bottom:6px">Register a reader</div>' +
+          readerList +
+          '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">' +
+            '<input id="mmTermAddr1" type="text" placeholder="Business address line 1 (first time only)" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+            '<div style="display:flex;gap:8px">' +
+              '<input id="mmTermCity" type="text" placeholder="City" style="flex:1;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+              '<input id="mmTermState" type="text" placeholder="ST" maxlength="2" style="width:60px;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+              '<input id="mmTermZip" type="text" placeholder="ZIP" style="width:90px;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+            '</div>' +
+            '<input id="mmTermRegCode" type="text" placeholder="Reader registration code (shown on device screen)" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+            '<input id="mmTermLabel" type="text" placeholder="Label, e.g. Front Counter" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+            '<button class="tile-detail-btn ghost" onclick="mmTerminalRegisterReader(this)">Register reader</button>' +
+          '</div>' +
+        '</div>' +
+        (readers.length ? (
+          '<div>' +
+            '<div style="font-weight:700;font-size:.85rem;margin-bottom:6px">Take a payment</div>' +
+            '<div style="display:flex;flex-direction:column;gap:8px">' +
+              '<input id="mmTermAmount" type="number" min="0.50" step="0.01" placeholder="Amount, e.g. 42.50" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+              '<input id="mmTermDesc" type="text" placeholder="What\'s this for?" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+              '<select id="mmTermReader" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' + readerOptions + '</select>' +
+              '<button class="tile-detail-btn primary" onclick="mmTerminalCollect(this)">Send to reader</button>' +
+            '</div>' +
+          '</div>'
+        ) : '') +
+        '<div id="mmTermMsg" style="font-size:.8rem;color:#9ca3af"></div>' +
+      '</div>';
+  } catch (e) {
+    el.innerHTML = '<div class="tile-detail-note">Could not load — ' + eeEsc(e.message || 'try again') + '</div>';
+  }
+}
+window.mmRenderPosTerminalPanel = mmRenderPosTerminalPanel;
+
+async function mmTerminalRegisterReader(btn){
+  var msgEl = document.getElementById('mmTermMsg');
+  var regCode = (document.getElementById('mmTermRegCode') || {}).value;
+  var label = (document.getElementById('mmTermLabel') || {}).value;
+  if (!regCode) { if (msgEl) msgEl.textContent = 'Enter the registration code shown on the reader.'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Registering…'; }
+  try {
+    var addr = {
+      line1: (document.getElementById('mmTermAddr1') || {}).value,
+      city: (document.getElementById('mmTermCity') || {}).value,
+      state: (document.getElementById('mmTermState') || {}).value,
+      postal_code: (document.getElementById('mmTermZip') || {}).value,
+    };
+    if (addr.line1 || addr.city || addr.state || addr.postal_code) {
+      await window.callCreateTerminalLocation({ address: addr });
+    } else {
+      // First-time setup with no address filled in — createTerminalLocation
+      // will throw if a location genuinely doesn't exist yet; that error
+      // surfaces below and tells the member to fill in the address fields.
+      await window.callCreateTerminalLocation({ address: addr });
+    }
+    await window.callRegisterTerminalReader({ registrationCode: regCode, label: label });
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Reader registered', 'You can now send payments to it.');
+    mmRenderPosTerminalPanel();
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not register reader.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Register reader'; }
+  }
+}
+window.mmTerminalRegisterReader = mmTerminalRegisterReader;
+
+async function mmTerminalCollect(btn){
+  var msgEl = document.getElementById('mmTermMsg');
+  var amount = parseFloat((document.getElementById('mmTermAmount') || {}).value);
+  var desc = (document.getElementById('mmTermDesc') || {}).value || 'Payment to your business';
+  var readerId = (document.getElementById('mmTermReader') || {}).value;
+  if (!amount || amount <= 0) { if (msgEl) msgEl.textContent = 'Enter a valid amount first.'; return; }
+  if (!readerId) { if (msgEl) msgEl.textContent = 'Register a reader first.'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending to reader…'; }
+  try {
+    var pi = await window.callCreatePosPaymentIntent({ amountUsd: amount, description: desc, method: 'terminal' });
+    await window.callCollectTerminalPayment({ readerId: readerId, paymentIntentId: pi.paymentIntentId });
+    if (msgEl) msgEl.textContent = 'Ask your customer to tap, insert, or swipe on the reader now…';
+    mmTerminalPollStatus(pi.paymentIntentId, 0);
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not send to reader.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send to reader'; }
+  }
+}
+window.mmTerminalCollect = mmTerminalCollect;
+
+async function mmTerminalPollStatus(paymentIntentId, attempt){
+  var msgEl = document.getElementById('mmTermMsg');
+  if (attempt > 20) { if (msgEl) msgEl.textContent = 'Still waiting on the reader — check its screen, or try again.'; return; }
+  try {
+    var res = await window.callGetPosPaymentStatus({ paymentIntentId: paymentIntentId });
+    if (res.status === 'succeeded') {
+      if (typeof showNotifToast === 'function') showNotifToast('✓ Payment received', 'The card was charged successfully.');
+      if (msgEl) msgEl.textContent = '✓ Payment complete.';
+      return;
+    }
+    setTimeout(function(){ mmTerminalPollStatus(paymentIntentId, attempt + 1); }, 3000);
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not check status.');
+  }
+}
+window.mmTerminalPollStatus = mmTerminalPollStatus;
+
+// ── Business Phone ────────────────────────────────────────────────────
+async function mmRenderBusinessPhonePanel(){
+  var el = document.getElementById('mmBusinessPhonePanel');
+  if (!el) return;
+  try {
+    var res = await window.callGetMyPhoneStatus();
+    var phone = res && res.phone;
+    if (!phone) {
+      el.innerHTML =
+        '<div style="display:flex;flex-direction:column;gap:8px">' +
+          '<div style="font-size:.8rem;color:#9ca3af">Get a dedicated business number in seconds — $' + BUSINESS_PHONE_MONTHLY_RENTAL_LABEL + '/mo, billed the same way as everything else in your account.</div>' +
+          '<input id="mmPhoneAreaCode" type="text" placeholder="Preferred area code (optional)" maxlength="3" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+          '<button class="tile-detail-btn primary" onclick="mmProvisionPhone(this)">Get my Business Phone number</button>' +
+          '<div id="mmPhoneMsg" style="font-size:.8rem;color:#9ca3af"></div>' +
+        '</div>';
+    } else {
+      var interior = (phone.interiorNumbers || []).join(', ');
+      el.innerHTML =
+        '<div style="display:flex;flex-direction:column;gap:8px">' +
+          '<div style="font-weight:700;font-size:1rem">' + eeEsc(phone.number) + '</div>' +
+          '<label style="font-size:.8rem;color:#9ca3af">Route calls internally to (comma-separated numbers, optional)</label>' +
+          '<input id="mmPhoneInterior" type="text" value="' + eeEsc(interior) + '" placeholder="e.g. 5551234567, 5559876543" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+          '<button class="tile-detail-btn ghost" onclick="mmSaveInteriorContacts(this)">Save</button>' +
+          '<div id="mmPhoneMsg" style="font-size:.8rem;color:#9ca3af"></div>' +
+        '</div>';
+    }
+  } catch (e) {
+    el.innerHTML = '<div class="tile-detail-note">Could not load — ' + eeEsc(e.message || 'try again') + '</div>';
+  }
+}
+window.mmRenderBusinessPhonePanel = mmRenderBusinessPhonePanel;
+var BUSINESS_PHONE_MONTHLY_RENTAL_LABEL = '5'; // mirrors functions/index.js BUSINESS_PHONE_MONTHLY_RENTAL_USD default
+
+async function mmProvisionPhone(btn){
+  var msgEl = document.getElementById('mmPhoneMsg');
+  var areaCode = (document.getElementById('mmPhoneAreaCode') || {}).value;
+  if (btn) { btn.disabled = true; btn.textContent = 'Getting your number…'; }
+  try {
+    var res = await window.callProvisionBusinessPhoneNumber({ areaCode: areaCode });
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Business Phone ready', res.phoneNumber + ' is live.');
+    mmRenderBusinessPhonePanel();
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not get a number — try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Get my Business Phone number'; }
+  }
+}
+window.mmProvisionPhone = mmProvisionPhone;
+
+async function mmSaveInteriorContacts(btn){
+  var msgEl = document.getElementById('mmPhoneMsg');
+  var raw = (document.getElementById('mmPhoneInterior') || {}).value || '';
+  var interiorNumbers = raw.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await window.callSetMyPhoneInteriorContacts({ interiorNumbers: interiorNumbers });
+    if (msgEl) msgEl.textContent = '✓ Saved.';
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not save.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  }
+}
+window.mmSaveInteriorContacts = mmSaveInteriorContacts;
+
+// ── SMS ───────────────────────────────────────────────────────────────
+async function mmRenderBusinessSmsPanel(){
+  var el = document.getElementById('mmBusinessSmsPanel');
+  if (!el) return;
+  try {
+    var res = await window.callGetMyPhoneStatus();
+    var phone = res && res.phone;
+    if (!phone) {
+      el.innerHTML = '<div class="tile-detail-note">Set up Business Phone first — texts send from that number.</div>' +
+        '<div class="tile-detail-actions"><button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenTileDetail(\'business-phone\')">Set up Business Phone</button></div>';
+      return;
+    }
+    el.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+        '<div style="font-size:.8rem;color:#9ca3af">Texting from ' + eeEsc(phone.number) + '</div>' +
+        '<input id="mmSmsTo" type="text" placeholder="Customer\'s number, e.g. 5551234567" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb">' +
+        '<textarea id="mmSmsText" rows="3" maxlength="1600" placeholder="Message" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb"></textarea>' +
+        '<button class="tile-detail-btn primary" onclick="mmSendSms(this)">Send text</button>' +
+        '<div id="mmSmsMsg" style="font-size:.8rem;color:#9ca3af"></div>' +
+      '</div>';
+  } catch (e) {
+    el.innerHTML = '<div class="tile-detail-note">Could not load — ' + eeEsc(e.message || 'try again') + '</div>';
+  }
+}
+window.mmRenderBusinessSmsPanel = mmRenderBusinessSmsPanel;
+
+async function mmSendSms(btn){
+  var msgEl = document.getElementById('mmSmsMsg');
+  var to = (document.getElementById('mmSmsTo') || {}).value;
+  var text = (document.getElementById('mmSmsText') || {}).value;
+  if (!to || !text) { if (msgEl) msgEl.textContent = 'Enter a number and a message.'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    await window.callSendBusinessSms({ to: to, text: text });
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Text sent', '');
+    var textEl = document.getElementById('mmSmsText');
+    if (textEl) textEl.value = '';
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not send.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send text'; }
+  }
+}
+window.mmSendSms = mmSendSms;
+
+// ── AI Receptionist ──────────────────────────────────────────────────
+async function mmRenderAiReceptionistPanel(){
+  var el = document.getElementById('mmAiReceptionistPanel');
+  if (!el) return;
+  try {
+    var res = await window.callGetMyPhoneStatus();
+    var phone = res && res.phone;
+    if (!phone) {
+      el.innerHTML = '<div class="tile-detail-note">Set up Business Phone first — the AI Receptionist answers calls to that number.</div>' +
+        '<div class="tile-detail-actions"><button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenTileDetail(\'business-phone\')">Set up Business Phone</button></div>';
+      return;
+    }
+    el.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<label style="display:flex;align-items:center;gap:8px;font-size:.85rem">' +
+          '<input id="mmAiRecEnabled" type="checkbox" ' + (phone.aiReceptionistEnabled ? 'checked' : '') + ' style="width:18px;height:18px">' +
+          'AI Receptionist answers calls to ' + eeEsc(phone.number) +
+        '</label>' +
+        '<label style="font-size:.8rem;color:#9ca3af">Greeting (optional — a sensible default is used if blank)</label>' +
+        '<textarea id="mmAiRecGreeting" rows="2" maxlength="300" placeholder="Thanks for calling [Business Name]! How can I help you today?">' + eeEsc(phone.aiReceptionistGreeting || '') + '</textarea>' +
+        '<button class="tile-detail-btn primary" onclick="mmSaveAiReceptionist(this)">Save</button>' +
+        '<div id="mmAiRecMsg" style="font-size:.8rem;color:#9ca3af">Place a real test call once this is on to make sure it sounds right.</div>' +
+      '</div>';
+    var ta = document.getElementById('mmAiRecGreeting');
+    if (ta) ta.style.cssText = 'width:100%;padding:9px 11px;border-radius:8px;border:1px solid #1f2937;background:#0b0f19;color:#e5e7eb';
+  } catch (e) {
+    el.innerHTML = '<div class="tile-detail-note">Could not load — ' + eeEsc(e.message || 'try again') + '</div>';
+  }
+}
+window.mmRenderAiReceptionistPanel = mmRenderAiReceptionistPanel;
+
+async function mmSaveAiReceptionist(btn){
+  var msgEl = document.getElementById('mmAiRecMsg');
+  var enabled = !!(document.getElementById('mmAiRecEnabled') || {}).checked;
+  var greeting = (document.getElementById('mmAiRecGreeting') || {}).value || '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await window.callSetAiReceptionistEnabled({ enabled: enabled, greeting: greeting });
+    if (typeof showNotifToast === 'function') showNotifToast(enabled ? '✓ AI Receptionist is on' : 'AI Receptionist is off', '');
+    if (msgEl) msgEl.textContent = enabled ? 'Place a real test call to make sure it sounds right.' : '';
+  } catch (e) {
+    if (msgEl) msgEl.textContent = '⚠ ' + (e.message || 'Could not save.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  }
+}
+window.mmSaveAiReceptionist = mmSaveAiReceptionist;
+
 function mmMasterLabel(route){
   var labels = { geniemaster:'Genie', businessmaster:'Business Master', marketingmaster:'Marketing Master', crmmaster:'CRM', reimaster:'Lead Gen', creativemaster:'Creative Master', communitymaster:'Community' };
   return labels[route] || route;
