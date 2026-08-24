@@ -371,6 +371,34 @@
     return res.data;
   };
 
+  // GAIN$ Plan — see functions/index.js getGainPlan / submitGainQuestionnaire
+  // / setGainStepStatus / startGainMerchantOnboarding / checkGainMerchantStatus.
+  window.callGetGainPlan = async () => {
+    const fn = httpsCallable(functionsClient, 'getGainPlan');
+    const res = await fn();
+    return res.data;
+  };
+  window.callSubmitGainQuestionnaire = async (answers) => {
+    const fn = httpsCallable(functionsClient, 'submitGainQuestionnaire');
+    const res = await fn({ answers });
+    return res.data;
+  };
+  window.callSetGainStepStatus = async (step, status, note) => {
+    const fn = httpsCallable(functionsClient, 'setGainStepStatus');
+    const res = await fn({ step, status, note: note || '' });
+    return res.data;
+  };
+  window.callStartGainMerchantOnboarding = async () => {
+    const fn = httpsCallable(functionsClient, 'startGainMerchantOnboarding');
+    const res = await fn();
+    return res.data;
+  };
+  window.callCheckGainMerchantStatus = async () => {
+    const fn = httpsCallable(functionsClient, 'checkGainMerchantStatus');
+    const res = await fn();
+    return res.data;
+  };
+
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
   // needing their own Firebase import wiring.
@@ -2793,12 +2821,59 @@ td .admnt-preview{margin-top:4px}
 .service-tile.dragging{opacity:.35}
 .service-tile.drag-over{border-color:#2E7BFF;box-shadow:0 0 0 2px rgba(46,123,255,.5) inset}
 .tile-grip{position:absolute;top:6px;left:8px;font-size:.7rem;color:rgba(255,255,255,.25);letter-spacing:-1px}
-.tile-status-badge{position:absolute;top:8px;right:8px;font-size:.58rem;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:20px}
+.tile-status-badge{position:absolute;top:8px;right:8px;font-size:.58rem;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.tile-status-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
 .tile-status-badge.live{background:rgba(20,83,45,.85);color:#86efac}
+.tile-status-badge.live::before{animation:live-pulse-dot 1.6s ease-in-out infinite}
 .tile-status-badge.soon{background:rgba(31,41,55,.85);color:#9ca3af}
+.tile-status-badge.pending{background:rgba(120,53,15,.85);color:#fdba74}
+.tile-status-badge.skipped{background:rgba(31,41,55,.85);color:#9ca3af}
+.tile-status-badge.complete{background:rgba(20,83,45,.85);color:#86efac}
+.tile-status-badge.complete::before{animation:live-pulse-dot 1.6s ease-in-out infinite}
+@keyframes live-pulse-dot{0%,100%{box-shadow:0 0 0 0 currentColor}50%{box-shadow:0 0 0 3px transparent}}
 .tile-notify-btn{margin-top:8px;font-size:.62rem;font-weight:700;color:#2E7BFF;background:none;border:1px solid #2E7BFF55;border-radius:20px;padding:3px 10px;cursor:pointer}
 .tile-notify-btn:hover{background:#2E7BFF20}
 .tile-notify-btn[disabled]{color:#6b7280;border-color:#374151;cursor:default}
+.service-tile.gain-tile{border-color:rgba(250,204,21,.18)}
+.service-tile.gain-tile.is-skipped{opacity:.62}
+.service-tile.gain-tile.is-complete{border-color:rgba(74,222,128,.35)}
+
+/* ── GAIN$ Plan progress banner (Dashboard) ─────────────────────────── */
+.gain-banner{position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border:1px solid rgba(250,204,21,.25);border-radius:16px;padding:16px 18px;margin-bottom:18px;cursor:pointer;transition:border-color .2s,transform .2s}
+.gain-banner:hover{transform:translateY(-2px);border-color:rgba(250,204,21,.5)}
+.gain-banner-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.gain-banner-title{font-size:.82rem;font-weight:800;color:#fde68a;letter-spacing:.02em}
+.gain-banner-count{font-size:.7rem;color:#9ca3af;font-weight:600}
+.gain-banner-track{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+.gain-banner-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#facc15,#fde68a);transition:width .4s ease}
+.gain-banner.gain-done{border-color:rgba(74,222,128,.3)}
+.gain-banner.gain-done .gain-banner-title{color:#86efac}
+.gain-banner.gain-done .gain-banner-fill{background:linear-gradient(90deg,#22c55e,#86efac)}
+
+/* ── Tile detail / GAIN$ step modal (reuses .modal-overlay/.modal shell) ─ */
+.tile-detail-modal{max-width:460px;text-align:left}
+.tile-detail-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.tile-detail-icon{font-size:2.1rem;line-height:1}
+.tile-detail-name{font-size:1.08rem;font-weight:800;margin-bottom:4px}
+.tile-detail-desc{font-size:.82rem;color:#9ca3af;line-height:1.5;margin-bottom:18px}
+.tile-detail-actions{display:flex;flex-wrap:wrap;gap:8px}
+.tile-detail-btn{font-size:.78rem;font-weight:700;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid transparent}
+.tile-detail-btn.primary{background:#2E7BFF;color:#fff}
+.tile-detail-btn.primary:hover{background:#2568e0}
+.tile-detail-btn.ghost{background:none;border-color:rgba(255,255,255,.15);color:#d1d5db}
+.tile-detail-btn.ghost:hover{border-color:rgba(255,255,255,.35)}
+.tile-detail-btn.skip{background:none;border-color:rgba(156,163,175,.3);color:#9ca3af}
+.tile-detail-btn.skip:hover{border-color:rgba(156,163,175,.6)}
+.tile-detail-btn[disabled]{opacity:.5;cursor:default}
+.tile-detail-note{font-size:.72rem;color:#6b7280;margin-top:12px}
+
+/* ── Business Discovery questionnaire modal ─────────────────────────── */
+.gain-q-field{margin-bottom:14px;text-align:left}
+.gain-q-field label{display:block;font-size:.7rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.gain-q-field input[type="text"],.gain-q-field select,.gain-q-field textarea{width:100%;background:#0b1220;border:1px solid #1f2937;border-radius:10px;color:#e5e7eb;padding:10px 12px;font-size:.85rem;font-family:inherit}
+.gain-q-field textarea{resize:vertical;min-height:60px}
+.gain-q-check{display:flex;align-items:center;gap:8px;font-size:.8rem;color:#d1d5db;margin-bottom:10px}
+.gain-q-check input{width:16px;height:16px}
 .activity-card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;margin-bottom:24px}
 .activity-title{font-size:.95rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .activity-live{display:inline-block;width:8px;height:8px;background:#2E7BFF;border-radius:50%;animation:live-pulse 1.6s ease-in-out infinite}
@@ -7579,6 +7654,13 @@ document.addEventListener('DOMContentLoaded', function() {
            we know what to build next. This replaces the old 2-tile
            "Essentials" shortcut (CRM + Community) — those two are still in
            here, just as regular tiles among the rest. -->
+      <!-- GAIN$ PLAN progress banner — the six-tile guided onboarding path
+           (Business Discovery → Register → Website → Hosting/Domain →
+           Social → Merchant Services). Hidden until we know there's
+           something to show; see renderGainPlanBanner() near the bottom
+           of the page. -->
+      <div id="gainPlanBanner" class="gain-banner" style="display:none" onclick="mmScrollToGainPlan()"></div>
+
       <div class="dash-section-label"><i class="fa-solid fa-star"></i> Business Essentials</div>
       <div id="businessEssentialsSection" class="tile-grid">Loading…</div>
 
@@ -10652,6 +10734,59 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 </main>
+</div>
+
+<!-- TILE DETAIL MODAL — clicking any Business Essentials tile opens this
+     instead of navigating straight away, so every tile (GAIN$ Plan or
+     otherwise) can explain what the service does for growing/creating
+     the member's business before they commit to it. Content is built by
+     mmOpenTileDetail() near the bottom of the page. -->
+<div class="modal-overlay" id="tileDetailModal">
+  <div class="modal tile-detail-modal">
+    <button class="modal-close-x" onclick="mmCloseTileDetail()">✕</button>
+    <div id="tileDetailBody"></div>
+  </div>
+</div>
+
+<!-- GAIN$ PLAN — Business Discovery questionnaire modal (tile 1). -->
+<div class="modal-overlay" id="gainQuestionnaireModal">
+  <div class="modal tile-detail-modal">
+    <button class="modal-close-x" onclick="mmCloseGainQuestionnaire()">✕</button>
+    <div class="tile-detail-head">
+      <div class="tile-detail-icon">🧭</div>
+      <div><div class="tile-detail-name">Business Discovery</div>
+        <div style="font-size:.72rem;color:#6b7280">This is what lets every AI agent give you advice that fits your business.</div></div>
+    </div>
+    <div class="gain-q-field"><label>Business name</label><input type="text" id="gainQName" maxlength="200"></div>
+    <div class="gain-q-field"><label>Entity type</label>
+      <select id="gainQEntity">
+        <option value="">Not sure yet</option>
+        <option value="Sole Proprietorship">Sole Proprietorship</option>
+        <option value="LLC">LLC</option>
+        <option value="S-Corp">S-Corp</option>
+        <option value="C-Corp">C-Corp</option>
+        <option value="Partnership">Partnership</option>
+        <option value="Nonprofit">Nonprofit</option>
+      </select>
+    </div>
+    <div class="gain-q-field"><label>Industry</label><input type="text" id="gainQIndustry" maxlength="200" placeholder="e.g. Home services, coaching, e-commerce"></div>
+    <div class="gain-q-field"><label>Stage</label>
+      <select id="gainQStage">
+        <option value="Idea">Just an idea</option>
+        <option value="Starting">Starting up</option>
+        <option value="Running">Already running</option>
+        <option value="Growing">Growing / scaling</option>
+      </select>
+    </div>
+    <label class="gain-q-check"><input type="checkbox" id="gainQRegistered"> My business is already registered</label>
+    <label class="gain-q-check"><input type="checkbox" id="gainQWebsite"> I already have a website</label>
+    <label class="gain-q-check"><input type="checkbox" id="gainQSocial"> I'm already set up on social media</label>
+    <label class="gain-q-check"><input type="checkbox" id="gainQPayments"> I already accept card payments</label>
+    <div class="gain-q-field"><label>What are you trying to achieve?</label><textarea id="gainQGoals" maxlength="1000" placeholder="Tell your AI agents what you're going for"></textarea></div>
+    <div class="tile-detail-actions">
+      <button class="tile-detail-btn primary" id="gainQSubmitBtn" onclick="mmSubmitGainQuestionnaire()">Save &amp; continue</button>
+    </div>
+  </div>
 </div>
 
 <!-- UPGRADE MODAL -->
@@ -20868,13 +21003,29 @@ function mmApplyTileOrderPrefs(tiles){
   });
 }
 
+// GAIN$ Plan step metadata the frontend needs alongside the registry's
+// own description — label text and status→badge mapping live here so
+// mmOpenTileDetail() and the tile grid agree on what each state means.
+var MM_GAIN_STEP_STATUS_LABEL = { pending: 'PENDING', skipped: 'SKIPPED', complete: 'COMPLETE' };
+var MM_GAIN_STEP_ORDER = ['questionnaire','register','website','hosting','social','merchant'];
+var mmGainPlanCache = null; // last-fetched { businessId, gainPlan, questionnaire }
+var mmTileRegistryCache = null; // last-fetched tiles array, for the detail modal
+
 async function renderBusinessEssentialsTiles(){
   var el = document.getElementById('businessEssentialsSection');
   if (!el) return;
   try {
-    var res = await window.callGetTileRegistry();
+    var results = await Promise.all([
+      window.callGetTileRegistry(),
+      (window.callGetGainPlan ? window.callGetGainPlan().catch(function(){ return null; }) : Promise.resolve(null)),
+    ]);
+    var res = results[0], gainRes = results[1];
+    if (gainRes) mmGainPlanCache = gainRes;
+    var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+
     var tiles = (res && res.tiles) || [];
     tiles = tiles.slice().sort(function(a,b){ return (a.displayOrder||0) - (b.displayOrder||0); });
+    mmTileRegistryCache = tiles;
     if (!tiles.length) { el.innerHTML = '<div class="tile-grid-empty">No services configured yet.</div>'; return; }
     tiles = mmApplyTileOrderPrefs(tiles);
 
@@ -20885,35 +21036,262 @@ async function renderBusinessEssentialsTiles(){
       var cat = t.category || 'Business Essentials';
       (byCat[cat] = byCat[cat] || []).push(t);
     });
-    var cats = MM_TILE_CATEGORY_ORDER.filter(function(c){ return byCat[c]; })
-      .concat(Object.keys(byCat).filter(function(c){ return MM_TILE_CATEGORY_ORDER.indexOf(c) === -1; }));
+    var catOrder = ['GAIN$ Plan'].concat(MM_TILE_CATEGORY_ORDER);
+    var cats = catOrder.filter(function(c){ return byCat[c]; })
+      .concat(Object.keys(byCat).filter(function(c){ return catOrder.indexOf(c) === -1; }));
 
     el.innerHTML = cats.map(function(cat){
       var tilesHtml = byCat[cat].map(function(t){
         var isLive = t.status === 'live';
         var safeId = eeEsc(t.id).replace(/'/g,"");
-        var badge = isLive
-          ? '<span class="tile-status-badge live">LIVE</span>'
-          : '<span class="tile-status-badge soon">COMING SOON</span>';
+        var gainStatus = t.gainStep ? ((gainPlan[t.gainStep] && gainPlan[t.gainStep].status) || 'pending') : null;
+
+        var badge;
+        if (gainStatus) {
+          badge = '<span class="tile-status-badge ' + gainStatus + '">' + MM_GAIN_STEP_LABEL_TEXT(gainStatus) + '</span>';
+        } else if (isLive) {
+          badge = '<span class="tile-status-badge live">LIVE</span>';
+        } else {
+          badge = '<span class="tile-status-badge soon">COMING SOON</span>';
+        }
+
         var body = '<div class="tile-grip">⠿</div>' +
           '<div class="qa-icon">' + (t.icon || '🧩') + '</div>' +
           '<div class="qa-label">' + eeEsc(t.name) + '</div>';
-        if (!isLive) {
-          body += '<button class="tile-notify-btn" data-tile-id="' + safeId + '" onclick="event.stopPropagation();mmNotifyTileInterest(this,\'' + safeId + '\')">Notify me</button>';
+
+        var tileClasses = 'service-tile ' + (isLive ? 'is-live' : 'is-soon');
+        if (t.gainStep) {
+          tileClasses += ' gain-tile';
+          if (gainStatus === 'skipped') tileClasses += ' is-skipped';
+          if (gainStatus === 'complete') tileClasses += ' is-complete';
         }
-        var clickAttr = isLive && t.route ? " onclick=\"showScreen('" + eeEsc(t.route).replace(/'/g,"") + "')\"" : '';
-        return '<div class="service-tile ' + (isLive ? 'is-live' : 'is-soon') + '" draggable="true" data-tile-id="' + safeId + '"' +
+
+        // Every tile — GAIN$ Plan or otherwise — opens the detail modal on
+        // click instead of navigating straight away, so members see what
+        // the service actually does before committing to it.
+        return '<div class="' + tileClasses + '" draggable="true" data-tile-id="' + safeId + '"' +
           ' ondragstart="mmTileDragStart(event)" ondragover="mmTileDragOver(event)" ondrop="mmTileDrop(event)" ondragend="mmTileDragEnd(event)"' +
-          clickAttr + ' title="' + eeEsc(t.description || '') + '">' + badge + body + '</div>';
+          ' onclick="mmOpenTileDetail(\'' + safeId + '\')" title="' + eeEsc(t.description || '') + '">' + badge + body + '</div>';
       }).join('');
       return '<div class="tile-category"><div class="tile-category-label">' + eeEsc(cat) + '</div>' +
         '<div class="tile-grid" data-tile-category="' + eeEsc(cat) + '">' + tilesHtml + '</div></div>';
     }).join('');
+
+    renderGainPlanBanner();
   } catch (e) {
     el.innerHTML = '<div class="tile-grid-empty">Could not load Business Essentials right now.</div>';
   }
 }
 window.renderBusinessEssentialsTiles = renderBusinessEssentialsTiles;
+function MM_GAIN_STEP_LABEL_TEXT(status){ return MM_GAIN_STEP_STATUS_LABEL[status] || 'PENDING'; }
+
+// ── GAIN$ Plan progress banner (Dashboard) ──────────────────────────────
+function renderGainPlanBanner(){
+  var el = document.getElementById('gainPlanBanner');
+  if (!el) return;
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || null;
+  if (!gainPlan) { el.style.display = 'none'; return; }
+  var total = MM_GAIN_STEP_ORDER.length;
+  var done = 0;
+  MM_GAIN_STEP_ORDER.forEach(function(s){ if (gainPlan[s] && (gainPlan[s].status === 'complete' || gainPlan[s].status === 'skipped')) done++; });
+  var pct = Math.round((done / total) * 100);
+  var isDone = done >= total;
+  el.style.display = '';
+  el.className = 'gain-banner' + (isDone ? ' gain-done' : '');
+  el.innerHTML =
+    '<div class="gain-banner-top">' +
+      '<div class="gain-banner-title">' + (isDone ? '✅ GAIN$ Plan complete' : '💰 Your GAIN$ Plan') + '</div>' +
+      '<div class="gain-banner-count">' + done + ' of ' + total + ' steps</div>' +
+    '</div>' +
+    '<div class="gain-banner-track"><div class="gain-banner-fill" style="width:' + pct + '%"></div></div>';
+}
+window.renderGainPlanBanner = renderGainPlanBanner;
+function mmScrollToGainPlan(){
+  var grid = document.querySelector('.tile-grid[data-tile-category="GAIN$ Plan"]');
+  if (grid && grid.scrollIntoView) grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+window.mmScrollToGainPlan = mmScrollToGainPlan;
+
+// ── Tile detail modal — every tile, GAIN$ Plan or otherwise ────────────
+function mmOpenTileDetail(tileId){
+  var t = (mmTileRegistryCache || []).find(function(x){ return x.id === tileId; });
+  if (!t) return;
+  var body = document.getElementById('tileDetailBody');
+  var modal = document.getElementById('tileDetailModal');
+  if (!body || !modal) return;
+
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+  var gainStatus = t.gainStep ? ((gainPlan[t.gainStep] && gainPlan[t.gainStep].status) || 'pending') : null;
+  var isLive = t.status === 'live';
+
+  var badgeHtml;
+  if (gainStatus) badgeHtml = '<span class="tile-status-badge ' + gainStatus + '" style="position:static">' + MM_GAIN_STEP_LABEL_TEXT(gainStatus) + '</span>';
+  else if (isLive) badgeHtml = '<span class="tile-status-badge live" style="position:static">LIVE</span>';
+  else badgeHtml = '<span class="tile-status-badge soon" style="position:static">COMING SOON</span>';
+
+  var actions = '';
+  var safeId = tileId.replace(/'/g,"");
+
+  if (t.activationType === 'gain_questionnaire') {
+    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenGainQuestionnaire()">Start</button>';
+  } else if (t.activationType === 'navigate_prompt') {
+    if (gainStatus !== 'complete') {
+      actions += '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmLaunchGainPrompt(\'' + safeId + '\')">Get AI Help</button>';
+    }
+    if (t.route) actions += '<button class="tile-detail-btn ghost" onclick="mmCloseTileDetail();showScreen(\'' + t.route.replace(/'/g,"") + '\')">Open ' + eeEsc(mmMasterLabel(t.route)) + '</button>';
+    if (t.gainStep) {
+      if (gainStatus !== 'complete') actions += '<button class="tile-detail-btn ghost" onclick="mmSetGainStep(\'' + t.gainStep + '\',\'complete\')">Mark complete</button>';
+      if (gainStatus === 'pending') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'' + t.gainStep + '\',\'skipped\')">Skip this step</button>';
+      if (gainStatus !== 'pending') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'' + t.gainStep + '\',\'pending\')">Undo / redo</button>';
+    }
+  } else if (t.activationType === 'gain_merchant') {
+    actions = '<button class="tile-detail-btn primary" onclick="mmStartGainMerchant(this)">' + (gainStatus === 'complete' ? 'Manage merchant account' : 'Connect Stripe') + '</button>';
+    if (gainStatus === 'pending') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'merchant\',\'skipped\')">Skip this step</button>';
+    if (gainStatus === 'skipped') actions += '<button class="tile-detail-btn skip" onclick="mmSetGainStep(\'merchant\',\'pending\')">Undo skip</button>';
+  } else if (isLive && t.route) {
+    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();showScreen(\'' + t.route.replace(/'/g,"") + '\')">Open</button>';
+  } else if (!isLive) {
+    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmNotifyTileInterest(null,\'' + safeId + '\')">Notify me when it\'s ready</button>';
+  }
+
+  body.innerHTML =
+    '<div class="tile-detail-head">' +
+      '<div class="tile-detail-icon">' + (t.icon || '🧩') + '</div>' +
+      '<div><div class="tile-detail-name">' + eeEsc(t.name) + '</div>' + badgeHtml + '</div>' +
+    '</div>' +
+    '<div class="tile-detail-desc">' + eeEsc(t.description || '') + '</div>' +
+    '<div class="tile-detail-actions" id="tileDetailActions">' + actions + '</div>' +
+    (t.gainStep ? '<div class="tile-detail-note">Part of your GAIN$ Plan — the guided path every business should follow first.</div>' : '');
+
+  modal.classList.add('open');
+}
+window.mmOpenTileDetail = mmOpenTileDetail;
+function mmCloseTileDetail(){
+  var modal = document.getElementById('tileDetailModal');
+  if (modal) modal.classList.remove('open');
+}
+window.mmCloseTileDetail = mmCloseTileDetail;
+function mmMasterLabel(route){
+  var labels = { geniemaster:'Genie', businessmaster:'Business Master', marketingmaster:'Marketing Master', crmmaster:'CRM', reimaster:'Lead Gen', creativemaster:'Creative Master', communitymaster:'Community' };
+  return labels[route] || route;
+}
+
+// Navigates to the tile's Master screen and, once there, drops the tile's
+// preset prompt into that Master's chat input and sends it — this is the
+// "AI agent helps you do it" action for register/website/hosting/social.
+function mmLaunchGainPrompt(tileId){
+  var t = (mmTileRegistryCache || []).find(function(x){ return x.id === tileId; });
+  if (!t || !t.route) return;
+  showScreen(t.route);
+  var tries = 0;
+  var timer = setInterval(function(){
+    tries++;
+    var input = document.querySelector('#screen-' + t.route + ' textarea, #screen-' + t.route + ' input[type="text"].chat-input, #screen-' + t.route + ' .chat-input-box textarea');
+    var sendBtn = document.querySelector('#screen-' + t.route + ' .chat-send-btn, #screen-' + t.route + ' [onclick*="Send"]');
+    if (input) {
+      clearInterval(timer);
+      input.value = t.prompt || ('Help me with ' + t.name + '.');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      if (sendBtn) sendBtn.click();
+    } else if (tries > 20) {
+      clearInterval(timer);
+    }
+  }, 150);
+}
+window.mmLaunchGainPrompt = mmLaunchGainPrompt;
+
+async function mmSetGainStep(step, status){
+  try {
+    await window.callSetGainStepStatus(step, status);
+    if (mmGainPlanCache && mmGainPlanCache.gainPlan) {
+      mmGainPlanCache.gainPlan[step] = { status: status };
+    }
+    mmCloseTileDetail();
+    renderBusinessEssentialsTiles();
+    if (typeof showNotifToast === 'function') {
+      showNotifToast(status === 'complete' ? '✓ Marked complete' : (status === 'skipped' ? '⏭ Skipped' : '↺ Reopened'), '');
+    }
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not update', e.message || 'Please try again.');
+  }
+}
+window.mmSetGainStep = mmSetGainStep;
+
+async function mmStartGainMerchant(btn){
+  if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
+  try {
+    var res = await window.callStartGainMerchantOnboarding();
+    if (res && res.url) window.open(res.url, '_blank');
+    mmCloseTileDetail();
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not start onboarding', e.message || 'Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Connect Stripe'; }
+  }
+}
+window.mmStartGainMerchant = mmStartGainMerchant;
+// If the member is bounced back here after Stripe onboarding, check status.
+if (/[?&]gain_merchant_return=1/.test(window.location.search) && window.callCheckGainMerchantStatus) {
+  window.callCheckGainMerchantStatus().then(function(r){
+    if (r && r.chargesEnabled && typeof showNotifToast === 'function') showNotifToast('✓ Merchant account connected!', 'You can now accept payments.');
+    if (mmGainPlanCache) renderBusinessEssentialsTiles();
+  }).catch(function(){});
+}
+
+// ── Business Discovery questionnaire modal ──────────────────────────────
+function mmOpenGainQuestionnaire(){
+  var modal = document.getElementById('gainQuestionnaireModal');
+  if (!modal) return;
+  var q = (mmGainPlanCache && mmGainPlanCache.questionnaire) || {};
+  var setVal = function(id, v){ var el = document.getElementById(id); if (el) el.value = v || ''; };
+  var setChk = function(id, v){ var el = document.getElementById(id); if (el) el.checked = !!v; };
+  setVal('gainQName', q.businessName);
+  setVal('gainQEntity', q.entityType);
+  setVal('gainQIndustry', q.industry);
+  setVal('gainQStage', q.stage || 'Idea');
+  setChk('gainQRegistered', q.isRegistered);
+  setChk('gainQWebsite', q.hasWebsite);
+  setChk('gainQSocial', q.hasSocial);
+  setChk('gainQPayments', q.acceptsPayments);
+  setVal('gainQGoals', q.goals);
+  modal.classList.add('open');
+}
+window.mmOpenGainQuestionnaire = mmOpenGainQuestionnaire;
+function mmCloseGainQuestionnaire(){
+  var modal = document.getElementById('gainQuestionnaireModal');
+  if (modal) modal.classList.remove('open');
+}
+window.mmCloseGainQuestionnaire = mmCloseGainQuestionnaire;
+async function mmSubmitGainQuestionnaire(){
+  var btn = document.getElementById('gainQSubmitBtn');
+  var val = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var chk = function(id){ var el = document.getElementById(id); return el ? el.checked : false; };
+  var answers = {
+    businessName: val('gainQName'),
+    entityType: val('gainQEntity'),
+    industry: val('gainQIndustry'),
+    stage: val('gainQStage'),
+    isRegistered: chk('gainQRegistered'),
+    hasWebsite: chk('gainQWebsite'),
+    hasSocial: chk('gainQSocial'),
+    acceptsPayments: chk('gainQPayments'),
+    goals: val('gainQGoals'),
+  };
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    var res = await window.callSubmitGainQuestionnaire(answers);
+    mmGainPlanCache = { businessId: res.businessId, gainPlan: res.gainPlan, questionnaire: answers };
+    mmCloseGainQuestionnaire();
+    renderBusinessEssentialsTiles();
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Saved', 'Your GAIN$ Plan is updated.');
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not save', e.message || 'Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save & continue'; }
+  }
+}
+window.mmSubmitGainQuestionnaire = mmSubmitGainQuestionnaire;
 
 // ── Drag-to-reorder for Business Essentials tiles ──────────────────────
 var mmDragTileId = null;
@@ -20959,15 +21337,14 @@ async function mmSaveTileOrder(){
 }
 
 async function mmNotifyTileInterest(btn, tileId){
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
+  if (btn && btn.disabled) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
   try {
     await window.callRequestTileEarlyAccess(tileId);
-    btn.textContent = '✓ We\'ll notify you';
+    if (btn) btn.textContent = '✓ We\'ll notify you';
+    else if (typeof showNotifToast === 'function') showNotifToast('✓ We\'ll notify you', 'We\'ll let you know when it\'s ready.');
   } catch (e) {
-    btn.disabled = false;
-    btn.textContent = 'Notify me';
+    if (btn) { btn.disabled = false; btn.textContent = 'Notify me'; }
     if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not send', e.message || 'Please try again.');
   }
 }
