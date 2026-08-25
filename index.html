@@ -612,12 +612,15 @@
       window.userData     = data;
       window.affCode      = data.affiliateCode || makeAffCode(user.uid);
       showLoggedIn(user, data);
-      // Genie Blueprint Section C: payment method required before the member
-      // can fully use the app. Runs after showLoggedIn so the dashboard is
-      // already rendered underneath — this shows as a blocking overlay, not
-      // a separate page, so returning members who already have a card on
-      // file see no delay at all (the status check below no-ops instantly).
-      if (typeof mmEnsureBillingSetup === 'function') mmEnsureBillingSetup();
+      // Start Free: card is no longer required up front. This used to call
+      // mmEnsureBillingSetup(), which threw up a blocking "add a payment
+      // method" wall on every single login with no way to skip it — that
+      // directly contradicted "people are able to login for free." Instead,
+      // we just quietly check (in the background, no UI) whether a card is
+      // already on file, and cache the answer for the global paywall gate
+      // (mmGlobalActionGate, defined near mmShowStartFreePaywall below) to
+      // use on the member's first real action click.
+      if (typeof mmRefreshBillingCardStatus === 'function') mmRefreshBillingCardStatus();
       // Site-visit engagement: real "earned while away" celebration + cosmetic
       // per-visit banner. Fires once per app load — see mmCheckSiteVisitEngagement.
       if (typeof mmCheckSiteVisitEngagement === 'function') mmCheckSiteVisitEngagement(user, data);
@@ -629,6 +632,7 @@
     } else {
       window.currentUser = null;
       window.userData    = null;
+      window.mmHasPaymentMethod = null;
       showLoggedOut();
     }
   });
@@ -7407,13 +7411,13 @@ document.addEventListener('DOMContentLoaded', function() {
         AI coach, and affiliate earnings.
       </div>
       <div class="pay-tiers" style="margin:18px 0">
-        <div class="pay-tier"><b>Basic</b> — <span data-mm-tier-summary="basic" data-mm-group="pp">$19.99/mo</span> · 30% one-time, no Masters</div>
+        <div class="pay-tier"><b>Start Free</b> — <span>$0.00</span> · full dashboard, pay only for what you use</div>
         <div class="pay-tier pro"><b>Pro</b> — <span data-mm-tier-summary="pro" data-mm-group="pp">$50/mo</span> · all Masters + 50% commissions + Team</div>
         <div class="pay-tier elite"><b>Elite</b> — <span data-mm-tier-summary="elite" data-mm-group="pp">$99/mo</span> · everything + revenue-sharing dividends</div>
       </div>
       <div id="mmToggle_pp"></div>
       <div class="pay-form" style="display:flex;flex-direction:column;gap:10px">
-        <button type="button" class="pay-submit" data-mm-plan-btn="basic" data-mm-group="pp" data-mm-label="Basic" onclick="checkoutMembershipWithPromo(this.getAttribute('data-mm-plan-btn'),'ppPromoCode','ppPromoErr')">Subscribe to Basic — $19.99/mo →</button>
+        <button type="button" class="pay-submit" onclick="hideMembershipGate();showScreen('dashboard')" style="background:#16a34a">Start Free — $0.00 →</button>
         <button type="button" class="pay-submit" data-mm-plan-btn="pro" data-mm-group="pp" data-mm-label="Pro" onclick="checkoutMembershipWithPromo(this.getAttribute('data-mm-plan-btn'),'ppPromoCode','ppPromoErr')" style="background:#2E7BFF">Subscribe to Pro — $50/mo →</button>
         <button type="button" class="pay-submit" data-mm-plan-btn="elite" data-mm-group="pp" data-mm-label="Elite" onclick="checkoutMembershipWithPromo(this.getAttribute('data-mm-plan-btn'),'ppPromoCode','ppPromoErr')" style="background:#a855f7">Subscribe to Elite — $99/mo →</button>
         <div style="text-align:center;margin-top:4px"><a href="javascript:void(0)" onclick="var b=document.getElementById('ppPromoBox'); if(b) b.style.display = b.style.display==='none'?'flex':'none';" style="font-size:.75rem;color:#8ba0c4;text-decoration:underline">Have a discount code?</a></div>
@@ -10907,13 +10911,12 @@ document.addEventListener('DOMContentLoaded', function() {
     <h2 id="upgradeModalHeading">Become a <span>Member</span></h2>
     <p id="upgradeModalSub">Unlock higher commissions, the AI coach, all courses, and your own store. Pick your plan and subscribe securely with Stripe.</p>
     <div class="pay-tiers">
-      <div class="pay-tier" data-mm-tier-row="basic"><b>Basic</b> — <span data-mm-tier-summary="basic" data-mm-group="um">$19.99/mo</span> · 30% one-time, no Masters</div>
+      <div class="pay-tier" data-mm-tier-row="free"><b>Start Free</b> — <span>$0.00</span> · full dashboard, pay only for what you use</div>
       <div class="pay-tier pro" data-mm-tier-row="pro"><b>Pro</b> — <span data-mm-tier-summary="pro" data-mm-group="um">$50/mo</span> · all Masters + 50% commissions + Team</div>
       <div class="pay-tier elite" data-mm-tier-row="elite"><b>Elite</b> — <span data-mm-tier-summary="elite" data-mm-group="um">$99/mo</span> · everything + revenue-sharing dividends</div>
     </div>
     <div id="mmToggle_um"></div>
     <div class="pay-form" style="display:flex;flex-direction:column;gap:10px" id="upgradeModalButtons">
-      <button type="button" class="pay-submit" data-mm-plan-btn="basic" data-mm-group="um" data-mm-label="Basic" onclick="checkoutMembershipWithPromo(this.getAttribute('data-mm-plan-btn'),'umPromoCode','umPromoErr')">Subscribe to Basic — $19.99/mo →</button>
       <button type="button" class="pay-submit" data-mm-plan-btn="pro" data-mm-group="um" data-mm-label="Pro" onclick="checkoutMembershipWithPromo(this.getAttribute('data-mm-plan-btn'),'umPromoCode','umPromoErr')" style="background:#2E7BFF">Subscribe to Pro — $50/mo →</button>
       <button type="button" class="pay-submit" data-mm-plan-btn="elite" data-mm-group="um" data-mm-label="Elite" onclick="checkoutMembershipWithPromo(this.getAttribute('data-mm-plan-btn'),'umPromoCode','umPromoErr')" style="background:#a855f7">Subscribe to Elite — $99/mo →</button>
       <div style="text-align:center;margin-top:4px"><a href="javascript:void(0)" onclick="var b=document.getElementById('umPromoBox'); if(b) b.style.display = b.style.display==='none'?'flex':'none';" style="font-size:.75rem;color:#8ba0c4;text-decoration:underline">Have a discount code?</a></div>
@@ -11244,18 +11247,16 @@ function showLoggedOut() {
   if (gate) gate.style.display = 'none';
 }
 
-// ── MEMBERSHIP GATE ──────────────────────────────────────────────────────────
-// Money Masteries is a paid-membership-only platform: nobody gets a working
-// dashboard on the free tier. Anyone who logs in without an active paid plan
-// lands here instead of the app, and can't get past it except by subscribing
-// (or signing out). This is what makes "sign up" effectively "sign up & pay."
+// ── MEMBERSHIP GATE — disabled under Start Free ─────────────────────────────
+// This used to hard-block every free-tier member from ever seeing the
+// dashboard ("nobody gets a working dashboard on the free tier") — that is
+// the opposite of Start Free, so hasPaidAccess() now always returns true and
+// showMembershipGate() is never called (see the showLoggedIn hook below).
+// Left in place, unused, rather than deleted, in case this screen is wanted
+// again later as an opt-in Plans & Pricing page.
 const MASTER_EMAIL_GATE = 'reachdavid.work@gmail.com';
 function hasPaidAccess(user, data) {
-  if (user && user.email && user.email.toLowerCase() === MASTER_EMAIL_GATE) return true;
-  if (!data) return false;
-  if (data.subscriptionStatus === 'active') return true;
-  if (data.plan && data.plan !== 'free') return true;
-  return false;
+  return true; // Start Free: everyone gets the real dashboard, no plan required.
 }
 function showMembershipGate(user, data) {
   document.getElementById('landingScreen').style.display = 'none';
@@ -16764,7 +16765,7 @@ function shareProduct(pid, btn) {
 // so the link, tracking, and commission math all reuse shareProduct() as-is.
 // Free has no purchasable product id, so it just shares the base link.
 function sharePlan(planId, btn) {
-  var PLAN_PRODUCT_IDS = { basic: 'm-basic', pro: 'm-pro', elite: 'm-elite' };
+  var PLAN_PRODUCT_IDS = { pro: 'm-pro', elite: 'm-elite' };
   if (PLAN_PRODUCT_IDS[planId]) {
     shareProduct(PLAN_PRODUCT_IDS[planId], btn);
     return;
@@ -21378,6 +21379,161 @@ async function mmEnsureBillingSetup(){
   mmShowBillingSetupModal(cancelled);
 }
 window.mmEnsureBillingSetup = mmEnsureBillingSetup;
+// mmEnsureBillingSetup/mmShowBillingSetupModal above are kept as-is (not
+// deleted) since they're still useful as an explicit "Add payment method"
+// flow reachable from Settings/Billing — they're just no longer invoked
+// automatically on login. The new Start Free paywall below is a SEPARATE,
+// skippable modal used for the click-gate.
+
+// ── Start Free: skippable paywall + global action-click gate ───────────────
+// Card is never required to sign up or browse. window.mmHasPaymentMethod
+// tracks whether a card is on file: null = not checked yet (fail OPEN —
+// never block on an unknown state), true = has a card (never gated), false
+// = Start Free member with no card (gated on real action clicks). Refreshed
+// silently on login by mmRefreshBillingCardStatus() (called from
+// onAuthStateChanged above) and again the moment they add a card.
+window.mmHasPaymentMethod = null;
+async function mmRefreshBillingCardStatus(){
+  try {
+    var status = await window.callGetMyBillingStatus();
+    window.mmHasPaymentMethod = !!(status && status.billing && status.billing.paymentMethodOnFile);
+  } catch (e) {
+    console.warn('mmRefreshBillingCardStatus failed — leaving gate state unknown (fails open)', e);
+  }
+}
+window.mmRefreshBillingCardStatus = mmRefreshBillingCardStatus;
+
+function mmStartFreePaywallHtml(){
+  return (
+    '<div id="mmPaywallOverlay" style="position:fixed;inset:0;z-index:99999;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;">' +
+      '<div style="width:100%;max-width:480px;background:#0f1a2e;border:1px solid #24365c;border-radius:16px;padding:28px 26px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);">' +
+        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:10px;">Start Free</div>' +
+        '<h2 style="margin:0 0 4px;font-size:1.9rem;line-height:1.15;">$0.00</h2>' +
+        '<div style="margin:0 0 14px;font-size:.9rem;color:#a9bdda;">today — no charge to keep using MoneyMasteries</div>' +
+        '<p style="margin:0 0 16px;font-size:.92rem;line-height:1.55;color:#a9bdda;">' + MM_BILLING_AGREEMENT_TEXT + '</p>' +
+        '<label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 16px;font-size:.85rem;line-height:1.4;color:#eaf1ff;cursor:pointer;">' +
+          '<input type="checkbox" id="mmPaywallAgreeCheck" style="margin-top:3px;width:16px;height:16px;flex:0 0 auto;">' +
+          '<span>I agree to MoneyMasteries\' usage-based billing terms above.</span>' +
+        '</label>' +
+        '<button id="mmPaywallAddCardBtn" disabled onclick="mmPaywallAddCard()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2457c9;color:#fff;font-weight:700;font-size:.95rem;cursor:not-allowed;opacity:.5;transition:opacity .15s;">Add payment method — $0 charged today</button>' +
+        '<button id="mmPaywallSkipBtn" onclick="mmPaywallSkip()" style="width:100%;margin-top:10px;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:none;color:#a9bdda;font-weight:600;font-size:.88rem;cursor:pointer;">Skip — continue free</button>' +
+        '<div id="mmPaywallError" style="display:none;margin-top:10px;font-size:.82rem;color:#ff8a80;"></div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+// The action the member was actually trying to take when the gate caught
+// them — Skip replays exactly this, so skipping never eats their click.
+var mmPaywallPendingAction = null;
+
+function mmShowStartFreePaywall(onSkip){
+  mmPaywallPendingAction = typeof onSkip === 'function' ? onSkip : null;
+  if (document.getElementById('mmPaywallOverlay')) return;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = mmStartFreePaywallHtml();
+  document.body.appendChild(wrap.firstChild);
+  var check = document.getElementById('mmPaywallAgreeCheck');
+  var btn = document.getElementById('mmPaywallAddCardBtn');
+  check.addEventListener('change', function(){
+    btn.disabled = !check.checked;
+    btn.style.opacity = check.checked ? '1' : '.5';
+    btn.style.cursor = check.checked ? 'pointer' : 'not-allowed';
+  });
+}
+window.mmShowStartFreePaywall = mmShowStartFreePaywall;
+
+function mmClosePaywall(){
+  var overlay = document.getElementById('mmPaywallOverlay');
+  if (overlay) overlay.remove();
+}
+
+window.mmPaywallSkip = function(){
+  mmClosePaywall();
+  var action = mmPaywallPendingAction;
+  mmPaywallPendingAction = null;
+  // Replay the original click the member made — Skip lets THIS action
+  // through (Start Free really is free); the very next action click will
+  // hit the gate again, since mmHasPaymentMethod is still false.
+  if (action) { mmGateBypassOnce = true; action(); }
+};
+
+window.mmPaywallAddCard = async function(){
+  var btn = document.getElementById('mmPaywallAddCardBtn');
+  var errEl = document.getElementById('mmPaywallError');
+  if (errEl) errEl.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Setting up…'; }
+  try {
+    var prov = await window.callEnsureBusinessProvisioned();
+    var businessId = prov && prov.businessId;
+    if (!businessId) throw new Error('Could not set up your business profile.');
+    await window.callRecordActiveBusinessAgreement({ businessId: businessId, agreementText: MM_BILLING_AGREEMENT_TEXT, version: 'v1' });
+    var session = await window.callCreatePaymentMethodSetupSession({ businessId: businessId });
+    if (session && session.url) {
+      window.location.href = session.url; // Stripe-hosted setup — returns here after
+    } else {
+      throw new Error('Could not start payment setup.');
+    }
+  } catch (e) {
+    if (errEl) { errEl.textContent = (e && e.message) || 'Something went wrong — please try again.'; errEl.style.display = 'block'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Add payment method — $0 charged today'; }
+  }
+};
+
+// ── The global gate itself ──────────────────────────────────────────────
+// Every click in the app runs through this first (capture phase, so it
+// fires before the element's own onclick). If the member has no card on
+// file, and the clicked element looks like it DOES something (as opposed to
+// just navigating around), the click is intercepted and the Start Free
+// paywall shows instead — Skip replays the same click so the action still
+// completes, but the next action click hits the gate again.
+//
+// "Does something" vs. "just navigates" is decided by a heuristic on the
+// onclick handler's own JS: function names that start with a
+// navigation-flavored verb (show/open/close/switch/toggle/scroll/select/
+// nav/goto/back/next/prev/hide/expand/collapse/focus/tab) are treated as
+// safe browsing and exempted; anything else in the same onclick is treated
+// as an action and gated. This mirrors the app's own naming conventions
+// (showScreen, openUpgradeModal, cmViewSwitch, mmCloseTileDetail, etc. are
+// all nav; mmSendSms, mmProvisionPhone, mmStartGainMerchant, jarvisAskQuick,
+// etc. are all actions) but it IS a heuristic over ~23,000 lines of existing
+// onclick handlers, not a hand-audited allowlist of every button in the
+// app — if something that should be free browsing gets gated (or vice
+// versa), it needs a one-line fix to MM_NAV_VERB_RE or an explicit
+// data-mm-nav="1" / data-mm-gate="1" override attribute (both supported
+// below) rather than a full rewrite.
+var MM_NAV_VERB_RE = /^(show|open|close|switch|toggle|scroll|select|nav|goto|back|next|prev|hide|expand|collapse|focus|tab)/i;
+var mmGateBypassOnce = false;
+
+function mmOnclickLooksLikeNav(onclickAttr){
+  if (!onclickAttr) return true; // nothing to gate
+  var statements = onclickAttr.split(';');
+  for (var i = 0; i < statements.length; i++) {
+    var stmt = statements[i].trim();
+    if (!stmt || stmt === 'return false') continue;
+    var m = stmt.match(/^([A-Za-z_$][\w$]*)\s*\(/);
+    if (!m) continue; // not a recognizable function call — don't gate on it alone
+    if (!MM_NAV_VERB_RE.test(m[1])) return false; // found a non-nav call — gate the whole click
+  }
+  return true;
+}
+
+document.addEventListener('click', function(e){
+  if (mmGateBypassOnce) { mmGateBypassOnce = false; return; } // Skip's own replay
+  if (!window.currentUser) return; // not logged in — nothing to gate yet
+  if (window.mmHasPaymentMethod !== false) return; // true = has a card, null = unknown yet — fail open either way
+  var el = e.target.closest('[onclick], [data-mm-gate], [data-mm-nav], button, a');
+  if (!el) return;
+  if (el.closest('#mmPaywallOverlay') || el.closest('#mmBillingSetupOverlay')) return; // never gate the paywall's own buttons
+  if (el.hasAttribute('data-mm-nav')) return; // explicit override: always free
+  var gateExplicit = el.hasAttribute('data-mm-gate');
+  var onclickAttr = el.getAttribute('onclick') || '';
+  if (!gateExplicit && mmOnclickLooksLikeNav(onclickAttr)) return;
+  if (!gateExplicit && !onclickAttr) return; // plain link/button with no app action wired — nothing to gate
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  mmShowStartFreePaywall(function(){ el.click(); });
+}, true);
 
 // ── GAIN$ Plan progress banner (Dashboard) ──────────────────────────────
 function renderGainPlanBanner(){
