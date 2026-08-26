@@ -21177,7 +21177,7 @@ function mmApplyTileOrderPrefs(tiles){
 // own description — label text and status→badge mapping live here so
 // mmOpenTileDetail() and the tile grid agree on what each state means.
 var MM_GAIN_STEP_STATUS_LABEL = { pending: 'PENDING', skipped: 'SKIPPED', complete: 'COMPLETE' };
-var MM_GAIN_STEP_ORDER = ['merchant','pos_terminal','questionnaire','website','hosting','social'];
+var MM_GAIN_STEP_ORDER = ['questionnaire','merchant','pos_terminal','website','social'];
 var mmGainPlanCache = null; // last-fetched { businessId, gainPlan, questionnaire }
 var mmTileRegistryCache = null; // last-fetched tiles array, for the detail modal
 
@@ -22097,20 +22097,20 @@ function mmMasterLabel(route){
 
 // Navigates to the tile's Master screen and, once there, drops the tile's
 // preset prompt into that Master's chat input and sends it — this is the
-// "AI agent helps you do it" action for register/website/hosting/social.
+// "AI agent helps you do it" action for website/social (register/hosting
+// no longer exist as their own GAIN$ steps — register was deleted as a
+// tile entirely, and hosting was merged into the "website" step).
 // Maps each GAIN$ step (plus the special 'ein' follow-up) to the Master AI
 // screen/tab/chat that actually handles it. Built from the real screen
-// structure — register goes to Business Master's own Jarvis chat;
-// website/hosting both live under Creative Master's "Production" tab,
-// where Production Master's chat already knows websites/domains; social
-// goes to Marketing Master's chat. Uses the app's own jarvisAskQuick()
-// helper (drops the prompt into that Master's real chat input and sends
-// it), not a guessed DOM selector — so this is exactly "answer the AI
-// agent's questions via chat" for real, not a dead click.
+// structure — website (which now covers domain + hosting too) lives under
+// Creative Master's "Production" tab, where Production Master's chat
+// already knows websites/domains/hosting; social goes to Marketing
+// Master's chat. Uses the app's own jarvisAskQuick() helper (drops the
+// prompt into that Master's real chat input and sends it), not a guessed
+// DOM selector — so this is exactly "answer the AI agent's questions via
+// chat" for real, not a dead click.
 var MM_GAIN_STEP_CHAT = {
-  register: { screen: 'businessmaster', masterKey: 'businessmaster' },
   website:  { screen: 'creativemaster', masterKey: 'productionmaster', tab: 'production' },
-  hosting:  { screen: 'creativemaster', masterKey: 'productionmaster', tab: 'production' },
   social:   { screen: 'marketingmaster', masterKey: 'marketingmaster' },
   ein:      { screen: 'businessmaster', masterKey: 'businessmaster' },
 };
