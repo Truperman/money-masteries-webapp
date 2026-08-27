@@ -115,6 +115,32 @@
     return res.data;
   };
 
+  // Unified Pricing Engine — Pricing & Margins admin panel (see
+  // functions/index.js adminListServicePricingConfigs /
+  // adminGetServicePricingConfig / adminSetServicePricingConfig /
+  // seedInitialPricingConfigs). Master-account-only; each Cloud Function
+  // re-checks the caller's email server-side.
+  window.callAdminListServicePricingConfigs = async () => {
+    const fn = httpsCallable(functionsClient, 'adminListServicePricingConfigs');
+    const res = await fn();
+    return res.data;
+  };
+  window.callAdminGetServicePricingConfig = async (serviceId) => {
+    const fn = httpsCallable(functionsClient, 'adminGetServicePricingConfig');
+    const res = await fn({ serviceId });
+    return res.data;
+  };
+  window.callAdminSetServicePricingConfig = async (serviceId, config) => {
+    const fn = httpsCallable(functionsClient, 'adminSetServicePricingConfig');
+    const res = await fn({ serviceId, config });
+    return res.data;
+  };
+  window.callSeedInitialPricingConfigs = async () => {
+    const fn = httpsCallable(functionsClient, 'seedInitialPricingConfigs');
+    const res = await fn();
+    return res.data;
+  };
+
   // ProsHub/CRM Master — real Firestore-backed CRM (see functions/index.js
   // crmList / crmSave / crmDelete / crmGenerateApiKey / crmGetApiKey).
   // Logged-in-member-only; each callable re-checks request.auth server-side.
@@ -9595,6 +9621,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="bank-tab" id="admtab-genie" onclick="switchAdminTab('genie')">🧞 Genie & AI</div>
         <div class="bank-tab" id="admtab-config" onclick="switchAdminTab('config')">⚙️ Revenue & Config</div>
         <div class="bank-tab" id="admtab-leads" onclick="switchAdminTab('leads')">🎓 Leads</div>
+        <div class="bank-tab" id="admtab-pricing" onclick="switchAdminTab('pricing')">📊 Pricing &amp; Margins</div>
       </div>
 
       <div class="bank-panel active" id="admpanel-overview">
@@ -9885,6 +9912,62 @@ document.addEventListener('DOMContentLoaded', function() {
           <thead><tr><th>Client</th><th>Email</th><th>Phone</th><th>Tier</th><th>Referred By</th><th>Date</th><th>Status</th></tr></thead>
           <tbody id="admRevalBody"><tr><td colspan="7" style="text-align:center;color:#6b7280;padding:20px">Loading…</td></tr></tbody>
         </table></div>
+      </div>
+      </div>
+
+      <div class="bank-panel" id="admpanel-pricing">
+      <div class="mpm-card">
+        <div class="mpm-title" style="color:#22c55e">📊 Unified Pricing Engine — fail-closed service pricing</div>
+        <div class="mpm-sub">Every external-service vertical (AI usage, Leads, Video, Phone) bills through this config now. If a service has no config here, billing for it is refused rather than given away for free — so keep this list current. Margin below is a client-side sanity display only; the backend is the source of truth.</div>
+        <div class="admin-table-wrap" style="margin-top:14px">
+          <div style="overflow-x:auto"><table class="admin-table">
+            <thead><tr><th>Service</th><th>Method</th><th>Multiplier / Markup</th><th>Margin</th><th>Version</th><th>Effective Date</th></tr></thead>
+            <tbody id="pricingConfigBody"><tr><td colspan="6" style="text-align:center;color:#6b7280;padding:20px">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="mpm-card">
+        <div class="mpm-title" style="color:#60a5fa">✏️ Edit Service Pricing</div>
+        <div class="mpm-sub">Pick a service, choose its pricing method, fill in the fields it needs, and save. Saving auto-bumps the pricing version and timestamps it — old billed events keep whatever version was in effect when they were written.</div>
+        <div class="mpm-grid">
+          <select id="pricingSvcSelect" onchange="pricingFormOnServiceChange()">
+            <option value="">Select a service…</option>
+          </select>
+          <select id="pricingMethodSelect" onchange="pricingFormOnMethodChange()">
+            <option value="">Select a pricing method…</option>
+            <option value="multiplier">multiplier</option>
+            <option value="percentage_markup">percentage_markup</option>
+            <option value="fixed_markup">fixed_markup</option>
+            <option value="multiplier_plus_fixed">multiplier_plus_fixed</option>
+            <option value="flat">flat</option>
+            <option value="tiered">tiered (JSON tiers below)</option>
+            <option value="base_plus_usage">base_plus_usage</option>
+            <option value="minimum_charge">minimum_charge</option>
+          </select>
+        </div>
+        <div class="mpm-grid" id="pricingFieldsGrid" style="margin-top:8px">
+          <input id="pf_multiplier" placeholder="Multiplier (e.g. 5)" type="number" step="0.01" style="display:none">
+          <input id="pf_markup_percentage" placeholder="Markup fraction (e.g. 0.5 = 50%)" type="number" step="0.01" style="display:none">
+          <input id="pf_fixed_markup" placeholder="Fixed markup ($)" type="number" step="0.01" style="display:none">
+          <input id="pf_flat_price" placeholder="Flat price ($)" type="number" step="0.01" style="display:none">
+          <input id="pf_base_price" placeholder="Base price ($)" type="number" step="0.01" style="display:none">
+          <input id="pf_usage_multiplier" placeholder="Usage multiplier" type="number" step="0.01" style="display:none">
+          <input id="pf_underlying_method" placeholder="Underlying method (e.g. multiplier)" style="display:none">
+          <input id="pf_minimum_charge" placeholder="Minimum charge ($)" type="number" step="0.01" style="display:none">
+          <textarea id="pf_tiers" placeholder='Tiers JSON, e.g. [{"upToUnits":10,"pricePerUnit":0.5}]' style="display:none;grid-column:1/-1;min-height:60px;font-family:monospace"></textarea>
+          <input id="pf_minimum_profit" placeholder="Minimum profit floor ($, optional)" type="number" step="0.01">
+          <input id="pf_minimum_gross_margin" placeholder="Minimum margin floor (0-1, optional)" type="number" step="0.01" min="0" max="0.99">
+        </div>
+        <button class="mpm-add" onclick="pricingSaveConfig()">💾 Save Pricing Config</button>
+        <div id="pricingSaveStatus" style="font-size:.7rem;color:#6b7280;margin-top:6px"></div>
+      </div>
+
+      <div class="mpm-card" style="border-color:#f59e0b50">
+        <div class="mpm-title" style="color:#f59e0b">🌱 One-Time Seed</div>
+        <div class="mpm-sub">Creates the initial multiplier configs for ai-usage / leads / video / phone at today's live default multipliers, so nothing changes the moment this ships. Safe to click more than once — it skips any service that already has a config. Only useful the first time.</div>
+        <button class="mpm-add" id="pricingSeedBtn" onclick="pricingRunSeed()">🌱 Run Initial Seed</button>
+        <div id="pricingSeedStatus" style="font-size:.7rem;color:#6b7280;margin-top:6px"></div>
       </div>
       </div>
 
@@ -11759,6 +11842,7 @@ function switchAdminTab(id) {
   if (tab) tab.classList.add('active');
   if (panel) panel.classList.add('active');
   if (id === 'marketing' && typeof adminLoadDiscountCodes === 'function') adminLoadDiscountCodes();
+  if (id === 'pricing' && typeof loadPricingConfigsPanel === 'function') loadPricingConfigsPanel();
 }
 
 // ── ACCOUNT CRM: SUB-TABS (one per service a member can sell) ────────────────
@@ -16548,6 +16632,158 @@ function masterSaveMarketsMasterKey(){
     if(typeof showNotifToast === 'function') showNotifToast('📈 Markets Master', key ? 'Live stock & futures data enabled.' : 'Stock & futures key cleared.');
   }).catch(function(e){ if(status) status.textContent = 'Could not save: ' + (e.message||e); });
 }
+// ── Pricing & Margins (Unified Pricing Engine admin panel) ───────────────────
+var pricingConfigsCache = {};
+var PRICING_METHOD_FIELD_MAP = {
+  multiplier: ['pf_multiplier'],
+  percentage_markup: ['pf_markup_percentage'],
+  fixed_markup: ['pf_fixed_markup'],
+  multiplier_plus_fixed: ['pf_multiplier', 'pf_fixed_markup'],
+  flat: ['pf_flat_price'],
+  tiered: ['pf_tiers'],
+  base_plus_usage: ['pf_base_price', 'pf_usage_multiplier'],
+  minimum_charge: ['pf_underlying_method', 'pf_minimum_charge'],
+};
+function pricingSummaryLabel(cfg){
+  if (!cfg || !cfg.pricing_method) return '—';
+  switch(cfg.pricing_method){
+    case 'multiplier': return cfg.multiplier + 'x';
+    case 'percentage_markup': return (Number(cfg.markup_percentage)*100).toFixed(1) + '% markup';
+    case 'fixed_markup': return '+$' + cfg.fixed_markup;
+    case 'multiplier_plus_fixed': return cfg.multiplier + 'x + $' + cfg.fixed_markup;
+    case 'flat': return '$' + cfg.flat_price + ' flat';
+    case 'tiered': return (Array.isArray(cfg.tiers) ? cfg.tiers.length : 0) + ' tiers';
+    case 'base_plus_usage': return '$' + cfg.base_price + ' + ' + cfg.usage_multiplier + 'x usage';
+    case 'minimum_charge': return 'min $' + cfg.minimum_charge + ' (' + cfg.underlying_method + ')';
+    default: return cfg.pricing_method;
+  }
+}
+// Client-side sanity display only, per spec — NOT authoritative (the
+// backend's computeCustomerPrice is authoritative). Assumes a representative
+// $1 provider cost just to show a rough margin shape for multiplier-style
+// methods; not meaningful for flat/tiered.
+function pricingClientMarginDisplay(cfg){
+  if (!cfg || !cfg.pricing_method) return '—';
+  var cost = 1;
+  var price;
+  if (cfg.pricing_method === 'multiplier') price = cost * Number(cfg.multiplier);
+  else if (cfg.pricing_method === 'percentage_markup') price = cost * (1 + Number(cfg.markup_percentage));
+  else if (cfg.pricing_method === 'fixed_markup') price = cost + Number(cfg.fixed_markup);
+  else if (cfg.pricing_method === 'multiplier_plus_fixed') price = cost * Number(cfg.multiplier) + Number(cfg.fixed_markup);
+  else return 'n/a';
+  if (!(price > 0)) return '—';
+  return (((price - cost) / price) * 100).toFixed(1) + '%';
+}
+function loadPricingConfigsPanel(){
+  var body = document.getElementById('pricingConfigBody');
+  var svcSelect = document.getElementById('pricingSvcSelect');
+  if (!body || typeof window.callAdminListServicePricingConfigs !== 'function') return;
+  body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:20px">Loading…</td></tr>';
+  window.callAdminListServicePricingConfigs().then(function(res){
+    var services = (res && res.services) || [];
+    pricingConfigsCache = {};
+    services.forEach(function(s){ pricingConfigsCache[s.serviceId] = s; });
+    if (!services.length){
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:20px">No pricing configs yet — run the Initial Seed below.</td></tr>';
+    } else {
+      body.innerHTML = services.map(function(s){
+        var effDate = '—';
+        try {
+          if (s.effective_date && s.effective_date.seconds) effDate = new Date(s.effective_date.seconds*1000).toLocaleDateString();
+          else if (s.effective_date && s.effective_date._seconds) effDate = new Date(s.effective_date._seconds*1000).toLocaleDateString();
+        } catch(e){}
+        return '<tr><td>' + s.serviceId + '</td><td>' + (s.pricing_method||'—') + '</td><td>' + pricingSummaryLabel(s) + '</td><td>' + pricingClientMarginDisplay(s) + '</td><td>' + (s.pricing_version!=null?s.pricing_version:'—') + '</td><td>' + effDate + '</td></tr>';
+      }).join('');
+    }
+    // Populate the service dropdown with known verticals plus anything else already configured.
+    var known = ['ai-usage','leads','video','phone'];
+    services.forEach(function(s){ if (known.indexOf(s.serviceId) === -1) known.push(s.serviceId); });
+    if (svcSelect){
+      var current = svcSelect.value;
+      svcSelect.innerHTML = '<option value="">Select a service…</option>' + known.map(function(id){ return '<option value="' + id + '">' + id + '</option>'; }).join('');
+      svcSelect.value = current;
+    }
+  }).catch(function(e){
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171;padding:20px">Could not load: ' + (e.message||e) + '</td></tr>';
+  });
+}
+function pricingFormOnServiceChange(){
+  var svcId = document.getElementById('pricingSvcSelect').value;
+  var methodSelect = document.getElementById('pricingMethodSelect');
+  var cfg = pricingConfigsCache[svcId];
+  if (cfg && methodSelect){
+    methodSelect.value = cfg.pricing_method || '';
+    pricingFormOnMethodChange();
+    ['multiplier','markup_percentage','fixed_markup','flat_price','base_price','usage_multiplier','underlying_method','minimum_charge','minimum_profit','minimum_gross_margin'].forEach(function(f){
+      var el = document.getElementById('pf_' + f);
+      if (el && cfg[f] != null) el.value = cfg[f];
+    });
+    var tiersEl = document.getElementById('pf_tiers');
+    if (tiersEl && cfg.tiers) tiersEl.value = JSON.stringify(cfg.tiers, null, 2);
+  }
+}
+function pricingFormOnMethodChange(){
+  var method = document.getElementById('pricingMethodSelect').value;
+  var allFields = ['pf_multiplier','pf_markup_percentage','pf_fixed_markup','pf_flat_price','pf_base_price','pf_usage_multiplier','pf_underlying_method','pf_minimum_charge','pf_tiers'];
+  allFields.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  (PRICING_METHOD_FIELD_MAP[method] || []).forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = ''; });
+}
+function pricingSaveConfig(){
+  var status = document.getElementById('pricingSaveStatus');
+  var serviceId = document.getElementById('pricingSvcSelect').value;
+  var method = document.getElementById('pricingMethodSelect').value;
+  if (!serviceId){ if(status) status.textContent = 'Pick a service first.'; return; }
+  if (!method){ if(status) status.textContent = 'Pick a pricing method first.'; return; }
+  var cfg = { pricing_method: method };
+  function num(id){ var v = document.getElementById(id).value; return v === '' ? undefined : Number(v); }
+  if (method === 'multiplier'){ cfg.multiplier = num('pf_multiplier'); }
+  else if (method === 'percentage_markup'){ cfg.markup_percentage = num('pf_markup_percentage'); }
+  else if (method === 'fixed_markup'){ cfg.fixed_markup = num('pf_fixed_markup'); }
+  else if (method === 'multiplier_plus_fixed'){ cfg.multiplier = num('pf_multiplier'); cfg.fixed_markup = num('pf_fixed_markup'); }
+  else if (method === 'flat'){ cfg.flat_price = num('pf_flat_price'); }
+  else if (method === 'tiered'){
+    try { cfg.tiers = JSON.parse(document.getElementById('pf_tiers').value || '[]'); }
+    catch(e){ if(status) status.textContent = 'Tiers JSON is invalid: ' + e.message; return; }
+  }
+  else if (method === 'base_plus_usage'){ cfg.base_price = num('pf_base_price'); cfg.usage_multiplier = num('pf_usage_multiplier'); }
+  else if (method === 'minimum_charge'){ cfg.underlying_method = document.getElementById('pf_underlying_method').value.trim(); cfg.minimum_charge = num('pf_minimum_charge'); }
+  var minProfit = document.getElementById('pf_minimum_profit').value;
+  var minMargin = document.getElementById('pf_minimum_gross_margin').value;
+  if (minProfit !== '') cfg.minimum_profit = Number(minProfit);
+  if (minMargin !== '') cfg.minimum_gross_margin = Number(minMargin);
+  if (typeof window.callAdminSetServicePricingConfig !== 'function'){ if(status) status.textContent = 'Not connected — try again on the live site.'; return; }
+  if (status) status.textContent = 'Saving…';
+  window.callAdminSetServicePricingConfig(serviceId, cfg).then(function(res){
+    if (status) status.textContent = '✓ Saved — ' + serviceId + ' is now pricing_version ' + res.pricing_version + '.';
+    if (typeof showNotifToast === 'function') showNotifToast('📊 Pricing & Margins', serviceId + ' pricing updated (v' + res.pricing_version + ').');
+    loadPricingConfigsPanel();
+  }).catch(function(e){ if(status) status.textContent = 'Could not save: ' + (e.message||e); });
+}
+function pricingRunSeed(){
+  var status = document.getElementById('pricingSeedStatus');
+  var btn = document.getElementById('pricingSeedBtn');
+  if (typeof window.callSeedInitialPricingConfigs !== 'function'){ if(status) status.textContent = 'Not connected — try again on the live site.'; return; }
+  if (status) status.textContent = 'Seeding…';
+  window.callSeedInitialPricingConfigs().then(function(res){
+    var lines = (res.results||[]).map(function(r){
+      return r.serviceId + ': ' + (r.skipped ? 'already seeded' : ('seeded at ' + r.multiplier + 'x'));
+    });
+    if (status) status.textContent = '✓ ' + lines.join(' · ');
+    try { localStorage.setItem('mm_pricingSeedDone', '1'); } catch(e){}
+    if (btn){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = '🌱 Seed already run'; }
+    loadPricingConfigsPanel();
+  }).catch(function(e){ if(status) status.textContent = 'Could not seed: ' + (e.message||e); });
+}
+(function initPricingSeedButtonState(){
+  try {
+    if (localStorage.getItem('mm_pricingSeedDone') === '1'){
+      document.addEventListener('DOMContentLoaded', function(){
+        var btn = document.getElementById('pricingSeedBtn');
+        if (btn){ btn.disabled = true; btn.style.opacity = '0.5'; btn.textContent = '🌱 Seed already run'; }
+      });
+    }
+  } catch(e){}
+})();
 function masterSaveRevenueShare(){
   var status = document.getElementById('divAdminStatus');
   var cfg = {
