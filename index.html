@@ -3188,6 +3188,23 @@ a.course-card:visited{color:inherit}
 @media (prefers-reduced-motion: reduce){
   .mm-candle-track,.mm-candle,.mm-candle-body{animation:none}
 }
+#nav-reimaster{position:relative;overflow:hidden;isolation:isolate}
+#nav-reimaster::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 20%,#D9770655 40%,#EAB30880 50%,#D9770655 60%,transparent 80%);background-size:220% 100%;background-position:200% 0;animation:mm-nav-glimmer 3.4s ease-in-out infinite;z-index:0}
+#nav-reimaster > *{position:relative;z-index:1}
+/* Real Estate Master nav icon — its own animated terracotta city skyline,
+   distinct from every other nav item's static Font Awesome glyph (and from
+   Markets Master's candlestick chart). Three buildings sit still while their
+   windows flicker on/off on staggered delays, like a skyline at night. */
+.rei-city-icon{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+.rei-city-svg{width:20px;height:20px;display:block;overflow:visible}
+.rei-city-track{animation:rei-city-drift 3.2s ease-in-out infinite}
+.rei-bldg{fill:#3a1f10;stroke:#D97706;stroke-width:.5}
+.rei-window{fill:#EAB308;animation:rei-window-glow 2.4s ease-in-out infinite;filter:drop-shadow(0 0 2px currentColor)}
+@keyframes rei-city-drift{0%,100%{transform:translateX(0)}50%{transform:translateX(-2px)}}
+@keyframes rei-window-glow{0%,40%{opacity:.2}50%,85%{opacity:1}100%{opacity:.2}}
+@media (prefers-reduced-motion: reduce){
+  .rei-city-track,.rei-window{animation:none}
+}
 .mk-card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .22s,border-color .22s,box-shadow .22s;animation:card-rise .5s backwards}
 .mk-card:nth-child(1){animation-delay:.04s}.mk-card:nth-child(2){animation-delay:.09s}.mk-card:nth-child(3){animation-delay:.14s}.mk-card:nth-child(4){animation-delay:.19s}.mk-card:nth-child(5){animation-delay:.24s}.mk-card:nth-child(6){animation-delay:.29s}.mk-card:nth-child(7){animation-delay:.34s}.mk-card:nth-child(8){animation-delay:.39s}
 .mk-card:hover{transform:translateY(-5px);border-color:#2E7BFF50;box-shadow:0 14px 34px #00000070}
@@ -7710,7 +7727,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item master-tool-item" onclick="window.open('https://genie.moneymasteries.com', '_blank', 'noopener')" id="nav-geniemaster"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Genie Agent Master</div>
     <div class="nav-item master-tool-item university-nav-item" onclick="showScreen('universitymaster')" id="nav-universitymaster"><span class="nav-item-icon"><i class="fa-solid fa-graduation-cap"></i></span> <span class="university-nav-text"><span class="nav-item-label">University Master</span><span class="university-nav-badge">🎉 FREE COURSES</span></span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('mystoremaster')" id="nav-mystoremaster"><span class="nav-item-icon"><i class="fa-solid fa-store"></i></span> My Store Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon"><i class="fa-solid fa-city"></i></span> Real Estate Master</div>
+    <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon rei-city-icon" aria-hidden="true"><svg class="rei-city-svg" viewBox="0 0 22 20"><g class="rei-city-track"><rect class="rei-bldg" x="1" y="9" width="5" height="10" rx=".6"></rect><rect class="rei-bldg" x="7.5" y="2" width="6" height="17" rx=".6"></rect><rect class="rei-bldg" x="15" y="6" width="6" height="13" rx=".6"></rect><rect class="rei-window" x="2" y="11" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="3.8" y="11" width="1.2" height="1.2" style="animation-delay:.6s"></rect><rect class="rei-window" x="2" y="14" width="1.2" height="1.2" style="animation-delay:1.2s"></rect><rect class="rei-window" x="3.8" y="14" width="1.2" height="1.2" style="animation-delay:.3s"></rect><rect class="rei-window" x="8.5" y="4" width="1.2" height="1.2" style="animation-delay:.2s"></rect><rect class="rei-window" x="10.5" y="4" width="1.2" height="1.2" style="animation-delay:.9s"></rect><rect class="rei-window" x="8.5" y="7" width="1.2" height="1.2" style="animation-delay:1.5s"></rect><rect class="rei-window" x="10.5" y="7" width="1.2" height="1.2" style="animation-delay:.5s"></rect><rect class="rei-window" x="8.5" y="10" width="1.2" height="1.2" style="animation-delay:1.1s"></rect><rect class="rei-window" x="10.5" y="10" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="8.5" y="13" width="1.2" height="1.2" style="animation-delay:.8s"></rect><rect class="rei-window" x="10.5" y="13" width="1.2" height="1.2" style="animation-delay:1.4s"></rect><rect class="rei-window" x="16" y="8" width="1.2" height="1.2" style="animation-delay:.4s"></rect><rect class="rei-window" x="18" y="8" width="1.2" height="1.2" style="animation-delay:1s"></rect><rect class="rei-window" x="16" y="11" width="1.2" height="1.2" style="animation-delay:1.6s"></rect><rect class="rei-window" x="18" y="11" width="1.2" height="1.2" style="animation-delay:.7s"></rect><rect class="rei-window" x="16" y="14" width="1.2" height="1.2" style="animation-delay:.1s"></rect><rect class="rei-window" x="18" y="14" width="1.2" height="1.2" style="animation-delay:1.3s"></rect></g></svg></span> <span class="nav-item-label">Real Estate Master</span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon"><i class="fa-solid fa-rocket"></i></span> Marketing Master</div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon mm-candle-icon" aria-hidden="true"><svg class="mm-candle-svg" viewBox="0 0 22 20"><g class="mm-candle-track"><g class="mm-candle"><line class="mm-candle-wick" x1="2.5" y1="2" x2="2.5" y2="18"></line><rect class="mm-candle-body" x="1" y="7" width="3" height="8" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="6.5" y1="1" x2="6.5" y2="17"></line><rect class="mm-candle-body" x="5" y="4" width="3" height="10" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="10.5" y1="3" x2="10.5" y2="19"></line><rect class="mm-candle-body" x="9" y="9" width="3" height="6" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="14.5" y1="0" x2="14.5" y2="16"></line><rect class="mm-candle-body" x="13" y="3" width="3" height="9" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="18.5" y1="2" x2="18.5" y2="18"></line><rect class="mm-candle-body" x="17" y="8" width="3" height="7" rx=".6"></rect></g></g></svg></span> <span class="nav-item-label">Markets Master</span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('creativemaster')" id="nav-creativemaster"><span class="nav-item-icon"><i class="fa-solid fa-clapperboard"></i></span> Creative Master</div>
@@ -8040,11 +8057,11 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="comp-tier">
           <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">BASIC</div>
           <div class="comp-tier-price">$19.99<sub>/mo</sub></div>
-          <div class="comp-tier-label">Full course access</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> Full access: Day Trading, Real Estate, E-Commerce</div>
+          <div class="comp-tier-label">Higher one-time commission</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> All courses included — free for every member, Basic or not: Day Trading, Real Estate, E-Commerce</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 30% commission — one-time, not recurring</div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No team / downline earnings</span></div>
-          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No Master Tools included — unlock any single Master for $25</span></div>
+          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No Master Tools included — unlock Marketing or Creative Master for $25 each (Real Estate Master &amp; Markets Master are Pro/Elite only, no à la carte unlock)</span></div>
           <button class="bm-add-btn" style="width:100%;margin-top:12px;background:#3b82f6" onclick="openUpgradeModal('basic')">💳 Subscribe Now — $19.99/mo</button>
           <button class="mk-share" style="width:100%;margin-top:8px" onclick="sharePlan('basic', this)">🔗 Share This Plan</button>
         </div>
@@ -8053,7 +8070,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="comp-tier-price">$50<sub>/mo</sub></div>
           <div class="comp-tier-label">Everything in Basic, plus team earnings</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> AI Coach + Live Events access</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> All Master Tools: REI, Marketing, Markets, Business, Financial &amp; Pros Hub</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> All Master Tools, including Real Estate Master &amp; Markets Master — Pro/Elite exclusive, no à la carte unlock</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 50% direct + 2% team bonus across 3 levels, recurring every month</div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Elite store / dropshipping</span></div>
           <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Revenue-sharing dividends (Elite only)</span></div>
@@ -16654,14 +16671,17 @@ window.UPLOADED_PRODUCTS = window.UPLOADED_PRODUCTS || [];
 
 // ── À LA CARTE MASTER ACCESS ────────────────────────────────────────────────
 // Pro & Elite members get every Master included free, same as always. Free
-// and Basic members can now unlock any single Master for a one-time $25
+// and Basic members can unlock most single Masters for a one-time $25
 // instead of upgrading the whole membership — see mastersEligible(id) and
 // finalizeOrder()'s 'master' branch, which drop the buyer straight into the
 // Master they just bought.
+//
+// Real Estate Master and Markets Master are NOT sold à la carte — per
+// David's call, those two are Pro/Elite subscription perks only, so they're
+// deliberately left out of this list (see SUBSCRIPTION_ONLY_MASTERS above
+// mastersEligible()).
 var MASTER_PRODUCTS = [
-  { id:'master-reimaster',        screenId:'reimaster',        type:'master', emoji:'🏘️', name:'Real Estate Master — Individual Access',        price:25, desc:'One-time unlock for Real Estate Master — real-estate deal analysis, lead tools & AI investing coach. Included free with Pro or Elite.' },
   { id:'master-marketingmaster',  screenId:'marketingmaster',  type:'master', emoji:'🚀', name:'Marketing Master — Individual Access',  price:25, desc:'One-time unlock for Marketing Master — the full marketing tool suite. Included free with Pro or Elite.' },
-  { id:'master-marketsmaster',    screenId:'marketsmaster',    type:'master', emoji:'📈', name:'Markets Master — Individual Access',    price:25, desc:'One-time unlock for Markets Master — live market data & AI market assistant. Included free with Pro or Elite.' },
   { id:'master-creativemaster', screenId:'creativemaster', type:'master', emoji:'🎬', name:'Creative Master — Individual Access', price:25, desc:'One-time unlock for Creative Master — AI video generation via SkyReels, plus the Production Master toolkit (website/domain/software requests). Included free with Pro or Elite.' }
   // CRM Master used to be here as a $25 unlock — it's now free for every
   // member (see MASTER_SCREENS in showScreen / Essentials tiles on the
@@ -16922,10 +16942,17 @@ window.mmUpdateGenieFabAccess = mmUpdateGenieFabAccess;
 // can still get in — one Master at a time — by buying that specific one for
 // $25 (see MASTER_PRODUCTS / buyProduct). ProsHub/CRM Master (the client CRM)
 // is sold à la carte exactly like every other Master now.
+//
+// Real Estate Master and Markets Master are the exception, per David's call:
+// no à la carte $25 unlock for these two — they're Pro/Elite subscription
+// perks only. Removed from MASTER_PRODUCTS below so they're not purchasable,
+// and excluded here too as a second guard against any stale purchase record.
+var SUBSCRIPTION_ONLY_MASTERS = ['reimaster', 'marketsmaster'];
 function mastersEligible(id){
   var pl=(window.userData&&window.userData.plan)||'free';
   if (pl==='pro' || pl==='elite' || window.isMaster===true) return true;
   if (!id) return false;
+  if (SUBSCRIPTION_ONLY_MASTERS.indexOf(id) !== -1) return false;
   // Firestore (purchasedMasters, synced at login — follows the member across
   // devices) is the source of truth; localStorage is just an immediate local
   // fallback right after a purchase, before the next full profile reload.
@@ -16946,8 +16973,13 @@ function showMasterPreviewOverlay(id){
   var name = MASTER_DISPLAY_NAMES[id] || 'This Master';
   var titleEl = document.getElementById('mpoTitle');
   var bodyEl = document.getElementById('mpoBody');
+  var unlockBtn = document.getElementById('mpoUnlockBtn');
+  var subOnly = typeof SUBSCRIPTION_ONLY_MASTERS !== 'undefined' && SUBSCRIPTION_ONLY_MASTERS.indexOf(id) !== -1;
   if (titleEl) titleEl.textContent = 'You\'re previewing ' + name;
-  if (bodyEl) bodyEl.textContent = 'Basic members can see every Master but need Pro, Elite, or a one-time $25 unlock to actually use ' + name + '. CRM Master and Community Master are included free for everyone.';
+  if (bodyEl) bodyEl.textContent = subOnly
+    ? name + ' is a Pro or Elite perk — there\'s no à la carte unlock for this one. Upgrade to Pro or Elite to start using it.'
+    : 'Basic members can see every Master but need Pro, Elite, or a one-time $25 unlock to actually use ' + name + '. CRM Master and Community Master are included free for everyone.';
+  if (unlockBtn) unlockBtn.style.display = subOnly ? 'none' : '';
   ov.style.display = 'block';
 }
 function hideMasterPreviewOverlay(){
