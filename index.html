@@ -8282,16 +8282,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <!-- TIER SUMMARY CARDS -->
       <div class="comp-tier-grid">
-        <div class="comp-tier">
-          <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">BASIC</div>
-          <div class="comp-tier-price">$19.99<sub>/mo</sub></div>
-          <div class="comp-tier-pct" style="color:#60a5fa">30%</div>
-          <div class="comp-tier-label">one-time, on your sale only</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> 30% commission — one-time, not recurring</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> Full course access + AI coach taste</div>
-          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No team / downline earnings</span></div>
-          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No Master Tools included — unlock any single Master for $25</span></div>
-        </div>
         <div class="comp-tier pro">
           <div class="comp-tier-badge pro">PRO ⚡</div>
           <div class="comp-tier-price">$50<sub>/mo</sub></div>
@@ -8427,7 +8417,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="comp-section-title">📊 Full Level-by-Level Breakdown (5 refer 5 scenario)</div>
       <div style="background:#111827;border-radius:14px;overflow:hidden;margin-bottom:24px">
         <table class="comp-table">
-          <thead><tr><th>Level</th><th>People</th><th>Basic — 30% L1 (one-time)</th><th>Pro — 50% L1 · 2% L2–4</th><th>Elite — 50% L1 · 5/3/2/1%</th></tr></thead>
+          <thead><tr><th>Level</th><th>People</th><th>Pro — 50% L1 · 2% L2–4</th><th>Elite — 50% L1 · 5/3/2/1%</th></tr></thead>
           <tbody id="compLevelTable"></tbody>
         </table>
       </div>
@@ -8472,7 +8462,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
 
       <div class="comp-note" style="border-color:#a855f740;background:#120d1a">
-        <b class="p">How it works:</b> A percentage of every membership payment ($19.99 Basic, $50 Pro, $99 Elite) is set aside into a company-owned <b>Growth Pool</b>. The company invests that pool — the pool itself always belongs to Money Masteries — and shares the <b>profits</b> the pool earns as a monthly cash dividend, split only among <b class="p">Elite</b> members. Basic and Pro members do not participate in this program.
+        <b class="p">How it works:</b> A percentage of every membership payment ($50 Pro, $99 Elite) is set aside into a company-owned <b>Growth Pool</b>. The company invests that pool — the pool itself always belongs to Money Masteries — and shares the <b>profits</b> the pool earns as a monthly cash dividend, split only among <b class="p">Elite</b> members. Pro members do not participate in this program.
       </div>
 
       <div class="stat-row" style="margin-bottom:20px">
@@ -12881,20 +12871,17 @@ function switchMLM(type) {
 function buildCompTable() {
   const el = document.getElementById('compLevelTable');
   if (!el) return;
-  const BASIC_PRICE = 19.99, TEAM_PRICE = 50; // Basic refers at $19.99 (one-time, L1 only); Pro/Elite team economics run on $50 Pro referrals
-  let html = '', people = 5, tb = 0, tp = 0, te = 0;
+  const TEAM_PRICE = 50; // Pro/Elite team economics run on $50 Pro referrals
+  let html = '', people = 5, tp = 0, te = 0;
   for (let lvl = 1; lvl <= 6; lvl++) {
-    const br = lvl === 1 ? 0.30 : 0;
     const pr = lvl === 1 ? 0.50 : (lvl <= 4 ? 0.02 : 0);
     const er = lvl === 1 ? 0.50 : (lvl === 2 ? 0.05 : lvl === 3 ? 0.03 : lvl === 4 ? 0.02 : lvl === 5 ? 0.01 : 0);
-    const bs = lvl === 1 ? people * BASIC_PRICE * br : 0; // Basic: one-time, Level 1 only
     const p = people * TEAM_PRICE * pr;
     const e = people * TEAM_PRICE * er;
-    tb += bs; tp += p; te += e;
+    tp += p; te += e;
     html += `<tr>
       <td style="font-weight:${lvl===1?'700':'400'}">${lvl===1?'Level 1 — Direct':'Level '+lvl}</td>
       <td>${people.toLocaleString()}</td>
-      <td style="color:${bs>0?'#60a5fa':'#4b5563'};font-weight:${bs>0?'700':'400'}">${bs>0?'$'+bs.toFixed(2)+' one-time':'$0'}</td>
       <td style="color:#2E7BFF;font-weight:${p>0?'700':'400'}">${p>0?'$'+p.toFixed(2)+'/mo':'$0'}</td>
       <td style="color:#a855f7;font-weight:${e>0?'700':'400'}">${e>0?'$'+e.toFixed(2)+'/mo':'$0'}</td>
     </tr>`;
@@ -12903,7 +12890,6 @@ function buildCompTable() {
   }
   html += `<tr style="background:#1a1a1a !important;font-weight:800;border-top:2px solid #2E7BFF">
     <td colspan="2" style="color:#e5e7eb">Total</td>
-    <td style="color:#60a5fa">$${tb.toFixed(2)}</td>
     <td style="color:#2E7BFF">$${tp.toFixed(2)}/mo</td>
     <td style="color:#a855f7">$${te.toFixed(2)}/mo</td>
   </tr>`;
