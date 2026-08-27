@@ -21810,6 +21810,18 @@ document.addEventListener('click', function(e){
   if (mmGateBypassOnce) { mmGateBypassOnce = false; return; } // Skip's own replay
   if (!window.currentUser) return; // not logged in — nothing to gate yet
   if (window.mmHasPaymentMethod !== false) return; // true = has a card, null = unknown yet — fail open either way
+  // Any member with an existing membership Stripe customer (Pro/Elite, or a
+  // grandfathered legacy Basic subscriber) is ALREADY metered for AI/leads/
+  // video/phone usage against THAT subscription (see functions/index.js
+  // reportUsageToStripe and its siblings, gated on users/{uid}.stripeCustomerId
+  // — set only by membershipCheckoutWebhook). This exposure-limit +
+  // payment-method-setup engine is the SEPARATE billing path built for Start
+  // Free (cardless) members. If a paying member were ever routed through
+  // this paywall and added a card here, their usage would start being
+  // invoiced TWICE — once via their membership's metered subscription item,
+  // once via this engine's settleUnbilledUsage — so anyone who already has a
+  // membership stripeCustomerId (or is Master) must never see this gate.
+  if ((window.userData && window.userData.stripeCustomerId) || window.isMaster === true) return;
   var el = e.target.closest('[onclick], [data-mm-gate], [data-mm-nav], button, a');
   if (!el) return;
   if (el.closest('#mmPaywallOverlay') || el.closest('#mmBillingSetupOverlay')) return; // never gate the paywall's own buttons
