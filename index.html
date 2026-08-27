@@ -7627,16 +7627,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="feat-desc">Create an account and start the Affiliate Fast Track course right away — no payment required.</div>
       <button class="lnav-cta" style="width:100%;margin-top:12px" onclick="switchAuthTab('signup');document.querySelector('.auth-box').scrollIntoView({behavior:'smooth',block:'center'})">Join Free →</button>
     </div>
-    <div class="feat-card">
-      <div class="feat-title">Basic Membership</div>
-      <div style="font-size:1.4rem;font-weight:800;margin:6px 0">$19.99<span style="font-size:.8rem;color:#8ba0c4">/mo</span></div>
-      <div class="feat-desc">Every course unlocked, 30% affiliate commissions.</div>
-      <button class="lnav-cta" style="width:100%;margin-top:12px;background:#374151" onclick="switchAuthTab('signup');document.querySelector('.auth-box').scrollIntoView({behavior:'smooth',block:'center'})">Get Started →</button>
-    </div>
     <div class="feat-card" style="border-color:#2E7BFF50">
       <div class="feat-title" style="color:#2E7BFF">Pro</div>
       <div style="font-size:1.4rem;font-weight:800;margin:6px 0">$50<span style="font-size:.8rem;color:#8ba0c4">/mo</span></div>
-      <div class="feat-desc">Everything in Basic, plus every AI Master, 50% commissions, and Team tools.</div>
+      <div class="feat-desc">Every course, every AI Master, 50% commissions, and Team tools.</div>
       <button class="lnav-cta" style="width:100%;margin-top:12px;background:#2E7BFF" onclick="switchAuthTab('signup');document.querySelector('.auth-box').scrollIntoView({behavior:'smooth',block:'center'})">Get Started →</button>
     </div>
     <div class="feat-card" style="border-color:#a855f750">
@@ -8080,21 +8074,11 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="screen-title">💳 Plans &amp; <span>Pricing</span></div>
       <div class="comp-note" style="margin-bottom:18px"><b>Every plan is shareable.</b> Tap "Share This Plan" on any tier below to copy a link with your affiliate code baked in — send people straight to the plan that fits them, and earn when they join.</div>
       <div class="comp-tier-grid">
-        <div class="comp-tier">
-          <div class="comp-tier-badge" style="background:#3b82f622;color:#60a5fa">BASIC</div>
-          <div class="comp-tier-price">$19.99<sub>/mo</sub></div>
-          <div class="comp-tier-label">Higher one-time commission</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> All courses included — free for every member, Basic or not: Day Trading, Real Estate, E-Commerce</div>
-          <div class="comp-feat"><span class="ci ci-y">✓</span> 30% commission — one-time, not recurring</div>
-          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No team / downline earnings</span></div>
-          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">No Master Tools included — unlock Marketing or Creative Master for $25 each (Real Estate Master &amp; Markets Master are Pro/Elite only, no à la carte unlock)</span></div>
-          <button class="bm-add-btn" style="width:100%;margin-top:12px;background:#3b82f6" onclick="openUpgradeModal('basic')">💳 Subscribe Now — $19.99/mo</button>
-          <button class="mk-share" style="width:100%;margin-top:8px" onclick="sharePlan('basic', this)">🔗 Share This Plan</button>
-        </div>
         <div class="comp-tier pro">
           <div class="comp-tier-badge pro">PRO ⚡</div>
           <div class="comp-tier-price">$50<sub>/mo</sub></div>
-          <div class="comp-tier-label">Everything in Basic, plus team earnings</div>
+          <div class="comp-tier-label">Every course, every Master, team earnings</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> All courses included — free for every member: Day Trading, Real Estate, E-Commerce</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> AI Coach + Live Events access</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> All Master Tools, including Real Estate Master &amp; Markets Master — Pro/Elite exclusive, no à la carte unlock</div>
           <div class="comp-feat"><span class="ci ci-y">✓</span> 50% direct + 2% team bonus across 3 levels, recurring every month</div>
@@ -14280,7 +14264,7 @@ window.courseUnlocked = courseUnlocked;
 
 function openCourse(path) {
   if (!courseUnlocked(path)) {
-    if (typeof openUpgradeModal === 'function') openUpgradeModal('basic');
+    if (typeof openUpgradeModal === 'function') openUpgradeModal();
     if (typeof showNotifToast === 'function') showNotifToast('🔒 Members only', 'This course is part of paid membership. The Affiliate Fast Track course is free to start with — upgrade any time to unlock the rest.');
     return;
   }
@@ -16887,7 +16871,10 @@ function renderShowcaseButton() {
 }
 // ═══ MARKETPLACE / PRODUCTS ═══════════════════════════════════════════════════
 var DEFAULT_PRODUCTS = [
-  { id:'m-basic', type:'membership', emoji:'🔓', name:'Basic Membership', price:19.99,  recurring:true, commissionRecurring:false, desc:'Full course access. 30% one-time commission on every membership you sell (no Master Tools, no recurring commissions)' },
+  // Basic ($19.99/mo) was discontinued as a sellable plan — Pro and Elite
+  // are the only memberships offered now. Left out of this list so it can no
+  // longer be bought or shared; existing Basic subscribers are unaffected
+  // (their billing/commission logic elsewhere in this file is untouched).
   { id:'m-pro',   type:'membership', emoji:'⚡', name:'Pro Membership',   price:57,  recurring:true,  commissionRecurring:true, desc:'All Master Tools + 50% direct commissions + 2% team bonus across 3 levels, paid every month' },
   { id:'m-elite', type:'membership', emoji:'💎', name:'Elite Membership', price:97,  recurring:true,  commissionRecurring:true, desc:'Everything in Pro + tiered team bonus to 5 levels (5/3/2/1%) + your own branded store + monthly revenue-sharing dividends' },
   { id:'d-dt',    type:'digital',    emoji:'📊', name:'Day Trading Masterclass', price:197, desc:'Complete stocks program — brokers, charts, live strategy' },
@@ -17058,8 +17045,9 @@ function shareProduct(pid, btn) {
 }
 
 // ── PLANS & PRICING — share a specific plan directly ─────────────────────────
-// Basic/Pro/Elite map onto existing membership products (m-basic/m-pro/m-elite)
-// so the link, tracking, and commission math all reuse shareProduct() as-is.
+// Pro/Elite map onto existing membership products (m-pro/m-elite) so the
+// link, tracking, and commission math all reuse shareProduct() as-is.
+// (Basic was discontinued — see DEFAULT_PRODUCTS comment above.)
 // Free has no purchasable product id, so it just shares the base link.
 function sharePlan(planId, btn) {
   var PLAN_PRODUCT_IDS = { pro: 'm-pro', elite: 'm-elite' };
