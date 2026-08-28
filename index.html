@@ -2901,6 +2901,24 @@ td .admnt-preview{margin-top:4px}
 .tile-category-label{font-size:.72rem;font-weight:700;color:#8a97ad;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;padding-left:10px;border-left:3px solid #2E7BFF55;line-height:1.2}
 .tile-category:first-child .tile-category-label{margin-top:0}
 .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+/* Collapsible "Tools" dropdown — every non-GAIN$ category lives inside this,
+   right under the Discover & Setup tile, instead of the dashboard opening
+   on a wall of every category at once. */
+.mm-tools-dropdown{margin-top:18px;border:1px solid #2E7BFF33;border-radius:14px;background:linear-gradient(180deg,#111827,#0d1420);overflow:hidden}
+.mm-tools-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:transparent;border:0;cursor:pointer;color:inherit;font:inherit;text-align:left}
+.mm-tools-toggle:hover{background:#2E7BFF14}
+.mm-tools-toggle:focus-visible{outline:2px solid #2E7BFF;outline-offset:-2px}
+.mm-tools-toggle-left{display:flex;align-items:center;gap:10px}
+.mm-tools-icon{font-size:1.05rem}
+.mm-tools-title{font-size:.86rem;font-weight:800;letter-spacing:.02em;color:#e7ecf5}
+.mm-tools-count{font-size:.68rem;font-weight:700;color:#7f97c2;background:#2E7BFF1f;border-radius:20px;padding:2px 9px}
+.mm-tools-chevron{color:#7f97c2;transition:transform .25s ease}
+.mm-tools-dropdown.is-open .mm-tools-chevron{transform:rotate(180deg)}
+.mm-tools-body{display:grid;grid-template-rows:0fr;padding:0 16px;transition:grid-template-rows .3s ease,padding .3s ease}
+.mm-tools-body>*{overflow:hidden}
+.mm-tools-dropdown.is-open .mm-tools-body{grid-template-rows:1fr;padding:0 16px 14px}
+.mm-tools-body .tile-category:first-child .tile-category-label{margin-top:16px}
+@media (prefers-reduced-motion: reduce){ .mm-tools-body,.mm-tools-chevron{transition:none} }
 .tile-grid-empty{color:#6b7280;font-size:.8rem;grid-column:1/-1}
 /* GAIN$ Plan tiles are the priority path — render them as full-width
    banner rows stacked above every other category, instead of squares in
@@ -6895,6 +6913,14 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 }
 .university-nav-item{ align-items:center; }
 .university-nav-text{ display:flex; flex-direction:column; gap:1px; line-height:1.2; }
+/* Every Master is framed as its own money-making niche — a small subtitle
+   under the name in the sidebar (and matching on each Master's own screen
+   title) says which one, so "Master Tools" reads as a menu of niches/game
+   plans rather than a generic feature list. */
+.nav-item-textcol{ display:flex; flex-direction:column; gap:1px; line-height:1.25; }
+.nav-item-niche{ font-size:.62rem; font-weight:600; letter-spacing:.01em; color:#7f97c2; }
+.master-tool-item.active .nav-item-niche{ color:#a9c4ff; }
+.screen-title-niche{ font-size:.72rem; font-weight:600; letter-spacing:.02em; color:#6fa8ff; text-transform:uppercase; margin-top:2px; }
 .university-nav-badge{
   font-size:.6rem;
   font-weight:800;
@@ -7757,15 +7783,15 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="sidebar-section-label">Money</div>
     <div class="nav-item" onclick="showScreen('commissions')" id="nav-commissions"><span class="nav-item-icon"><i class="fa-solid fa-building-columns"></i></span> Payouts/Bank</div>
     <div class="sidebar-section-label">Master Tools</div>
-    <div class="nav-item master-tool-item" onclick="window.open('https://genie.moneymasteries.com', '_blank', 'noopener')" id="nav-geniemaster"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Genie Agent Master</div>
-    <div class="nav-item master-tool-item university-nav-item" onclick="showScreen('universitymaster')" id="nav-universitymaster"><span class="nav-item-icon"><i class="fa-solid fa-graduation-cap"></i></span> <span class="university-nav-text"><span class="nav-item-label">University Master</span><span class="university-nav-badge">🎉 FREE COURSES</span></span></div>
-    <div class="nav-item master-tool-item" onclick="showScreen('mystoremaster')" id="nav-mystoremaster"><span class="nav-item-icon"><i class="fa-solid fa-store"></i></span> My Store Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon rei-city-icon" aria-hidden="true"><svg class="rei-city-svg" viewBox="0 0 22 20"><g class="rei-city-track"><rect class="rei-bldg" x="1" y="9" width="5" height="10" rx=".6"></rect><rect class="rei-bldg" x="7.5" y="2" width="6" height="17" rx=".6"></rect><rect class="rei-bldg" x="15" y="6" width="6" height="13" rx=".6"></rect><rect class="rei-window" x="2" y="11" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="3.8" y="11" width="1.2" height="1.2" style="animation-delay:.6s"></rect><rect class="rei-window" x="2" y="14" width="1.2" height="1.2" style="animation-delay:1.2s"></rect><rect class="rei-window" x="3.8" y="14" width="1.2" height="1.2" style="animation-delay:.3s"></rect><rect class="rei-window" x="8.5" y="4" width="1.2" height="1.2" style="animation-delay:.2s"></rect><rect class="rei-window" x="10.5" y="4" width="1.2" height="1.2" style="animation-delay:.9s"></rect><rect class="rei-window" x="8.5" y="7" width="1.2" height="1.2" style="animation-delay:1.5s"></rect><rect class="rei-window" x="10.5" y="7" width="1.2" height="1.2" style="animation-delay:.5s"></rect><rect class="rei-window" x="8.5" y="10" width="1.2" height="1.2" style="animation-delay:1.1s"></rect><rect class="rei-window" x="10.5" y="10" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="8.5" y="13" width="1.2" height="1.2" style="animation-delay:.8s"></rect><rect class="rei-window" x="10.5" y="13" width="1.2" height="1.2" style="animation-delay:1.4s"></rect><rect class="rei-window" x="16" y="8" width="1.2" height="1.2" style="animation-delay:.4s"></rect><rect class="rei-window" x="18" y="8" width="1.2" height="1.2" style="animation-delay:1s"></rect><rect class="rei-window" x="16" y="11" width="1.2" height="1.2" style="animation-delay:1.6s"></rect><rect class="rei-window" x="18" y="11" width="1.2" height="1.2" style="animation-delay:.7s"></rect><rect class="rei-window" x="16" y="14" width="1.2" height="1.2" style="animation-delay:.1s"></rect><rect class="rei-window" x="18" y="14" width="1.2" height="1.2" style="animation-delay:1.3s"></rect></g></svg></span> <span class="nav-item-label">Real Estate Master</span></div>
-    <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon"><i class="fa-solid fa-rocket"></i></span> Marketing Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon mm-candle-icon" aria-hidden="true"><svg class="mm-candle-svg" viewBox="0 0 22 20"><g class="mm-candle-track"><g class="mm-candle"><line class="mm-candle-wick" x1="2.5" y1="2" x2="2.5" y2="18"></line><rect class="mm-candle-body" x="1" y="7" width="3" height="8" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="6.5" y1="1" x2="6.5" y2="17"></line><rect class="mm-candle-body" x="5" y="4" width="3" height="10" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="10.5" y1="3" x2="10.5" y2="19"></line><rect class="mm-candle-body" x="9" y="9" width="3" height="6" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="14.5" y1="0" x2="14.5" y2="16"></line><rect class="mm-candle-body" x="13" y="3" width="3" height="9" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="18.5" y1="2" x2="18.5" y2="18"></line><rect class="mm-candle-body" x="17" y="8" width="3" height="7" rx=".6"></rect></g></g></svg></span> <span class="nav-item-label">Markets Master</span></div>
-    <div class="nav-item master-tool-item" onclick="showScreen('creativemaster')" id="nav-creativemaster"><span class="nav-item-icon"><i class="fa-solid fa-clapperboard"></i></span> Creative Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('crmmaster')" id="nav-crmmaster"><span class="nav-item-icon"><i class="fa-solid fa-toolbox"></i></span> CRM Master</div>
-    <div class="nav-item master-tool-item" onclick="showScreen('communitymaster')" id="nav-communitymaster"><span class="nav-item-icon"><i class="fa-solid fa-comments"></i></span> Community Master</div>
+    <div class="nav-item master-tool-item" onclick="window.open('https://genie.moneymasteries.com', '_blank', 'noopener')" id="nav-geniemaster"><span class="nav-item-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Genie Agent Master</span><span class="nav-item-niche">AI Agency &amp; Resale</span></span></div>
+    <div class="nav-item master-tool-item university-nav-item" onclick="showScreen('universitymaster')" id="nav-universitymaster"><span class="nav-item-icon"><i class="fa-solid fa-graduation-cap"></i></span> <span class="university-nav-text"><span class="nav-item-label">University Master</span><span class="nav-item-niche">Skills &amp; Certifications</span><span class="university-nav-badge">🎉 FREE COURSES</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('mystoremaster')" id="nav-mystoremaster"><span class="nav-item-icon"><i class="fa-solid fa-store"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">My Store Master</span><span class="nav-item-niche">E-Commerce &amp; Print-on-Demand</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon rei-city-icon" aria-hidden="true"><svg class="rei-city-svg" viewBox="0 0 22 20"><g class="rei-city-track"><rect class="rei-bldg" x="1" y="9" width="5" height="10" rx=".6"></rect><rect class="rei-bldg" x="7.5" y="2" width="6" height="17" rx=".6"></rect><rect class="rei-bldg" x="15" y="6" width="6" height="13" rx=".6"></rect><rect class="rei-window" x="2" y="11" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="3.8" y="11" width="1.2" height="1.2" style="animation-delay:.6s"></rect><rect class="rei-window" x="2" y="14" width="1.2" height="1.2" style="animation-delay:1.2s"></rect><rect class="rei-window" x="3.8" y="14" width="1.2" height="1.2" style="animation-delay:.3s"></rect><rect class="rei-window" x="8.5" y="4" width="1.2" height="1.2" style="animation-delay:.2s"></rect><rect class="rei-window" x="10.5" y="4" width="1.2" height="1.2" style="animation-delay:.9s"></rect><rect class="rei-window" x="8.5" y="7" width="1.2" height="1.2" style="animation-delay:1.5s"></rect><rect class="rei-window" x="10.5" y="7" width="1.2" height="1.2" style="animation-delay:.5s"></rect><rect class="rei-window" x="8.5" y="10" width="1.2" height="1.2" style="animation-delay:1.1s"></rect><rect class="rei-window" x="10.5" y="10" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="8.5" y="13" width="1.2" height="1.2" style="animation-delay:.8s"></rect><rect class="rei-window" x="10.5" y="13" width="1.2" height="1.2" style="animation-delay:1.4s"></rect><rect class="rei-window" x="16" y="8" width="1.2" height="1.2" style="animation-delay:.4s"></rect><rect class="rei-window" x="18" y="8" width="1.2" height="1.2" style="animation-delay:1s"></rect><rect class="rei-window" x="16" y="11" width="1.2" height="1.2" style="animation-delay:1.6s"></rect><rect class="rei-window" x="18" y="11" width="1.2" height="1.2" style="animation-delay:.7s"></rect><rect class="rei-window" x="16" y="14" width="1.2" height="1.2" style="animation-delay:.1s"></rect><rect class="rei-window" x="18" y="14" width="1.2" height="1.2" style="animation-delay:1.3s"></rect></g></svg></span> <span class="nav-item-textcol"><span class="nav-item-label">Real Estate Master</span><span class="nav-item-niche">Wholesaling &amp; Flipping</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon"><i class="fa-solid fa-rocket"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Marketing Master</span><span class="nav-item-niche">Marketing &amp; Social Agency</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon mm-candle-icon" aria-hidden="true"><svg class="mm-candle-svg" viewBox="0 0 22 20"><g class="mm-candle-track"><g class="mm-candle"><line class="mm-candle-wick" x1="2.5" y1="2" x2="2.5" y2="18"></line><rect class="mm-candle-body" x="1" y="7" width="3" height="8" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="6.5" y1="1" x2="6.5" y2="17"></line><rect class="mm-candle-body" x="5" y="4" width="3" height="10" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="10.5" y1="3" x2="10.5" y2="19"></line><rect class="mm-candle-body" x="9" y="9" width="3" height="6" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="14.5" y1="0" x2="14.5" y2="16"></line><rect class="mm-candle-body" x="13" y="3" width="3" height="9" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="18.5" y1="2" x2="18.5" y2="18"></line><rect class="mm-candle-body" x="17" y="8" width="3" height="7" rx=".6"></rect></g></g></svg></span> <span class="nav-item-textcol"><span class="nav-item-label">Markets Master</span><span class="nav-item-niche">Trading &amp; Investing</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('creativemaster')" id="nav-creativemaster"><span class="nav-item-icon"><i class="fa-solid fa-clapperboard"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Creative Master</span><span class="nav-item-niche">Content &amp; Video Production</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('crmmaster')" id="nav-crmmaster"><span class="nav-item-icon"><i class="fa-solid fa-toolbox"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">CRM Master</span><span class="nav-item-niche">Sales &amp; Client Management</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('communitymaster')" id="nav-communitymaster"><span class="nav-item-icon"><i class="fa-solid fa-comments"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Community Master</span><span class="nav-item-niche">Community &amp; Audience Building</span></span></div>
     <div class="sidebar-section-label" id="adminSectionLabel" style="display:none">Master</div>
     <div class="nav-item admin-item" onclick="showScreen('admin')" id="nav-admin" style="display:none"><span class="nav-item-icon"><i class="fa-solid fa-crown"></i></span> Master Portal</div>
   </aside>
@@ -7963,6 +7989,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- UNIVERSITY MASTER — Courses + Revalidation Service + Impact Webapp -->
     <div class="screen" id="screen-universitymaster" data-sbg="courses">
       <div class="screen-title"><i class="fa-solid fa-graduation-cap"></i> <span>University Master</span></div>
+      <div class="screen-title-niche">🎓 Your niche: Skills &amp; Certifications</div>
 
       <div class="um-free-banner"><span class="um-free-banner-text">🎉 FREE COURSES!</span></div>
 
@@ -8508,6 +8535,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- COMMUNITY -->
     <div class="screen" id="screen-communitymaster" data-sbg="community">
       <div class="screen-title"><i class="fa-solid fa-comments"></i> <span>Community Master</span></div>
+      <div class="screen-title-niche">💬 Your niche: Community &amp; Audience Building</div>
 
       <div class="cm-tabs">
         <button class="cm-tab active" id="cmtyVFeed" onclick="cmtyViewSwitch('feed')">💬 Live Feed</button>
@@ -8702,6 +8730,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- MARKETING MASTER -->
     <div class="screen" id="screen-marketingmaster" data-sbg="marketingmaster">
       <div class="screen-title"><i class="fa-solid fa-rocket"></i> <span>Marketing Master</span></div>
+      <div class="screen-title-niche">🚀 Your niche: Marketing &amp; Social Agency</div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
       <div id="mktMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
       <div class="mk-grid" style="margin-bottom:18px">
@@ -8743,6 +8772,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- MARKETS MASTER (Elite Tools live here for now) -->
     <div class="screen" id="screen-marketsmaster" data-sbg="marketsmaster">
       <div class="screen-title"><i class="fa-solid fa-chart-line"></i> <span>Markets Master</span></div>
+      <div class="screen-title-niche">📈 Your niche: Trading &amp; Investing</div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
@@ -8953,6 +8983,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- CREATIVE MASTER — AI Video (SkyReels) + Production, pass-through billed, openart.ai-styled studio -->
     <div class="screen" id="screen-creativemaster" data-sbg="creativemaster">
       <div class="screen-title"><i class="fa-solid fa-clapperboard"></i> <span>Creative Master</span></div>
+      <div class="screen-title-niche">🎬 Your niche: Content &amp; Video Production</div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="cm-tabs">
@@ -9136,6 +9167,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <div class="screen" id="screen-crmmaster" data-sbg="crmmaster">
       <div class="screen-title"><i class="fa-solid fa-toolbox"></i> <span>CRM Master</span></div>
+      <div class="screen-title-niche">🧰 Your niche: Sales &amp; Client Management</div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="cm-tabs">
@@ -10182,6 +10214,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ══════════════════ MY STORE MASTER (Create Product + My Store + Marketplace) ══════════════════ -->
     <div class="screen" id="screen-mystoremaster" data-sbg="mystore">
       <div class="screen-title"><i class="fa-solid fa-store"></i> My Store <span>Master</span></div>
+      <div class="screen-title-niche">🏪 Your niche: E-Commerce &amp; Print-on-Demand</div>
       <div id="storeMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
       <div class="rei-view-bar" style="margin-bottom:16px">
         <button class="rei-view active" id="msmVStore" onclick="msmSwitch('store')">🛍️ My Store</button>
@@ -10805,6 +10838,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <!-- Header -->
   <div class="rei-top">
     <div class="rei-title"><i class="fa-solid fa-city"></i> <span>Real Estate Master</span></div>
+    <div class="screen-title-niche">🏙️ Your niche: Wholesaling &amp; Flipping</div>
     <span class="rei-pill off" id="reiStatusPill">NO DATA SOURCE</span>
     <button class="rei-demo-btn" onclick="reiDemoOn()" title="See what Real Estate Master looks like once a data source is connected">▶ View Demo</button>
     <button class="rei-gear" onclick="reiOpenSettings()">⚙ Setup</button>
@@ -21541,7 +21575,7 @@ async function renderBusinessEssentialsTiles(){
     var cats = catOrder.filter(function(c){ return byCat[c]; })
       .concat(Object.keys(byCat).filter(function(c){ return catOrder.indexOf(c) === -1; }));
 
-    el.innerHTML = cats.map(function(cat){
+    function mmRenderTileCategory(cat){
       var tilesHtml;
       if (cat === 'GAIN$ Plan') {
         // The 5 individual GAIN$ steps are consolidated into one
@@ -21609,14 +21643,35 @@ async function renderBusinessEssentialsTiles(){
           ' ondragstart="mmTileDragStart(event)" ondragover="mmTileDragOver(event)" ondrop="mmTileDrop(event)" ondragend="mmTileDragEnd(event)"' +
           ' onclick="mmOpenTileDetail(\'' + safeId + '\')" title="' + eeEsc(t.description || '') + '">' + badge + body + '</div>';
       }).join('');
-      var headerHtml = (cat === 'GAIN$ Plan')
-        ? '<div class="gain-plan-kicker">✅ Essential for Set Up</div>' +
-          '<div class="gain-plan-headline">Follow the GAIN$ Plan</div>' +
-          '<div class="gain-plan-sub">Every tile below is essential to your business — take them in order, or skip any and come back later.</div>'
-        : '<div class="tile-category-label">' + eeEsc(cat) + '</div>';
+      var headerHtml = '<div class="tile-category-label">' + eeEsc(cat) + '</div>';
       return '<div class="tile-category">' + headerHtml +
         '<div class="tile-grid" data-tile-category="' + eeEsc(cat) + '">' + tilesHtml + '</div></div>';
-    }).join('');
+    }
+
+    // The GAIN$ Plan / Discover & Setup tile always renders on its own,
+    // front and center. Every other category gets collected together and
+    // tucked behind one collapsible "Tools" dropdown right underneath it —
+    // members who just want to get set up aren't confronted with a wall of
+    // every tool category all at once; the tools are still one tap away.
+    var gainCats = cats.filter(function(c){ return c === 'GAIN$ Plan'; });
+    var toolCats = cats.filter(function(c){ return c !== 'GAIN$ Plan'; });
+    var gainHtml = gainCats.map(mmRenderTileCategory).join('');
+    var toolsHtml = toolCats.map(mmRenderTileCategory).join('');
+    var toolsTileCount = toolCats.reduce(function(sum, c){ return sum + (byCat[c] ? byCat[c].length : 0); }, 0);
+    var toolsLiveCount = toolCats.reduce(function(sum, c){ return sum + (byCat[c] ? byCat[c].filter(function(t){ return t.status === 'live'; }).length : 0); }, 0);
+    var toolsOpen = true;
+    try { toolsOpen = localStorage.getItem('mmToolsDropdownOpen') !== '0'; } catch (e) {}
+    var toolsDropdownHtml = !toolCats.length ? '' :
+      '<div class="mm-tools-dropdown' + (toolsOpen ? ' is-open' : '') + '" id="mmToolsDropdown">' +
+        '<button type="button" class="mm-tools-toggle" onclick="mmToggleToolsDropdown()" aria-expanded="' + (toolsOpen ? 'true' : 'false') + '" aria-controls="mmToolsDropdownBody">' +
+          '<span class="mm-tools-toggle-left"><span class="mm-tools-icon">🛠️</span><span class="mm-tools-title">Tools</span>' +
+          '<span class="mm-tools-count">' + toolsLiveCount + '/' + toolsTileCount + ' live</span></span>' +
+          '<span class="mm-tools-chevron"><i class="fa-solid fa-chevron-down"></i></span>' +
+        '</button>' +
+        '<div class="mm-tools-body" id="mmToolsDropdownBody">' + toolsHtml + '</div>' +
+      '</div>';
+
+    el.innerHTML = gainHtml + toolsDropdownHtml;
 
     renderGainPlanBanner();
     mmMaybePromptGainPlan();
@@ -21652,6 +21707,26 @@ function mmAnimateTilesIn(){
   });
 }
 window.mmAnimateTilesIn = mmAnimateTilesIn;
+
+// Collapsible "Tools" dropdown — every non-GAIN$ tile category lives
+// inside it so the dashboard opens on the one thing that matters (Discover
+// & Setup) instead of a wall of every category at once. Open/closed state
+// is remembered per-device via localStorage so it doesn't re-collapse on
+// every login once a member has opened it.
+function mmToggleToolsDropdown(){
+  var el = document.getElementById('mmToolsDropdown');
+  if (!el) return;
+  var nowOpen = !el.classList.contains('is-open');
+  el.classList.toggle('is-open', nowOpen);
+  var btn = el.querySelector('.mm-tools-toggle');
+  if (btn) btn.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+  try { localStorage.setItem('mmToolsDropdownOpen', nowOpen ? '1' : '0'); } catch (e) {}
+  if (nowOpen && !mmPrefersReducedMotion() && window.gsap) {
+    var tiles = el.querySelectorAll('.mm-tools-body .service-tile');
+    if (tiles.length) gsap.from(tiles, { opacity: 0, y: 10, duration: .35, ease: 'power3.out', stagger: .02, clearProps: 'opacity,transform' });
+  }
+}
+window.mmToggleToolsDropdown = mmToggleToolsDropdown;
 
 // Every login (once per session, not on every re-render) — if any GAIN$
 // step is still pending, open it right in front of the member so they
