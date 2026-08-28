@@ -7029,7 +7029,7 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
   opacity:0;transition:opacity .6s ease;
   pointer-events:none;
 }
-#mmDashVantaBg.visible{ opacity:1; }
+#mmDashVantaBg.visible{ opacity:.5; }
 @media (prefers-reduced-motion: reduce){ #mmDashVantaBg{ display:none !important; } }
 
 /* Cockpit HUD overlay — faint corner brackets + horizon line + edge
@@ -11144,7 +11144,7 @@ async function mmInitDashboardVanta(){
         mouseControls: true, touchControls: true, gyroControls: false,
         minHeight: 200, minWidth: 200,
         baseColor: 0x2e7bff, backgroundColor: 0x0a0e1a,
-        amplitudeFactor: 1.4, size: 1.6, xOffset: 0.15, yOffset: -0.1,
+        amplitudeFactor: .9, size: .9, xOffset: 0.35, yOffset: -0.35,
       });
     }
   } catch (e) { console.warn('Dashboard 3D background failed to load', e); el.classList.remove('visible'); }
