@@ -7020,6 +7020,18 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
 }
 @media (prefers-reduced-motion: reduce){ #dashLiquidBg{ transition:none; animation:none; } }
 
+/* Dashboard-only living 3D backdrop (Vanta.js "Halo" over Three.js) —
+   replaces the static photo just on the dashboard screen. Same fixed/
+   pointer-events-none pattern as #dashLiquidBg above so it never blocks
+   clicks on the tiles or cards drawn above it. */
+#mmDashVantaBg{
+  position:fixed;inset:0;z-index:0;
+  opacity:0;transition:opacity .6s ease;
+  pointer-events:none;
+}
+#mmDashVantaBg.visible{ opacity:1; }
+@media (prefers-reduced-motion: reduce){ #mmDashVantaBg{ display:none !important; } }
+
 /* Cockpit HUD overlay — faint corner brackets + horizon line + edge
    vignette layered above the background photo on every screen, so the
    whole app reads as "viewed from a cockpit in flight" rather than a
@@ -7697,6 +7709,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div id="sbgLayer" class="screen-bg-layer" aria-hidden="true"></div>
 <div id="bgGrid" class="bg-grid" aria-hidden="true"></div>
 <div id="dashLiquidBg" class="visible" data-lg-screen="dashboard" style="background-image:linear-gradient(180deg, rgba(10,8,14,.32) 0%, rgba(10,8,14,.62) 65%, rgba(10,8,14,.86) 100%), url('https://loremflickr.com/1600/1000/aerial,city,skyline,dusk?lock=301');background-position:center 45%" aria-hidden="true"></div>
+<div id="mmDashVantaBg" aria-hidden="true"></div>
 <!-- COCKPIT HUD OVERLAY — sits above the background photo on every screen
      to reinforce "flying" over the city rather than just viewing a photo:
      a soft vignette plus faint corner HUD brackets, like a heads-up
@@ -11083,8 +11096,76 @@ var MM_LG_SCREEN_PHOTOS = {
   account:          { kw: 'clouds,aerial,horizon',          lock: 403, pos: 'center 45%' },
   admin:            { kw: 'city,skyline,aerial,control,tower', lock: 304, pos: 'center 50%' }
 };
+// ── Shared lazy-script loader — used by the dashboard 3D background and
+// the tile entrance motion below, so each external library is fetched at
+// most once and only when a screen actually needs it.
+function mmPrefersReducedMotion(){
+  try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; }
+}
+window.mmPrefersReducedMotion = mmPrefersReducedMotion;
+function mmLoadScriptOnce(src){
+  return new Promise(function(resolve, reject){
+    var existing = document.querySelector('script[data-mm-src="' + src + '"]');
+    if (existing) {
+      if (existing.getAttribute('data-loaded') === '1') { resolve(); return; }
+      existing.addEventListener('load', function(){ resolve(); });
+      existing.addEventListener('error', reject);
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = src; s.async = true; s.setAttribute('data-mm-src', src);
+    s.onload = function(){ s.setAttribute('data-loaded', '1'); resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+window.mmLoadScriptOnce = mmLoadScriptOnce;
+
+// ── Dashboard-only living 3D background — Vanta.js "Halo" over Three.js.
+// A slow-drifting glowing ring in the brand's navy/blue, replacing the
+// static photo backdrop just on the dashboard so the screen every member
+// sees most feels alive instead of static. Both libraries are lazy-loaded
+// (only fetched the first time the dashboard is actually shown) and the
+// effect is destroyed whenever the member navigates away, so no other
+// screen pays for the animation loop or the GPU/battery cost.
+var mmVantaEffect = null, mmVantaLoading = false;
+async function mmInitDashboardVanta(){
+  var el = document.getElementById('mmDashVantaBg');
+  if (!el || mmPrefersReducedMotion()) return;
+  el.classList.add('visible');
+  if (mmVantaEffect || mmVantaLoading) return;
+  mmVantaLoading = true;
+  try {
+    if (!window.THREE) await mmLoadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js');
+    if (!window.VANTA || !window.VANTA.HALO) await mmLoadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.halo.min.js');
+    if (window.VANTA && window.VANTA.HALO && document.getElementById('mmDashVantaBg')) {
+      mmVantaEffect = window.VANTA.HALO({
+        el: '#mmDashVantaBg',
+        mouseControls: true, touchControls: true, gyroControls: false,
+        minHeight: 200, minWidth: 200,
+        baseColor: 0x2e7bff, backgroundColor: 0x0a0e1a,
+        amplitudeFactor: 1.4, size: 1.6, xOffset: 0.15, yOffset: -0.1,
+      });
+    }
+  } catch (e) { console.warn('Dashboard 3D background failed to load', e); el.classList.remove('visible'); }
+  mmVantaLoading = false;
+}
+window.mmInitDashboardVanta = mmInitDashboardVanta;
+function mmTeardownDashboardVanta(){
+  var el = document.getElementById('mmDashVantaBg');
+  if (el) el.classList.remove('visible');
+  if (mmVantaEffect) { try { mmVantaEffect.destroy(); } catch(e){} mmVantaEffect = null; }
+}
+window.mmTeardownDashboardVanta = mmTeardownDashboardVanta;
+
 function mmUpdateLiquidGlassBg(id){
   var el = document.getElementById('dashLiquidBg');
+  if (id === 'dashboard') {
+    if (el) el.classList.remove('visible');
+    mmInitDashboardVanta();
+    return;
+  }
+  mmTeardownDashboardVanta();
   if (!el) return;
   var cfg = MM_LG_SCREEN_PHOTOS[id];
   if (!cfg) { el.classList.remove('visible'); return; }
@@ -21540,11 +21621,37 @@ async function renderBusinessEssentialsTiles(){
     renderGainPlanBanner();
     mmMaybePromptGainPlan();
     mmRenderDailyBrief();
+    mmAnimateTilesIn();
   } catch (e) {
     el.innerHTML = '<div class="tile-grid-empty">Could not load Business Essentials right now.</div>';
   }
 }
 window.renderBusinessEssentialsTiles = renderBusinessEssentialsTiles;
+
+// Tile grid entrance motion (GSAP, lazy-loaded) — a quick staggered
+// fade + rise each time the grid redraws (login, drag-reorder, a GAIN$
+// step completing), instead of tiles just snapping into place. Skips
+// entirely under prefers-reduced-motion.
+var mmGsapLoading = false;
+async function mmEnsureGsap(){
+  if (window.gsap) return true;
+  if (mmGsapLoading) { for (var i = 0; i < 20 && !window.gsap; i++) await new Promise(function(r){ setTimeout(r, 100); }); return !!window.gsap; }
+  mmGsapLoading = true;
+  try { await mmLoadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js'); } catch (e) {}
+  mmGsapLoading = false;
+  return !!window.gsap;
+}
+window.mmEnsureGsap = mmEnsureGsap;
+function mmAnimateTilesIn(){
+  if (mmPrefersReducedMotion()) return;
+  mmEnsureGsap().then(function(ok){
+    if (!ok || !window.gsap) return;
+    var tiles = document.querySelectorAll('#businessEssentialsSection .service-tile');
+    if (!tiles.length) return;
+    gsap.from(tiles, { opacity: 0, y: 14, duration: .45, ease: 'power3.out', stagger: .035, clearProps: 'opacity,transform' });
+  });
+}
+window.mmAnimateTilesIn = mmAnimateTilesIn;
 
 // Every login (once per session, not on every re-render) — if any GAIN$
 // step is still pending, open it right in front of the member so they
