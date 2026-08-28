@@ -21461,7 +21461,29 @@ async function renderBusinessEssentialsTiles(){
       .concat(Object.keys(byCat).filter(function(c){ return catOrder.indexOf(c) === -1; }));
 
     el.innerHTML = cats.map(function(cat){
-      var tilesHtml = byCat[cat].map(function(t){
+      var tilesHtml;
+      if (cat === 'GAIN$ Plan') {
+        // The 5 individual GAIN$ steps are consolidated into one
+        // "Discover & Setup" tile — an AI agent (voice + form) walks the
+        // member through all 5 steps inside a single guided popup instead
+        // of 5 separate tiles/detail-modals. See mmOpenDiscoverSetup().
+        var dsDone = MM_GAIN_STEP_ORDER.filter(function(s){ return gainPlan[s] && gainPlan[s].status && gainPlan[s].status !== 'pending'; }).length;
+        var dsTotal = MM_GAIN_STEP_ORDER.length;
+        var dsAllDone = dsDone === dsTotal;
+        var dsBadge = dsAllDone
+          ? '<span class="tile-status-badge live">✓ ALL SET</span>'
+          : '<span class="tile-status-badge soon">' + dsDone + '/' + dsTotal + '</span>';
+        var dsBody =
+          '<div class="qa-icon">' + (dsAllDone ? '✅' : '🧭') + '</div>' +
+          '<div class="qa-label">Discover &amp; Setup</div>' +
+          '<div class="gain-next-flag">' + (dsAllDone ? 'All done — tap to review' : '↓ ' + dsDone + ' of ' + dsTotal + ' complete — tap to continue') + '</div>';
+        tilesHtml = '<div class="service-tile is-live gain-tile' + (dsAllDone ? ' is-complete' : ' is-pending-glow') + '" onclick="mmOpenDiscoverSetup()" title="Your AI agent walks you through setup — by voice or by typing.">' + dsBadge + dsBody + '</div>';
+        return '<div class="tile-category"><div class="gain-plan-kicker">✅ Essential for Set Up</div>' +
+          '<div class="gain-plan-headline">Follow the GAIN$ Plan</div>' +
+          '<div class="gain-plan-sub">Your AI agent will walk you through it — just talk or type, and it fills things out for you.</div>' +
+          '<div class="tile-grid" data-tile-category="' + eeEsc(cat) + '">' + tilesHtml + '</div></div>';
+      }
+      tilesHtml = byCat[cat].map(function(t){
         var isLive = t.status === 'live';
         var safeId = eeEsc(t.id).replace(/'/g,"");
         var gainStatus = t.gainStep ? ((gainPlan[t.gainStep] && gainPlan[t.gainStep].status) || 'pending') : null;
@@ -21535,12 +21557,10 @@ function mmMaybePromptGainPlan(){
   if (!gainPlan) return;
   var nextStep = MM_GAIN_STEP_ORDER.find(function(s){ return !gainPlan[s] || gainPlan[s].status === 'pending'; });
   if (!nextStep) { mmGainPromptShownThisSession = true; return; }
-  var nextTile = (mmTileRegistryCache || []).find(function(t){ return t.gainStep === nextStep; });
-  if (!nextTile) return;
   mmGainPromptShownThisSession = true;
   setTimeout(function(){
     if (document.getElementById('screen-dashboard') && document.getElementById('screen-dashboard').classList.contains('active')) {
-      mmOpenTileDetail(nextTile.id);
+      mmOpenDiscoverSetup(nextStep);
     }
   }, 1400);
 }
@@ -22546,6 +22566,532 @@ async function mmSubmitGainQuestionnaire(){
   }
 }
 window.mmSubmitGainQuestionnaire = mmSubmitGainQuestionnaire;
+
+// ── "Discover & Setup" — the 5 GAIN$ Plan steps consolidated into one
+// guided popup, driven by an AI agent that asks the right questions by
+// BOTH voice and form and fills things out for the member. The agent
+// greets the member (a different, personality-driven line each time, in
+// their site language, and different depending on whether they're brand
+// new or coming back) then walks step-by-step: Business Discovery asks
+// one field at a time and auto-saves once every field is answered;
+// Payments explains + launches the real Stripe Connect onboarding
+// (that's Stripe's own hosted, compliance-required form — the agent
+// can't fill that one in for them, only explain and hand off to it);
+// Website / Social / Marketing ask a couple of quick guiding questions
+// then hand off to the right Master AI's chat with those answers already
+// folded into the prompt, so the member never has to repeat themselves.
+var MM_DS_Q_FIELDS = [
+  { key: 'businessName',     id: 'mmDsQName',       type: 'text' },
+  { key: 'entityType',       id: 'mmDsQEntity',      type: 'select', options: ['', 'Sole Proprietorship', 'LLC', 'S-Corp', 'C-Corp', 'Partnership', 'Nonprofit'] },
+  { key: 'industry',         id: 'mmDsQIndustry',    type: 'text' },
+  { key: 'stage',            id: 'mmDsQStage',       type: 'select', options: ['Idea', 'Starting', 'Running', 'Growing'] },
+  { key: 'isRegistered',     id: 'mmDsQRegistered',  type: 'check' },
+  { key: 'hasWebsite',       id: 'mmDsQWebsite',     type: 'check' },
+  { key: 'hasSocial',        id: 'mmDsQSocial',      type: 'check' },
+  { key: 'acceptsPayments',  id: 'mmDsQPayments',    type: 'check' },
+  { key: 'hasEIN',           id: 'mmDsQEIN',         type: 'check' },
+  { key: 'goals',            id: 'mmDsQGoals',       type: 'textarea' },
+];
+window.MM_DS_Q_FIELDS = MM_DS_Q_FIELDS;
+
+var MM_DS_STR = {
+  en: {
+    title: 'Discover & Setup', subtitle: "Let's get your business fully set up.",
+    stepLabels: { questionnaire: 'Business Discovery', merchant: 'Payments', website: 'Website', social: 'Social Media', marketing: 'Marketing' },
+    qAsk: {
+      businessName: "What's your business name?",
+      entityType: "What type of entity is it? Sole proprietorship, LLC, S-corp, C-corp, partnership, or nonprofit — or just say 'not sure yet'.",
+      industry: "What industry are you in?",
+      stage: "Where are you right now — just an idea, starting up, already running, or growing?",
+      isRegistered: "Is your business already registered? Yes or no.",
+      hasWebsite: "Do you already have a website? Yes or no.",
+      hasSocial: "Are you already set up on social media? Yes or no.",
+      acceptsPayments: "Do you already accept card payments? Yes or no.",
+      hasEIN: "Do you already have an EIN, your Employer ID Number? Yes or no.",
+      goals: "In your own words — what are you trying to achieve with your business?",
+    },
+    merchantExplain: "This connects a real Stripe merchant account so you can accept card payments. It opens in a new tab — come back here when you're done.",
+    contextAsk: {
+      website: "Tell me a bit about what you want your website to do, and whether you already have a domain or hosting.",
+      social: "Which platforms do you want to focus on — Instagram, Facebook, TikTok, something else?",
+      marketing: "What's the main goal right now — more leads, more repeat customers, or brand awareness?",
+    },
+    btnListen: '🎙️ Talk to your agent', btnListening: '🎙️ Listening…', btnSaveContinue: 'Save & continue',
+    btnConnect: 'Connect Stripe', btnHandoff: 'Continue with your AI agent →', btnSkip: 'Skip for now',
+    btnMarkComplete: 'Mark complete', btnReopen: 'Undo / redo', btnClose: 'Close',
+    allDoneTitle: "You're all set! 🎉", allDoneBody: 'Every step of your GAIN$ Plan is complete. You can still revisit any step above.',
+    typePlaceholder: 'Or type your answer…',
+  },
+  es: {
+    title: 'Descubre y Configura', subtitle: 'Vamos a dejar tu negocio completamente listo.',
+    stepLabels: { questionnaire: 'Descubrimiento del Negocio', merchant: 'Pagos', website: 'Sitio Web', social: 'Redes Sociales', marketing: 'Marketing' },
+    qAsk: {
+      businessName: '¿Cómo se llama tu negocio?',
+      entityType: "¿Qué tipo de entidad es? Propietario único, LLC, S-corp, C-corp, sociedad, o sin fines de lucro — o di 'no estoy seguro'.",
+      industry: '¿En qué industria trabajas?',
+      stage: '¿En qué etapa estás — solo una idea, comenzando, ya operando, o creciendo?',
+      isRegistered: '¿Tu negocio ya está registrado? Sí o no.',
+      hasWebsite: '¿Ya tienes un sitio web? Sí o no.',
+      hasSocial: '¿Ya tienes redes sociales configuradas? Sí o no.',
+      acceptsPayments: '¿Ya aceptas pagos con tarjeta? Sí o no.',
+      hasEIN: '¿Ya tienes un EIN, tu número de identificación de empleador? Sí o no.',
+      goals: '¿En tus propias palabras, qué estás tratando de lograr con tu negocio?',
+    },
+    merchantExplain: 'Esto conecta una cuenta real de Stripe para que puedas aceptar pagos con tarjeta. Se abre en una pestaña nueva — vuelve aquí cuando termines.',
+    contextAsk: {
+      website: 'Cuéntame un poco sobre lo que quieres que haga tu sitio web, y si ya tienes dominio o hosting.',
+      social: '¿En qué plataformas quieres enfocarte — Instagram, Facebook, TikTok, otra?',
+      marketing: '¿Cuál es el objetivo principal ahora — más clientes potenciales, más clientes recurrentes, o más reconocimiento de marca?',
+    },
+    btnListen: '🎙️ Habla con tu agente', btnListening: '🎙️ Escuchando…', btnSaveContinue: 'Guardar y continuar',
+    btnConnect: 'Conectar Stripe', btnHandoff: 'Continuar con tu agente de IA →', btnSkip: 'Omitir por ahora',
+    btnMarkComplete: 'Marcar como completo', btnReopen: 'Deshacer / rehacer', btnClose: 'Cerrar',
+    allDoneTitle: '¡Todo listo! 🎉', allDoneBody: 'Completaste todos los pasos de tu Plan GAIN$. Aún puedes revisar cualquier paso arriba.',
+    typePlaceholder: 'O escribe tu respuesta…',
+  },
+  pt: {
+    title: 'Descobrir e Configurar', subtitle: 'Vamos deixar seu negócio totalmente configurado.',
+    stepLabels: { questionnaire: 'Descoberta do Negócio', merchant: 'Pagamentos', website: 'Site', social: 'Redes Sociais', marketing: 'Marketing' },
+    qAsk: {
+      businessName: 'Qual é o nome do seu negócio?',
+      entityType: "Que tipo de entidade é? Empresário individual, LLC, S-corp, C-corp, sociedade, ou sem fins lucrativos — ou diga 'ainda não sei'.",
+      industry: 'Em qual setor você atua?',
+      stage: 'Em que fase você está — só uma ideia, começando, já em funcionamento, ou crescendo?',
+      isRegistered: 'Seu negócio já está registrado? Sim ou não.',
+      hasWebsite: 'Você já tem um site? Sim ou não.',
+      hasSocial: 'Você já está configurado nas redes sociais? Sim ou não.',
+      acceptsPayments: 'Você já aceita pagamentos com cartão? Sim ou não.',
+      hasEIN: 'Você já tem um EIN, seu número de identificação de empregador? Sim ou não.',
+      goals: 'Em suas próprias palavras, o que você está tentando alcançar com seu negócio?',
+    },
+    merchantExplain: 'Isso conecta uma conta real do Stripe para você aceitar pagamentos com cartão. Abre em uma nova aba — volte aqui quando terminar.',
+    contextAsk: {
+      website: 'Me conte um pouco sobre o que você quer que seu site faça, e se você já tem domínio ou hospedagem.',
+      social: 'Em quais plataformas você quer focar — Instagram, Facebook, TikTok, outra?',
+      marketing: 'Qual é o objetivo principal agora — mais leads, mais clientes recorrentes, ou mais reconhecimento de marca?',
+    },
+    btnListen: '🎙️ Fale com seu agente', btnListening: '🎙️ Ouvindo…', btnSaveContinue: 'Salvar e continuar',
+    btnConnect: 'Conectar Stripe', btnHandoff: 'Continuar com seu agente de IA →', btnSkip: 'Pular por agora',
+    btnMarkComplete: 'Marcar como concluído', btnReopen: 'Desfazer / refazer', btnClose: 'Fechar',
+    allDoneTitle: 'Tudo pronto! 🎉', allDoneBody: 'Você concluiu todas as etapas do seu Plano GAIN$. Você ainda pode revisar qualquer etapa acima.',
+    typePlaceholder: 'Ou digite sua resposta…',
+  },
+};
+function mmDsT(key){
+  var lang = (typeof MM_LANG !== 'undefined' && MM_LANG && MM_DS_STR[MM_LANG]) ? MM_LANG : 'en';
+  return MM_DS_STR[lang][key];
+}
+window.mmDsT = mmDsT;
+
+// Greetings — a fun-but-professional personality, several variants per
+// language/state so it doesn't repeat the exact same line every visit.
+// "§" marks where the member's first name gets inserted (or removed
+// cleanly if we don't have one).
+var MM_DS_GREETINGS = {
+  en: {
+    welcome: [
+      "Hi§! I'm Genie — think of me as your business co-pilot. Let's knock out your setup together.",
+      "Welcome aboard§! I'm Genie, and I'm genuinely excited to help you get set up. Let's dive in.",
+      "Hey there§ — I'm Genie. Give me a few minutes and I'll have your business dialed in.",
+      "Nice to meet you§! I'm Genie. Ready to build the foundation for your business? Let's go.",
+    ],
+    back: [
+      "Welcome back§! Let's pick up right where we left off.",
+      "Good to see you again§ — a few steps left, and you'll be fully set up.",
+      "You're back§! I like the dedication. Let's finish strong.",
+      "Welcome back§ — let's knock out the rest of your GAIN$ Plan.",
+    ],
+  },
+  es: {
+    welcome: [
+      '¡Hola§! Soy Genie, tu copiloto de negocios. Vamos a completar tu configuración juntos.',
+      '¡Bienvenido§! Soy Genie, y estoy encantado de ayudarte. Empecemos.',
+      '¡Hola§! Dame unos minutos y dejaremos todo listo.',
+      '¡Un placer conocerte§! Soy Genie. ¿Listo para construir las bases de tu negocio? Vamos.',
+    ],
+    back: [
+      '¡Bienvenido de nuevo§! Sigamos donde lo dejamos.',
+      'Qué bueno verte otra vez§ — faltan pocos pasos para terminar.',
+      '¡Volviste§! Me gusta esa dedicación. Terminemos con todo.',
+      'Bienvenido de nuevo§ — vamos a completar el resto de tu Plan GAIN$.',
+    ],
+  },
+  pt: {
+    welcome: [
+      'Oi§! Eu sou o Genie, seu copiloto de negócios. Vamos concluir sua configuração juntos.',
+      'Bem-vindo§! Sou o Genie, e estou animado para ajudar. Vamos começar.',
+      'Olá§! Me dê alguns minutos e deixamos tudo pronto.',
+      'Prazer em conhecê-lo§! Sou o Genie. Pronto para construir a base do seu negócio? Vamos lá.',
+    ],
+    back: [
+      'Bem-vindo de volta§! Vamos continuar de onde paramos.',
+      'Que bom te ver de novo§ — faltam poucos passos para terminar.',
+      'Você voltou§! Adoro essa dedicação. Vamos terminar com tudo.',
+      'Bem-vindo de volta§ — vamos concluir o resto do seu Plano GAIN$.',
+    ],
+  },
+};
+function mmDsGreeting(isReturning, name){
+  var lang = (typeof MM_LANG !== 'undefined' && MM_LANG && MM_DS_GREETINGS[MM_LANG]) ? MM_LANG : 'en';
+  var pool = MM_DS_GREETINGS[lang][isReturning ? 'back' : 'welcome'];
+  var tmpl = pool[Math.floor(Math.random() * pool.length)];
+  return name ? tmpl.replace('§', ' ' + name) : tmpl.replace('§', '');
+}
+window.mmDsGreeting = mmDsGreeting;
+
+function mmOpenDiscoverSetup(startStep){
+  if (document.getElementById('mmDsOverlay')) { if (startStep) mmDsGoStep(startStep); return; }
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+  var hasAnyProgress = MM_GAIN_STEP_ORDER.some(function(s){ return gainPlan[s] && gainPlan[s].status && gainPlan[s].status !== 'pending'; });
+  var firstPending = MM_GAIN_STEP_ORDER.find(function(s){ return !gainPlan[s] || gainPlan[s].status === 'pending'; });
+  window.mmDs = { open: true, step: startStep || firstPending || MM_GAIN_STEP_ORDER[0], qAnswers: {}, ctxAnswers: {}, qIdx: 0, listening: false, recognition: null };
+  var wrap = document.createElement('div');
+  wrap.innerHTML = mmDsOverlayHtml();
+  document.body.appendChild(wrap.firstChild);
+  mmDsRenderProgress();
+  if (!firstPending && !startStep) { mmDsRenderAllDone(); return; }
+  mmDsRenderStep();
+  var name = (window.userData && window.userData.name) || (window.currentUser && window.currentUser.displayName) || '';
+  var firstName = name ? String(name).split(' ')[0] : '';
+  var greet = mmDsGreeting(hasAnyProgress, firstName);
+  setTimeout(function(){
+    mmDsSetCaption(greet);
+    if (typeof genieFabSpeak === 'function') genieFabSpeak(greet);
+  }, 250);
+}
+window.mmOpenDiscoverSetup = mmOpenDiscoverSetup;
+
+function mmDsClose(){
+  var ov = document.getElementById('mmDsOverlay');
+  if (ov) ov.remove();
+  if (window.mmDs && window.mmDs.recognition) { try { window.mmDs.recognition.stop(); } catch(e){} }
+  if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch(e){} }
+  if (window.mmDs) window.mmDs.open = false;
+}
+window.mmDsClose = mmDsClose;
+
+function mmDsOverlayHtml(){
+  return (
+    '<div id="mmDsOverlay" style="position:fixed;inset:0;z-index:99998;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;">' +
+      '<div style="width:100%;max-width:640px;max-height:92vh;overflow-y:auto;background:#0f1a2e;border:1px solid #24365c;border-radius:16px;padding:24px 22px 20px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative;">' +
+        '<button onclick="mmDsClose()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#7f97c2;font-size:1.1rem;cursor:pointer;">✕</button>' +
+        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:6px;">🧞 ' + eeEsc(mmDsT('title')) + '</div>' +
+        '<div style="font-size:.85rem;color:#a9bdda;margin-bottom:16px;">' + eeEsc(mmDsT('subtitle')) + '</div>' +
+        '<div id="mmDsProgress" style="display:flex;gap:6px;margin-bottom:18px;"></div>' +
+        '<div id="mmDsCaption" style="background:rgba(111,168,255,.1);border:1px solid rgba(111,168,255,.25);border-radius:10px;padding:10px 12px;font-size:.85rem;line-height:1.45;margin-bottom:16px;min-height:20px;"></div>' +
+        '<div id="mmDsBody"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:18px;align-items:center;">' +
+          '<button id="mmDsMicBtn" onclick="mmDsMicClick()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:1px solid #24365c;background:#132242;color:#eaf1ff;font-weight:600;font-size:.85rem;cursor:pointer;">' + eeEsc(mmDsT('btnListen')) + '</button>' +
+          '<input id="mmDsTextInput" type="text" placeholder="' + eeEsc(mmDsT('typePlaceholder')) + '" style="flex:1;padding:11px 12px;border-radius:10px;border:1px solid #24365c;background:#0c1730;color:#eaf1ff;font-size:.85rem;" onkeydown="if(event.key===\'Enter\'){mmDsSubmitTyped();}">' +
+          '<button onclick="mmDsSubmitTyped()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:none;background:#2457c9;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">➤</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function mmDsRenderProgress(){
+  var el = document.getElementById('mmDsProgress');
+  if (!el || !window.mmDs) return;
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+  var labels = mmDsT('stepLabels');
+  el.innerHTML = MM_GAIN_STEP_ORDER.map(function(s){
+    var st = (gainPlan[s] && gainPlan[s].status) || 'pending';
+    var active = window.mmDs.step === s;
+    var bg = st === 'complete' ? '#1f8a4c' : st === 'skipped' ? '#4a5568' : (active ? '#2457c9' : '#1a2740');
+    var label = labels[s] || s;
+    return '<div onclick="mmDsGoStep(\'' + s + '\')" style="flex:1;text-align:center;cursor:pointer;padding:7px 4px;border-radius:8px;background:' + bg + ';font-size:.68rem;font-weight:700;line-height:1.3;' + (active ? 'box-shadow:0 0 0 2px #6fa8ff inset;' : '') + '">' + eeEsc(label) + (st === 'complete' ? ' ✓' : st === 'skipped' ? ' ⏭' : '') + '</div>';
+  }).join('');
+}
+window.mmDsRenderProgress = mmDsRenderProgress;
+
+function mmDsSetCaption(text){
+  var el = document.getElementById('mmDsCaption');
+  if (el) el.textContent = text;
+}
+window.mmDsSetCaption = mmDsSetCaption;
+
+function mmDsGoStep(step){
+  if (!window.mmDs) return;
+  window.mmDs.step = step;
+  window.mmDs.qIdx = 0;
+  mmDsRenderProgress();
+  mmDsRenderStep();
+}
+window.mmDsGoStep = mmDsGoStep;
+
+function mmDsRenderStep(){
+  var body = document.getElementById('mmDsBody');
+  if (!body || !window.mmDs) return;
+  var step = window.mmDs.step;
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+  var status = (gainPlan[step] && gainPlan[step].status) || 'pending';
+  if (step === 'questionnaire') { mmDsRenderQuestionnaire(); return; }
+  if (step === 'merchant') { mmDsRenderMerchant(status); return; }
+  mmDsRenderContextStep(step, status);
+}
+window.mmDsRenderStep = mmDsRenderStep;
+
+function mmDsRenderQuestionnaire(){
+  var body = document.getElementById('mmDsBody');
+  if (!body) return;
+  var q = (mmGainPlanCache && mmGainPlanCache.questionnaire) || {};
+  var ask = mmDsT('qAsk');
+  var rowsHtml = MM_DS_Q_FIELDS.map(function(f){
+    var val = window.mmDs.qAnswers.hasOwnProperty(f.key) ? window.mmDs.qAnswers[f.key] : q[f.key];
+    var labelText = ask[f.key] || f.key;
+    var inputHtml;
+    if (f.type === 'text') {
+      inputHtml = '<input type="text" id="' + f.id + '" value="' + eeEsc(val || '') + '" oninput="mmDsFieldChanged(\'' + f.key + '\')" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid #24365c;background:#0c1730;color:#eaf1ff;font-size:.85rem;">';
+    } else if (f.type === 'textarea') {
+      inputHtml = '<textarea id="' + f.id + '" oninput="mmDsFieldChanged(\'' + f.key + '\')" style="width:100%;min-height:60px;padding:9px 10px;border-radius:8px;border:1px solid #24365c;background:#0c1730;color:#eaf1ff;font-size:.85rem;">' + eeEsc(val || '') + '</textarea>';
+    } else if (f.type === 'select') {
+      inputHtml = '<select id="' + f.id + '" onchange="mmDsFieldChanged(\'' + f.key + '\')" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid #24365c;background:#0c1730;color:#eaf1ff;font-size:.85rem;">' +
+        f.options.map(function(o){ return '<option value="' + eeEsc(o) + '"' + (val === o ? ' selected' : '') + '>' + (o || '—') + '</option>'; }).join('') + '</select>';
+    } else {
+      inputHtml = '<label style="display:flex;align-items:center;gap:8px;font-size:.85rem;"><input type="checkbox" id="' + f.id + '" onchange="mmDsFieldChanged(\'' + f.key + '\')"' + (val ? ' checked' : '') + '> Yes</label>';
+    }
+    return '<div style="margin-bottom:12px;"><div style="font-size:.78rem;color:#a9bdda;margin-bottom:5px;">' + eeEsc(labelText) + '</div>' + inputHtml + '</div>';
+  }).join('');
+  body.innerHTML = rowsHtml + '<div style="display:flex;gap:8px;margin-top:6px;"><button class="tile-detail-btn primary" onclick="mmDsSaveQuestionnaire()">' + eeEsc(mmDsT('btnSaveContinue')) + '</button></div>';
+  window.mmDs.qIdx = 0;
+  mmDsAskCurrentQField();
+}
+window.mmDsRenderQuestionnaire = mmDsRenderQuestionnaire;
+
+function mmDsAskCurrentQField(){
+  var idx = window.mmDs.qIdx;
+  if (idx >= MM_DS_Q_FIELDS.length) { mmDsSaveQuestionnaire(); return; }
+  var f = MM_DS_Q_FIELDS[idx];
+  var question = mmDsT('qAsk')[f.key] || f.key;
+  mmDsSetCaption(question);
+  if (typeof genieFabSpeak === 'function') genieFabSpeak(question);
+}
+window.mmDsAskCurrentQField = mmDsAskCurrentQField;
+
+function mmDsFieldChanged(key){
+  var f = MM_DS_Q_FIELDS.filter(function(x){ return x.key === key; })[0];
+  if (!f) return;
+  var el = document.getElementById(f.id);
+  if (!el) return;
+  window.mmDs.qAnswers[key] = f.type === 'check' ? el.checked : el.value;
+}
+window.mmDsFieldChanged = mmDsFieldChanged;
+
+async function mmDsSaveQuestionnaire(){
+  var val = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var chk = function(id){ var el = document.getElementById(id); return el ? el.checked : false; };
+  var answers = {
+    businessName: val('mmDsQName'), entityType: val('mmDsQEntity'), industry: val('mmDsQIndustry'),
+    stage: val('mmDsQStage'), isRegistered: chk('mmDsQRegistered'), hasWebsite: chk('mmDsQWebsite'),
+    hasSocial: chk('mmDsQSocial'), acceptsPayments: chk('mmDsQPayments'), hasEIN: chk('mmDsQEIN'),
+    einNumber: '', goals: val('mmDsQGoals'),
+  };
+  try {
+    var res = await window.callSubmitGainQuestionnaire(answers);
+    mmGainPlanCache = { businessId: res.businessId, gainPlan: res.gainPlan, questionnaire: answers };
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Saved', 'Business Discovery is complete.');
+    renderBusinessEssentialsTiles();
+    mmDsAdvanceToNextStep();
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not save', e.message || 'Please try again.');
+  }
+}
+window.mmDsSaveQuestionnaire = mmDsSaveQuestionnaire;
+
+function mmDsAdvanceToNextStep(){
+  if (!window.mmDs) return;
+  var gainPlan = (mmGainPlanCache && mmGainPlanCache.gainPlan) || {};
+  var curIdx = MM_GAIN_STEP_ORDER.indexOf(window.mmDs.step);
+  var next = null;
+  for (var i = curIdx + 1; i < MM_GAIN_STEP_ORDER.length; i++){
+    var s = MM_GAIN_STEP_ORDER[i];
+    if (!gainPlan[s] || gainPlan[s].status === 'pending') { next = s; break; }
+  }
+  if (!next) { mmDsRenderAllDone(); return; }
+  mmDsGoStep(next);
+}
+window.mmDsAdvanceToNextStep = mmDsAdvanceToNextStep;
+
+function mmDsRenderAllDone(){
+  var body = document.getElementById('mmDsBody');
+  if (!body) return;
+  mmDsRenderProgress();
+  var line = mmDsT('allDoneTitle') + ' ' + mmDsT('allDoneBody');
+  mmDsSetCaption(mmDsT('allDoneTitle'));
+  if (typeof genieFabSpeak === 'function') genieFabSpeak(line);
+  body.innerHTML = '<div style="text-align:center;padding:20px 10px;">' +
+    '<div style="font-size:2rem;margin-bottom:8px;">🎉</div>' +
+    '<div style="font-weight:700;margin-bottom:6px;">' + eeEsc(mmDsT('allDoneTitle')) + '</div>' +
+    '<div style="font-size:.85rem;color:#a9bdda;">' + eeEsc(mmDsT('allDoneBody')) + '</div>' +
+    '<button class="tile-detail-btn ghost" style="margin-top:16px;" onclick="mmDsClose()">' + eeEsc(mmDsT('btnClose')) + '</button>' +
+  '</div>';
+}
+window.mmDsRenderAllDone = mmDsRenderAllDone;
+
+function mmDsRenderMerchant(status){
+  var body = document.getElementById('mmDsBody');
+  if (!body) return;
+  var explain = mmDsT('merchantExplain');
+  mmDsSetCaption(explain);
+  if (typeof genieFabSpeak === 'function') genieFabSpeak(explain);
+  var btnLabel = status === 'complete' ? 'Manage merchant account' : mmDsT('btnConnect');
+  body.innerHTML =
+    '<div style="font-size:.85rem;color:#c9d7f0;margin-bottom:14px;">' + eeEsc(explain) + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="tile-detail-btn primary" onclick="mmDsStartMerchant(this)">' + eeEsc(btnLabel) + '</button>' +
+      (status === 'pending' ? '<button class="tile-detail-btn skip" onclick="mmDsSetStepStatus(\'merchant\',\'skipped\')">' + eeEsc(mmDsT('btnSkip')) + '</button>' : '') +
+      (status !== 'pending' ? '<button class="tile-detail-btn ghost" onclick="mmDsSetStepStatus(\'merchant\',\'pending\')">' + eeEsc(mmDsT('btnReopen')) + '</button>' : '') +
+    '</div>';
+}
+window.mmDsRenderMerchant = mmDsRenderMerchant;
+
+function mmDsStartMerchant(btn){
+  if (typeof mmStartGainMerchant === 'function') mmStartGainMerchant(btn);
+}
+window.mmDsStartMerchant = mmDsStartMerchant;
+
+function mmDsRenderContextStep(step, status){
+  var body = document.getElementById('mmDsBody');
+  if (!body) return;
+  var ask = mmDsT('contextAsk')[step] || '';
+  mmDsSetCaption(ask);
+  if (typeof genieFabSpeak === 'function') genieFabSpeak(ask);
+  var savedCtx = (window.mmDs.ctxAnswers && window.mmDs.ctxAnswers[step]) || '';
+  body.innerHTML =
+    '<div style="font-size:.85rem;color:#c9d7f0;margin-bottom:12px;">' + eeEsc(ask) + '</div>' +
+    '<textarea id="mmDsCtxInput" oninput="mmDsCtxChanged(\'' + step + '\')" placeholder="' + eeEsc(mmDsT('typePlaceholder')) + '" style="width:100%;min-height:70px;padding:9px 10px;border-radius:8px;border:1px solid #24365c;background:#0c1730;color:#eaf1ff;font-size:.85rem;margin-bottom:12px;">' + eeEsc(savedCtx) + '</textarea>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="tile-detail-btn primary" onclick="mmDsHandOff(\'' + step + '\')">' + eeEsc(mmDsT('btnHandoff')) + '</button>' +
+      (status !== 'complete' ? '<button class="tile-detail-btn ghost" onclick="mmDsSetStepStatus(\'' + step + '\',\'complete\')">' + eeEsc(mmDsT('btnMarkComplete')) + '</button>' : '') +
+      (status === 'pending' ? '<button class="tile-detail-btn skip" onclick="mmDsSetStepStatus(\'' + step + '\',\'skipped\')">' + eeEsc(mmDsT('btnSkip')) + '</button>' : '') +
+      (status !== 'pending' ? '<button class="tile-detail-btn ghost" onclick="mmDsSetStepStatus(\'' + step + '\',\'pending\')">' + eeEsc(mmDsT('btnReopen')) + '</button>' : '') +
+    '</div>';
+}
+window.mmDsRenderContextStep = mmDsRenderContextStep;
+
+function mmDsCtxChanged(step){
+  if (!window.mmDs.ctxAnswers) window.mmDs.ctxAnswers = {};
+  var el = document.getElementById('mmDsCtxInput');
+  window.mmDs.ctxAnswers[step] = el ? el.value : '';
+}
+window.mmDsCtxChanged = mmDsCtxChanged;
+
+function mmDsHandOff(step){
+  var t = (mmTileRegistryCache || []).find(function(x){ return x.gainStep === step; });
+  var cfg = MM_GAIN_STEP_CHAT[step];
+  if (!cfg) return;
+  var ctx = (window.mmDs.ctxAnswers && window.mmDs.ctxAnswers[step]) || '';
+  var basePrompt = (t && t.prompt) || ('Help me with ' + (t ? t.name : step) + '.');
+  var prompt = ctx ? (basePrompt + ' Here is what I told my setup agent: ' + ctx) : basePrompt;
+  mmDsSetStepStatus(step, 'complete', true);
+  mmDsClose();
+  showScreen(cfg.screen);
+  setTimeout(function(){
+    if (cfg.tab && typeof cmViewSwitch === 'function') cmViewSwitch(cfg.tab);
+    setTimeout(function(){
+      if (typeof jarvisAskQuick === 'function') jarvisAskQuick(cfg.masterKey, prompt);
+    }, cfg.tab ? 150 : 0);
+  }, 200);
+}
+window.mmDsHandOff = mmDsHandOff;
+
+async function mmDsSetStepStatus(step, status, skipRender){
+  try {
+    await window.callSetGainStepStatus(step, status);
+    if (mmGainPlanCache && mmGainPlanCache.gainPlan) mmGainPlanCache.gainPlan[step] = { status: status };
+    renderBusinessEssentialsTiles();
+    if (skipRender) return;
+    if (typeof showNotifToast === 'function') showNotifToast(status === 'complete' ? '✓ Marked complete' : (status === 'skipped' ? '⏭ Skipped' : '↺ Reopened'), '');
+    if (status === 'complete' || status === 'skipped') mmDsAdvanceToNextStep();
+    else { mmDsRenderProgress(); mmDsRenderStep(); }
+  } catch (e) {
+    if (typeof showNotifToast === 'function') showNotifToast('⚠ Could not update', e.message || 'Please try again.');
+  }
+}
+window.mmDsSetStepStatus = mmDsSetStepStatus;
+
+function mmDsHandleAnswer(text){
+  if (!window.mmDs) return;
+  var step = window.mmDs.step;
+  mmDsSetCaption('"' + text + '"');
+  if (step === 'questionnaire') { mmDsHandleQAnswer(text); return; }
+  if (step === 'merchant') { return; }
+  if (!window.mmDs.ctxAnswers) window.mmDs.ctxAnswers = {};
+  window.mmDs.ctxAnswers[step] = ((window.mmDs.ctxAnswers[step] || '') + ' ' + text).trim();
+  var ta = document.getElementById('mmDsCtxInput');
+  if (ta) ta.value = window.mmDs.ctxAnswers[step];
+}
+window.mmDsHandleAnswer = mmDsHandleAnswer;
+
+function mmDsHandleQAnswer(text){
+  var idx = window.mmDs.qIdx;
+  var f = MM_DS_Q_FIELDS[idx];
+  if (!f) return;
+  var lower = text.toLowerCase();
+  var value;
+  if (f.type === 'check') {
+    var yes = /\b(yes|yeah|yep|already|i do|si|s[ií]|claro|sim|tenho)\b/i.test(lower);
+    var no = /\b(no|not yet|nope|n[ãa]o|ainda n[ãa]o)\b/i.test(lower);
+    value = yes && !no;
+  } else if (f.key === 'entityType') {
+    if (/llc/.test(lower)) value = 'LLC';
+    else if (/s[\s-]?corp/.test(lower)) value = 'S-Corp';
+    else if (/c[\s-]?corp/.test(lower)) value = 'C-Corp';
+    else if (/partner|socied/.test(lower)) value = 'Partnership';
+    else if (/nonprofit|non-profit|sin fines|sem fins/.test(lower)) value = 'Nonprofit';
+    else if (/sole|[uú]nico|individual/.test(lower)) value = 'Sole Proprietorship';
+    else value = '';
+  } else if (f.key === 'stage') {
+    if (/idea/.test(lower)) value = 'Idea';
+    else if (/start|comenz|come[çc]ando/.test(lower)) value = 'Starting';
+    else if (/grow|crec|crescendo/.test(lower)) value = 'Growing';
+    else if (/runn|already|operat|ya opera|funcionamento/.test(lower)) value = 'Running';
+    else value = 'Idea';
+  } else {
+    value = text;
+  }
+  window.mmDs.qAnswers[f.key] = value;
+  var el = document.getElementById(f.id);
+  if (el) { if (f.type === 'check') el.checked = !!value; else el.value = value; }
+  window.mmDs.qIdx = idx + 1;
+  mmDsAskCurrentQField();
+}
+window.mmDsHandleQAnswer = mmDsHandleQAnswer;
+
+function mmDsMicClick(){
+  if (!window.mmDs) return;
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var micBtn = document.getElementById('mmDsMicBtn');
+  if (!SR) { if (micBtn) micBtn.disabled = true; return; }
+  if (window.mmDs.listening) {
+    if (window.mmDs.recognition) window.mmDs.recognition.stop();
+    return;
+  }
+  var rec = new SR();
+  window.mmDs.recognition = rec;
+  rec.lang = (typeof _genieFabSpeechLang === 'function') ? _genieFabSpeechLang() : 'en-US';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  rec.onstart = function(){ window.mmDs.listening = true; if (micBtn) { micBtn.textContent = mmDsT('btnListening'); micBtn.style.background = '#2457c9'; } };
+  rec.onresult = function(e){
+    var transcript = e.results && e.results[0] && e.results[0][0] ? e.results[0][0].transcript : '';
+    if (transcript) mmDsHandleAnswer(transcript);
+  };
+  rec.onerror = function(){};
+  rec.onend = function(){ window.mmDs.listening = false; if (micBtn) { micBtn.textContent = mmDsT('btnListen'); micBtn.style.background = '#132242'; } window.mmDs.recognition = null; };
+  try { rec.start(); } catch(e){ window.mmDs.listening = false; }
+}
+window.mmDsMicClick = mmDsMicClick;
+
+function mmDsSubmitTyped(){
+  var input = document.getElementById('mmDsTextInput');
+  if (!input || !input.value.trim()) return;
+  var text = input.value.trim();
+  input.value = '';
+  mmDsHandleAnswer(text);
+}
+window.mmDsSubmitTyped = mmDsSubmitTyped;
 
 // ── Drag-to-reorder for Business Essentials tiles ──────────────────────
 var mmDragTileId = null;
