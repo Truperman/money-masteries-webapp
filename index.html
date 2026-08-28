@@ -22771,19 +22771,39 @@ function mmDsClose(){
 window.mmDsClose = mmDsClose;
 
 function mmDsOverlayHtml(){
+  // Colors match the app's real design tokens (body #0A0E1A, .modal bg
+  // #111827, accent #2E7BFF / hover #2568e0 — see .tile-detail-btn.primary)
+  // rather than a one-off palette, so the wizard reads as part of the app,
+  // not a bolted-on popup. The <style> block is scoped to #mmDsOverlay so
+  // it can't leak into the rest of the page.
   return (
+    '<style>' +
+      '#mmDsOverlay{animation:mmDsFadeIn .22s cubic-bezier(.16,1,.3,1);}' +
+      '#mmDsOverlay .mmDsPanel{animation:mmDsPanelIn .28s cubic-bezier(.16,1,.3,1);}' +
+      '@keyframes mmDsFadeIn{from{opacity:0}to{opacity:1}}' +
+      '@keyframes mmDsPanelIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}' +
+      '@media (prefers-reduced-motion: reduce){#mmDsOverlay,#mmDsOverlay .mmDsPanel{animation:none}}' +
+      '#mmDsOverlay button{transition:background .15s ease,border-color .15s ease,color .15s ease,transform .15s ease}' +
+      '#mmDsOverlay .mmDsCloseBtn:hover{color:#eaf1ff;background:rgba(255,255,255,.08)}' +
+      '#mmDsOverlay .mmDsMicBtn:hover{border-color:#2E7BFF80}' +
+      '#mmDsOverlay .mmDsSendBtn:hover{background:#2568e0}' +
+      '#mmDsOverlay input:focus-visible,#mmDsOverlay select:focus-visible,#mmDsOverlay textarea:focus-visible{outline:none;border-color:#2E7BFF;box-shadow:0 0 0 3px #2E7BFF33}' +
+      '#mmDsOverlay button:focus-visible{outline:2px solid #2E7BFF;outline-offset:2px}' +
+      '#mmDsOverlay .mmDsStep{transition:background .2s ease,box-shadow .2s ease,transform .15s ease}' +
+      '#mmDsOverlay .mmDsStep:hover{transform:translateY(-1px)}' +
+    '</style>' +
     '<div id="mmDsOverlay" style="position:fixed;inset:0;z-index:99998;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;">' +
-      '<div style="width:100%;max-width:640px;max-height:92vh;overflow-y:auto;background:#0f1a2e;border:1px solid #24365c;border-radius:16px;padding:24px 22px 20px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative;">' +
-        '<button onclick="mmDsClose()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#7f97c2;font-size:1.1rem;cursor:pointer;">✕</button>' +
+      '<div class="mmDsPanel" style="width:100%;max-width:640px;max-height:92vh;overflow-y:auto;background:#111827;border:1px solid #2E7BFF3d;border-radius:16px;padding:24px 22px 20px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative;">' +
+        '<button class="mmDsCloseBtn" onclick="mmDsClose()" style="position:absolute;top:12px;right:14px;width:30px;height:30px;border-radius:8px;background:none;border:none;color:#7f97c2;font-size:1.05rem;cursor:pointer;">✕</button>' +
         '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:6px;">🧞 ' + eeEsc(mmDsT('title')) + '</div>' +
         '<div style="font-size:.85rem;color:#a9bdda;margin-bottom:16px;">' + eeEsc(mmDsT('subtitle')) + '</div>' +
         '<div id="mmDsProgress" style="display:flex;gap:6px;margin-bottom:18px;"></div>' +
-        '<div id="mmDsCaption" style="background:rgba(111,168,255,.1);border:1px solid rgba(111,168,255,.25);border-radius:10px;padding:10px 12px;font-size:.85rem;line-height:1.45;margin-bottom:16px;min-height:20px;"></div>' +
+        '<div id="mmDsCaption" style="background:rgba(46,123,255,.09);border:1px solid rgba(46,123,255,.28);border-radius:10px;padding:10px 12px;font-size:.85rem;line-height:1.45;margin-bottom:16px;min-height:20px;"></div>' +
         '<div id="mmDsBody"></div>' +
         '<div style="display:flex;gap:8px;margin-top:18px;align-items:center;">' +
-          '<button id="mmDsMicBtn" onclick="mmDsMicClick()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:1px solid #24365c;background:#132242;color:#eaf1ff;font-weight:600;font-size:.85rem;cursor:pointer;">' + eeEsc(mmDsT('btnListen')) + '</button>' +
-          '<input id="mmDsTextInput" type="text" placeholder="' + eeEsc(mmDsT('typePlaceholder')) + '" style="flex:1;padding:11px 12px;border-radius:10px;border:1px solid #24365c;background:#0c1730;color:#eaf1ff;font-size:.85rem;" onkeydown="if(event.key===\'Enter\'){mmDsSubmitTyped();}">' +
-          '<button onclick="mmDsSubmitTyped()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:none;background:#2457c9;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">➤</button>' +
+          '<button id="mmDsMicBtn" class="mmDsMicBtn" onclick="mmDsMicClick()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:1px solid #2E7BFF3d;background:#1a2333;color:#eaf1ff;font-weight:600;font-size:.85rem;cursor:pointer;">' + eeEsc(mmDsT('btnListen')) + '</button>' +
+          '<input id="mmDsTextInput" type="text" placeholder="' + eeEsc(mmDsT('typePlaceholder')) + '" style="flex:1;padding:11px 12px;border-radius:10px;border:1px solid #2E7BFF3d;background:#0c1220;color:#eaf1ff;font-size:.85rem;" onkeydown="if(event.key===\'Enter\'){mmDsSubmitTyped();}">' +
+          '<button class="mmDsSendBtn" onclick="mmDsSubmitTyped()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:none;background:#2E7BFF;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">➤</button>' +
         '</div>' +
       '</div>' +
     '</div>'
