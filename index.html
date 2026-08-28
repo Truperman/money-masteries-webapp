@@ -2901,24 +2901,26 @@ td .admnt-preview{margin-top:4px}
 .tile-category-label{font-size:.72rem;font-weight:700;color:#8a97ad;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;padding-left:10px;border-left:3px solid #2E7BFF55;line-height:1.2}
 .tile-category:first-child .tile-category-label{margin-top:0}
 .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:8px}
-/* Collapsible "Tools" dropdown — every non-GAIN$ category lives inside this,
-   right under the Discover & Setup tile, instead of the dashboard opening
-   on a wall of every category at once. */
-.mm-tools-dropdown{margin-top:18px;border:1px solid #2E7BFF33;border-radius:14px;background:linear-gradient(180deg,#111827,#0d1420);overflow:hidden}
-.mm-tools-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:transparent;border:0;cursor:pointer;color:inherit;font:inherit;text-align:left}
-.mm-tools-toggle:hover{background:#2E7BFF14}
-.mm-tools-toggle:focus-visible{outline:2px solid #2E7BFF;outline-offset:-2px}
-.mm-tools-toggle-left{display:flex;align-items:center;gap:10px}
-.mm-tools-icon{font-size:1.05rem}
-.mm-tools-title{font-size:.86rem;font-weight:800;letter-spacing:.02em;color:#e7ecf5}
-.mm-tools-count{font-size:.68rem;font-weight:700;color:#7f97c2;background:#2E7BFF1f;border-radius:20px;padding:2px 9px}
-.mm-tools-chevron{color:#7f97c2;transition:transform .25s ease}
-.mm-tools-dropdown.is-open .mm-tools-chevron{transform:rotate(180deg)}
-.mm-tools-body{display:grid;grid-template-rows:0fr;padding:0 16px;transition:grid-template-rows .3s ease,padding .3s ease}
-.mm-tools-body>*{overflow:hidden}
-.mm-tools-dropdown.is-open .mm-tools-body{grid-template-rows:1fr;padding:0 16px 14px}
-.mm-tools-body .tile-category:first-child .tile-category-label{margin-top:16px}
-@media (prefers-reduced-motion: reduce){ .mm-tools-body,.mm-tools-chevron{transition:none} }
+/* "Necessary Tools" banner — a single tile under Discover & Setup. Clicking
+   it opens the mm-tools-modal listing every other tool category, instead of
+   the dashboard showing a wall of every category at once. */
+.mm-tools-banner{margin-top:18px;display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid #2E7BFF33;border-radius:14px;background:linear-gradient(180deg,#111827,#0d1420);cursor:pointer;transition:background .2s ease,border-color .2s ease,transform .2s ease}
+.mm-tools-banner:hover{background:#152037;border-color:#2E7BFF66;transform:translateY(-1px)}
+.mm-tools-banner:focus-visible{outline:2px solid #2E7BFF;outline-offset:2px}
+.mm-tools-banner-icon{font-size:1.5rem;flex:none}
+.mm-tools-banner-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.mm-tools-banner-title{font-size:.92rem;font-weight:800;letter-spacing:.02em;color:#e7ecf5}
+.mm-tools-banner-sub{font-size:.72rem;color:#7f97c2}
+.mm-tools-banner-arrow{color:#7f97c2;flex:none;transition:transform .2s ease}
+.mm-tools-banner:hover .mm-tools-banner-arrow{transform:translateX(3px)}
+@media (prefers-reduced-motion: reduce){ .mm-tools-banner,.mm-tools-banner-arrow{transition:none} }
+
+/* Necessary Tools modal — wide, scrollable, holds every non-GAIN$ category. */
+.mm-tools-modal{position:relative;max-width:960px;width:94%;max-height:86vh;display:flex;flex-direction:column;text-align:left;padding:28px}
+.mm-tools-modal-head{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:800;color:#e7ecf5;margin-bottom:14px;flex:none}
+.mm-tools-modal-body{overflow-y:auto;padding-right:4px}
+.mm-tools-modal-body .tile-category:first-child .tile-category-label{margin-top:0}
+@media (max-width:640px){ .mm-tools-modal{padding:20px 16px;max-height:90vh} }
 .tile-grid-empty{color:#6b7280;font-size:.8rem;grid-column:1/-1}
 /* GAIN$ Plan tiles are the priority path — render them as full-width
    banner rows stacked above every other category, instead of squares in
@@ -6921,6 +6923,18 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .nav-item-niche{ font-size:.62rem; font-weight:600; letter-spacing:.01em; color:#7f97c2; }
 .master-tool-item.active .nav-item-niche{ color:#a9c4ff; }
 .screen-title-niche{ font-size:.72rem; font-weight:600; letter-spacing:.02em; color:#6fa8ff; text-transform:uppercase; margin-top:2px; }
+/* Each Master's own game-plan course, pulled straight from University Master
+   so members don't have to go hunting for the lesson that matches what
+   they're actually working on right now. */
+.master-course-section{ margin:14px 0 22px; }
+.master-course-label{ font-size:.68rem; font-weight:700; color:#8a97ad; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+.master-course-card{ max-width:420px; display:flex; align-items:center; gap:14px; padding:16px 18px; }
+.master-course-card .course-card-icon{ font-size:1.6rem; margin-bottom:0; flex:none; }
+.master-course-card .course-card-title{ font-size:.88rem; margin-bottom:2px; }
+.master-course-card .course-card-sub{ font-size:.72rem; }
+.master-course-soon{ font-size:.8rem; color:#9ca3af; max-width:420px; line-height:1.5; }
+.master-course-soon a{ color:#2E7BFF; text-decoration:none; font-weight:700; }
+.master-course-soon a:hover{ text-decoration:underline; }
 .university-nav-badge{
   font-size:.6rem;
   font-weight:800;
@@ -8536,6 +8550,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-communitymaster" data-sbg="community">
       <div class="screen-title"><i class="fa-solid fa-comments"></i> <span>Community Master</span></div>
       <div class="screen-title-niche">💬 Your niche: Community &amp; Audience Building</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="master-course-soon">A dedicated Community &amp; Audience Building course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
+      </div>
 
       <div class="cm-tabs">
         <button class="cm-tab active" id="cmtyVFeed" onclick="cmtyViewSwitch('feed')">💬 Live Feed</button>
@@ -8731,6 +8748,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-marketingmaster" data-sbg="marketingmaster">
       <div class="screen-title"><i class="fa-solid fa-rocket"></i> <span>Marketing Master</span></div>
       <div class="screen-title-niche">🚀 Your niche: Marketing &amp; Social Agency</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="master-course-soon">A dedicated Marketing &amp; Social Agency course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
+      </div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
       <div id="mktMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
       <div class="mk-grid" style="margin-bottom:18px">
@@ -8773,6 +8793,12 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-marketsmaster" data-sbg="marketsmaster">
       <div class="screen-title"><i class="fa-solid fa-chart-line"></i> <span>Markets Master</span></div>
       <div class="screen-title-niche">📈 Your niche: Trading &amp; Investing</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="course-card master-course-card" onclick="openCourse('stocks')">
+          <div class="course-card-icon">📊</div>
+          <div><div class="course-card-title">Day Trading — Stocks</div><div class="course-card-sub">9 chapters · Brokers, charts, funding</div></div>
+        </div>
+      </div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="rei-views" style="margin:14px 0 18px;flex-wrap:wrap">
@@ -8984,6 +9010,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-creativemaster" data-sbg="creativemaster">
       <div class="screen-title"><i class="fa-solid fa-clapperboard"></i> <span>Creative Master</span></div>
       <div class="screen-title-niche">🎬 Your niche: Content &amp; Video Production</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="master-course-soon">A dedicated Content &amp; Video Production course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
+      </div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="cm-tabs">
@@ -9168,6 +9197,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-crmmaster" data-sbg="crmmaster">
       <div class="screen-title"><i class="fa-solid fa-toolbox"></i> <span>CRM Master</span></div>
       <div class="screen-title-niche">🧰 Your niche: Sales &amp; Client Management</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="master-course-soon">A dedicated Sales &amp; Client Management course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
+      </div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
       <div class="cm-tabs">
@@ -9546,6 +9578,13 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- GENIE AGENT MASTER (buy page — always open, no plan gate) -->
     <div class="screen" id="screen-geniemaster" data-sbg="geniemaster">
       <div class="screen-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Genie Agent <span>Master</span></div>
+      <div class="screen-title-niche">🧞 Your niche: AI Agency &amp; Resale</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="course-card master-course-card" onclick="openCourse('affiliate')">
+          <div class="course-card-icon">💸</div>
+          <div><div class="course-card-title">Affiliate Fast Track — Share &amp; Earn</div><div class="course-card-sub">6 chapters · Turn your link into $1,000/month</div></div>
+        </div>
+      </div>
       <div class="comp-note" style="margin-bottom:20px">Your own AI agent, billed monthly plus actual usage. Pick a tier below — checkout opens in a new tab, then brings you back here to tell us about your business.</div>
       <div id="mmToggle_genie"></div>
       <div class="mk-grid">
@@ -10215,6 +10254,12 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="screen" id="screen-mystoremaster" data-sbg="mystore">
       <div class="screen-title"><i class="fa-solid fa-store"></i> My Store <span>Master</span></div>
       <div class="screen-title-niche">🏪 Your niche: E-Commerce &amp; Print-on-Demand</div>
+      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+        <div class="course-card master-course-card" onclick="openCourse('dropshipping')">
+          <div class="course-card-icon">📦</div>
+          <div><div class="course-card-title">E-Commerce — Dropshipping</div><div class="course-card-sub">6 chapters · Shopify, suppliers, ads</div></div>
+        </div>
+      </div>
       <div id="storeMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
       <div class="rei-view-bar" style="margin-bottom:16px">
         <button class="rei-view active" id="msmVStore" onclick="msmSwitch('store')">🛍️ My Store</button>
@@ -10839,6 +10884,12 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="rei-top">
     <div class="rei-title"><i class="fa-solid fa-city"></i> <span>Real Estate Master</span></div>
     <div class="screen-title-niche">🏙️ Your niche: Wholesaling &amp; Flipping</div>
+    <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
+      <div class="course-card master-course-card" onclick="openCourse('wholesale')">
+        <div class="course-card-icon">🔑</div>
+        <div><div class="course-card-title">Real Estate — Wholesaling</div><div class="course-card-sub">7 chapters · Find deals, flip contracts</div></div>
+      </div>
+    </div>
     <span class="rei-pill off" id="reiStatusPill">NO DATA SOURCE</span>
     <button class="rei-demo-btn" onclick="reiDemoOn()" title="See what Real Estate Master looks like once a data source is connected">▶ View Demo</button>
     <button class="rei-gear" onclick="reiOpenSettings()">⚙ Setup</button>
@@ -11004,6 +11055,18 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="modal tile-detail-modal">
     <button class="modal-close-x" onclick="mmCloseTileDetail()">✕</button>
     <div id="tileDetailBody"></div>
+  </div>
+</div>
+
+<!-- NECESSARY TOOLS MODAL — clicking the "Necessary Tools" banner opens
+     this instead of the dashboard showing every tool category at once.
+     Content is the cached category markup from renderBusinessEssentialsTiles(),
+     injected by mmOpenToolsModal(). -->
+<div class="modal-overlay" id="mmToolsModal">
+  <div class="modal mm-tools-modal">
+    <button class="modal-close-x" onclick="mmCloseToolsModal()">✕</button>
+    <div class="mm-tools-modal-head"><span class="mm-tools-banner-icon">🛠️</span> Necessary Tools</div>
+    <div class="mm-tools-modal-body" id="mmToolsModalBody"></div>
   </div>
 </div>
 
@@ -21537,6 +21600,7 @@ var MM_GAIN_STEP_STATUS_LABEL = { pending: 'PENDING', skipped: 'SKIPPED', comple
 var MM_GAIN_STEP_ORDER = ['questionnaire','merchant','website','social','marketing'];
 var mmGainPlanCache = null; // last-fetched { businessId, gainPlan, questionnaire }
 var mmTileRegistryCache = null; // last-fetched tiles array, for the detail modal
+var mmToolsModalHtmlCache = ''; // rendered "Necessary Tools" category markup, filled by renderBusinessEssentialsTiles()
 
 async function renderBusinessEssentialsTiles(){
   var el = document.getElementById('businessEssentialsSection');
@@ -21659,19 +21723,19 @@ async function renderBusinessEssentialsTiles(){
     var toolsHtml = toolCats.map(mmRenderTileCategory).join('');
     var toolsTileCount = toolCats.reduce(function(sum, c){ return sum + (byCat[c] ? byCat[c].length : 0); }, 0);
     var toolsLiveCount = toolCats.reduce(function(sum, c){ return sum + (byCat[c] ? byCat[c].filter(function(t){ return t.status === 'live'; }).length : 0); }, 0);
-    var toolsOpen = true;
-    try { toolsOpen = localStorage.getItem('mmToolsDropdownOpen') !== '0'; } catch (e) {}
-    var toolsDropdownHtml = !toolCats.length ? '' :
-      '<div class="mm-tools-dropdown' + (toolsOpen ? ' is-open' : '') + '" id="mmToolsDropdown">' +
-        '<button type="button" class="mm-tools-toggle" onclick="mmToggleToolsDropdown()" aria-expanded="' + (toolsOpen ? 'true' : 'false') + '" aria-controls="mmToolsDropdownBody">' +
-          '<span class="mm-tools-toggle-left"><span class="mm-tools-icon">🛠️</span><span class="mm-tools-title">Tools</span>' +
-          '<span class="mm-tools-count">' + toolsLiveCount + '/' + toolsTileCount + ' live</span></span>' +
-          '<span class="mm-tools-chevron"><i class="fa-solid fa-chevron-down"></i></span>' +
-        '</button>' +
-        '<div class="mm-tools-body" id="mmToolsDropdownBody"><div class="mm-tools-inner">' + toolsHtml + '</div></div>' +
+    // Cache the rendered category markup for the modal to inject on open —
+    // built once here alongside everything else instead of re-grouping the
+    // tiles a second time when the member actually clicks the banner.
+    mmToolsModalHtmlCache = toolsHtml;
+    var toolsBannerHtml = !toolCats.length ? '' :
+      '<div class="mm-tools-banner" id="mmToolsBanner" onclick="mmOpenToolsModal()" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();mmOpenToolsModal();}">' +
+        '<span class="mm-tools-banner-icon">🛠️</span>' +
+        '<span class="mm-tools-banner-text"><span class="mm-tools-banner-title">Necessary Tools</span>' +
+        '<span class="mm-tools-banner-sub">Everything else your business needs — ' + toolsLiveCount + ' of ' + toolsTileCount + ' live</span></span>' +
+        '<span class="mm-tools-banner-arrow"><i class="fa-solid fa-chevron-right"></i></span>' +
       '</div>';
 
-    el.innerHTML = gainHtml + toolsDropdownHtml;
+    el.innerHTML = gainHtml + toolsBannerHtml;
 
     renderGainPlanBanner();
     mmMaybePromptGainPlan();
@@ -21708,25 +21772,27 @@ function mmAnimateTilesIn(){
 }
 window.mmAnimateTilesIn = mmAnimateTilesIn;
 
-// Collapsible "Tools" dropdown — every non-GAIN$ tile category lives
-// inside it so the dashboard opens on the one thing that matters (Discover
-// & Setup) instead of a wall of every category at once. Open/closed state
-// is remembered per-device via localStorage so it doesn't re-collapse on
-// every login once a member has opened it.
-function mmToggleToolsDropdown(){
-  var el = document.getElementById('mmToolsDropdown');
-  if (!el) return;
-  var nowOpen = !el.classList.contains('is-open');
-  el.classList.toggle('is-open', nowOpen);
-  var btn = el.querySelector('.mm-tools-toggle');
-  if (btn) btn.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
-  try { localStorage.setItem('mmToolsDropdownOpen', nowOpen ? '1' : '0'); } catch (e) {}
-  if (nowOpen && !mmPrefersReducedMotion() && window.gsap) {
-    var tiles = el.querySelectorAll('.mm-tools-body .service-tile');
-    if (tiles.length) gsap.from(tiles, { opacity: 0, y: 10, duration: .35, ease: 'power3.out', stagger: .02, clearProps: 'opacity,transform' });
+// "Necessary Tools" modal — every non-GAIN$ tile category lives behind this
+// one banner instead of cluttering the dashboard, so the dashboard opens on
+// the one thing that matters (Discover & Setup) and every other tool is one
+// tap away inside a full-screen modal.
+function mmOpenToolsModal(){
+  var body = document.getElementById('mmToolsModalBody');
+  var modal = document.getElementById('mmToolsModal');
+  if (!body || !modal) return;
+  body.innerHTML = mmToolsModalHtmlCache || '<div class="tile-grid-empty">No tools configured yet.</div>';
+  modal.classList.add('open');
+  if (!mmPrefersReducedMotion() && window.gsap) {
+    var tiles = body.querySelectorAll('.service-tile');
+    if (tiles.length) gsap.from(tiles, { opacity: 0, y: 10, duration: .35, ease: 'power3.out', stagger: .015, clearProps: 'opacity,transform' });
   }
 }
-window.mmToggleToolsDropdown = mmToggleToolsDropdown;
+window.mmOpenToolsModal = mmOpenToolsModal;
+function mmCloseToolsModal(){
+  var modal = document.getElementById('mmToolsModal');
+  if (modal) modal.classList.remove('open');
+}
+window.mmCloseToolsModal = mmCloseToolsModal;
 
 // Every login (once per session, not on every re-render) — if any GAIN$
 // step is still pending, open it right in front of the member so they
