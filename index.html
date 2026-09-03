@@ -473,6 +473,14 @@
   window.callSetAiReceptionistEnabled = async (data) => (await httpsCallable(functionsClient, 'setAiReceptionistEnabled')(data)).data;
   window.callSendBusinessSms = async (data) => (await httpsCallable(functionsClient, 'sendBusinessSms')(data)).data;
   window.callPlaceOutboundCall = async (data) => (await httpsCallable(functionsClient, 'placeOutboundCall')(data)).data;
+  window.callGetPhoneConversationLog = async () => (await httpsCallable(functionsClient, 'getPhoneConversationLog')()).data;
+  window.callGetPhoneConversationDetail = async (conversationId) => (await httpsCallable(functionsClient, 'getPhoneConversationDetail')({conversationId})).data;
+
+  // AI Voice picker (ElevenLabs voices) for the AI Receptionist — see
+  // functions/index.js: getAiVoiceOptions / setAiVoicePreference / previewAiVoice.
+  window.callGetAiVoiceOptions = async () => (await httpsCallable(functionsClient, 'getAiVoiceOptions')()).data;
+  window.callSetAiVoicePreference = async (data) => (await httpsCallable(functionsClient, 'setAiVoicePreference')(data)).data;
+  window.callPreviewAiVoice = async (data) => (await httpsCallable(functionsClient, 'previewAiVoice')(data)).data;
 
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
@@ -5818,14 +5826,6 @@ body.mm-dark .myst-card-v3-share { background: #e5e7eb; color: #111; }
     linear-gradient(160deg, #0f0904 0%, #110a05 55%, #130b06 100%);
 }
 
-/* Master Tools — Marketing Master (electric launch magenta) */
-.sbg-marketingmaster {
-  background:
-    radial-gradient(ellipse 65% 55% at 80% 25%, rgba(236,72,153,0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 50% at 20% 75%, rgba(139,92,246,0.07) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(236,72,153,0.05) 0%, transparent 45%),
-    linear-gradient(155deg, #0c0310 0%, #0d0413 55%, #0f0517 100%);
-}
 
 /* Master Tools — Markets Master (ticker/chart cyan-green) */
 .sbg-marketsmaster {
@@ -6859,10 +6859,9 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .nav-item.master-tool-item .nav-item-icon i,
 #screen-mystoremaster .screen-title i,
 #screen-reimaster .rei-title i,
-#screen-marketingmaster .screen-title i,
 #screen-marketsmaster .screen-title i,
 #screen-creativemaster .screen-title i,
-#screen-crmmaster .screen-title i,
+#screen-proshubmaster .screen-title i,
 #screen-communitymaster .screen-title i{
   background-image: linear-gradient(110deg, #04150a 0%, #16a34a 28%, #bbf7d0 50%, #16a34a 72%, #04150a 100%);
   background-size: 250% 100%;
@@ -6878,8 +6877,8 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 @media (prefers-reduced-motion: reduce){
   .nav-item.master-tool-item .nav-item-icon i,
   #screen-mystoremaster .screen-title i,#screen-reimaster .rei-title i,
-  #screen-marketingmaster .screen-title i,#screen-marketsmaster .screen-title i,
-  #screen-creativemaster .screen-title i,#screen-crmmaster .screen-title i,
+  #screen-marketsmaster .screen-title i,
+  #screen-creativemaster .screen-title i,#screen-proshubmaster .screen-title i,
   #screen-communitymaster .screen-title i{
     animation: none;
   }
@@ -7642,9 +7641,6 @@ document.addEventListener('DOMContentLoaded', function() {
       <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Continue with Google
     </button>
-    <div style="text-align:center;margin-top:16px">
-      <button class="auth-forgot" onclick="openProsHubGate()" style="opacity:.9">🗂️ ProsHub Master — partner sign in</button>
-    </div>
   </div>
 
   <!-- INCOME PATHS -->
@@ -7809,10 +7805,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="nav-item master-tool-item university-nav-item" onclick="showScreen('universitymaster')" id="nav-universitymaster"><span class="nav-item-icon"><i class="fa-solid fa-graduation-cap"></i></span> <span class="university-nav-text"><span class="nav-item-label">University Master</span><span class="nav-item-niche">Skills &amp; Certifications</span><span class="university-nav-badge">🎉 FREE COURSES</span></span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('mystoremaster')" id="nav-mystoremaster"><span class="nav-item-icon"><i class="fa-solid fa-store"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">My Store Master</span><span class="nav-item-niche">E-Commerce &amp; Print-on-Demand</span></span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('reimaster')" id="nav-reimaster"><span class="nav-item-icon rei-city-icon" aria-hidden="true"><svg class="rei-city-svg" viewBox="0 0 22 20"><g class="rei-city-track"><rect class="rei-bldg" x="1" y="9" width="5" height="10" rx=".6"></rect><rect class="rei-bldg" x="7.5" y="2" width="6" height="17" rx=".6"></rect><rect class="rei-bldg" x="15" y="6" width="6" height="13" rx=".6"></rect><rect class="rei-window" x="2" y="11" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="3.8" y="11" width="1.2" height="1.2" style="animation-delay:.6s"></rect><rect class="rei-window" x="2" y="14" width="1.2" height="1.2" style="animation-delay:1.2s"></rect><rect class="rei-window" x="3.8" y="14" width="1.2" height="1.2" style="animation-delay:.3s"></rect><rect class="rei-window" x="8.5" y="4" width="1.2" height="1.2" style="animation-delay:.2s"></rect><rect class="rei-window" x="10.5" y="4" width="1.2" height="1.2" style="animation-delay:.9s"></rect><rect class="rei-window" x="8.5" y="7" width="1.2" height="1.2" style="animation-delay:1.5s"></rect><rect class="rei-window" x="10.5" y="7" width="1.2" height="1.2" style="animation-delay:.5s"></rect><rect class="rei-window" x="8.5" y="10" width="1.2" height="1.2" style="animation-delay:1.1s"></rect><rect class="rei-window" x="10.5" y="10" width="1.2" height="1.2" style="animation-delay:0s"></rect><rect class="rei-window" x="8.5" y="13" width="1.2" height="1.2" style="animation-delay:.8s"></rect><rect class="rei-window" x="10.5" y="13" width="1.2" height="1.2" style="animation-delay:1.4s"></rect><rect class="rei-window" x="16" y="8" width="1.2" height="1.2" style="animation-delay:.4s"></rect><rect class="rei-window" x="18" y="8" width="1.2" height="1.2" style="animation-delay:1s"></rect><rect class="rei-window" x="16" y="11" width="1.2" height="1.2" style="animation-delay:1.6s"></rect><rect class="rei-window" x="18" y="11" width="1.2" height="1.2" style="animation-delay:.7s"></rect><rect class="rei-window" x="16" y="14" width="1.2" height="1.2" style="animation-delay:.1s"></rect><rect class="rei-window" x="18" y="14" width="1.2" height="1.2" style="animation-delay:1.3s"></rect></g></svg></span> <span class="nav-item-textcol"><span class="nav-item-label">Real Estate Master</span><span class="nav-item-niche">Wholesaling &amp; Flipping</span></span></div>
-    <div class="nav-item master-tool-item" onclick="showScreen('marketingmaster')" id="nav-marketingmaster"><span class="nav-item-icon"><i class="fa-solid fa-rocket"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Marketing Master</span><span class="nav-item-niche">Marketing &amp; Social Agency</span></span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('marketsmaster')" id="nav-marketsmaster"><span class="nav-item-icon mm-candle-icon" aria-hidden="true"><svg class="mm-candle-svg" viewBox="0 0 22 20"><g class="mm-candle-track"><g class="mm-candle"><line class="mm-candle-wick" x1="2.5" y1="2" x2="2.5" y2="18"></line><rect class="mm-candle-body" x="1" y="7" width="3" height="8" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="6.5" y1="1" x2="6.5" y2="17"></line><rect class="mm-candle-body" x="5" y="4" width="3" height="10" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="10.5" y1="3" x2="10.5" y2="19"></line><rect class="mm-candle-body" x="9" y="9" width="3" height="6" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="14.5" y1="0" x2="14.5" y2="16"></line><rect class="mm-candle-body" x="13" y="3" width="3" height="9" rx=".6"></rect></g><g class="mm-candle"><line class="mm-candle-wick" x1="18.5" y1="2" x2="18.5" y2="18"></line><rect class="mm-candle-body" x="17" y="8" width="3" height="7" rx=".6"></rect></g></g></svg></span> <span class="nav-item-textcol"><span class="nav-item-label">Markets Master</span><span class="nav-item-niche">Trading &amp; Investing</span></span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('creativemaster')" id="nav-creativemaster"><span class="nav-item-icon"><i class="fa-solid fa-clapperboard"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Creative Master</span><span class="nav-item-niche">Content &amp; Video Production</span></span></div>
-    <div class="nav-item master-tool-item" onclick="showScreen('crmmaster')" id="nav-crmmaster"><span class="nav-item-icon"><i class="fa-solid fa-toolbox"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">CRM Master</span><span class="nav-item-niche">Sales &amp; Client Management</span></span></div>
+    <div class="nav-item master-tool-item" onclick="showScreen('proshubmaster')" id="nav-proshubmaster"><span class="nav-item-icon"><i class="fa-solid fa-layer-group"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">ProsHub Master</span><span class="nav-item-niche">CRM &amp; Marketing</span></span></div>
     <div class="nav-item master-tool-item" onclick="showScreen('communitymaster')" id="nav-communitymaster"><span class="nav-item-icon"><i class="fa-solid fa-comments"></i></span> <span class="nav-item-textcol"><span class="nav-item-label">Community Master</span><span class="nav-item-niche">Community &amp; Audience Building</span></span></div>
     </div>
     <div class="sidebar-section-label" id="adminSectionLabel" style="display:none">Master</div>
@@ -8778,49 +8773,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- MARKETPLACE -->
 
     <!-- MARKETING MASTER -->
-    <div class="screen" id="screen-marketingmaster" data-sbg="marketingmaster">
-      <div class="screen-title"><i class="fa-solid fa-rocket"></i> <span>Marketing Master</span></div>
-      <div class="screen-title-niche">🚀 Your niche: Marketing &amp; Social Agency</div>
-      <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
-        <div class="master-course-soon">A dedicated Marketing &amp; Social Agency course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
-      </div>
-      <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
-      <div id="mktMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
-      <div class="mk-grid" style="margin-bottom:18px">
-        <div class="mk-card">
-          <span class="mk-badge purple">ADD-ON</span>
-          <div class="mk-emoji">📣</div>
-          <div class="mk-name">Ads &amp; Ad Spend Access</div>
-          <div class="mk-desc">Push and manage paid ads directly from Marketing Master — no AI agent included, just the ads &amp; ad spend tooling on its own.</div>
-          <div class="mk-price-row"><span class="mk-price">$25</span></div>
-          <div class="mk-actions">
-            <button class="mk-share" onclick="shareProduct('s-adsaccess', this)">🔗 Share &amp; Earn</button>
-            <button class="mk-buy" onclick="buyProduct('s-adsaccess')">Buy</button>
-          </div>
-        </div>
-      </div>
-      <div class="payout-card" style="margin-bottom:20px">
-        <div class="po-title">🔗 Connect Your Social Accounts</div>
-        <div class="po-sub">Connect your real accounts, then post to them straight from here — or ask Genie to do it for you. Open to every member, including Basic/free — you get immediate access, no plan upgrade needed.</div>
-        <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#6b7280;margin:6px 0 4px">Loading…</div>
-        <div id="mmSocialFeeNote" style="font-size:.68rem;color:#9ca3af;margin:0 0 12px;font-style:italic"></div>
-        <div id="mmSocialConnectGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
-        <div id="mmSocialComposer"></div>
-      </div>
-      <div class="payout-card" style="margin-bottom:20px">
-        <div class="po-title">🤖 Ask Marketing Master</div>
-        <div class="po-sub">Content plans, captions, ad copy, and posting strategy — your marketing coach, on demand.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-marketingmaster-chips"></div>
-        <div class="ai-chat-log" id="j-marketingmaster-log"></div>
-        <div style="display:flex;gap:8px">
-          <input class="ai-chat-input" id="j-marketingmaster-input" maxlength="300" placeholder="Ask Marketing Master anything about content, ads, or promotion..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('marketingmaster')">
-          <button class="ai-chat-send" id="j-marketingmaster-send" onclick="sendJarvisQuestion('marketingmaster')">➤</button>
-        </div>
-      </div>
-      <div style="border:1px solid #1f2937;border-radius:14px;overflow:hidden;height:calc(100vh - 170px);min-height:520px;background:#0A0E1A">
-        <iframe src="marketing-master.html" title="Marketing Master" style="width:100%;height:100%;border:none;display:block"></iframe>
-      </div>
-    </div>
+    
 
     <!-- MARKETS MASTER (Elite Tools live here for now) -->
     <div class="screen" id="screen-marketsmaster" data-sbg="marketsmaster">
@@ -9089,7 +9042,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <video id="cmVideoResultPlayer" controls style="width:100%;border-radius:10px;margin-top:8px;background:#000;aspect-ratio:auto"></video>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
               <a id="cmVideoDownloadLink" class="admin-save-btn" style="text-decoration:none;background:rgba(255,255,255,.08)" href="#" download>⬇️ Download</a>
-              <button class="admin-save-btn cm-gen-btn" onclick="cmSendToMaster('marketingmaster')">🚀 Send to Marketing Master</button>
+              <button class="admin-save-btn cm-gen-btn" onclick="cmSendToMaster('proshubmaster')">🚀 Send to ProsHub Master</button>
               <button class="admin-save-btn cm-gen-btn" style="background:#14b8a6" onclick="cmSendToMaster('mystoremaster')">🛍️ Send to My Store Master</button>
               <span id="cmSendStatus" style="font-size:.72rem;color:#8ba0c4;align-self:center"></span>
             </div>
@@ -9171,7 +9124,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="mpm-sub" id="prodVideoResultBody"></div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
               <button class="admin-save-btn" onclick="if(typeof showNotifToast==='function')showNotifToast('🎬 Coming soon','Real video/ad rendering isn\'t built yet — this is a showcase preview.')">▶️ Preview (demo)</button>
-              <button class="admin-save-btn" style="background:#a855f7" onclick="showScreen('marketingmaster'); if(typeof showNotifToast==='function')showNotifToast('🚀 Exported (demo)','This concept would be sent to Marketing Master to publish once the real pipeline is built.')">🚀 Export to Marketing Master</button>
+              <button class="admin-save-btn" style="background:#a855f7" onclick="showScreen('proshubmaster'); if(typeof showNotifToast==='function')showNotifToast('🚀 Exported (demo)','This concept would be sent to ProsHub Master to publish once the real pipeline is built.')">🚀 Export to ProsHub Master</button>
             </div>
           </div>
         </div>
@@ -9227,23 +9180,26 @@ document.addEventListener('DOMContentLoaded', function() {
       </div><!-- /cmProductionTab -->
     </div><!-- /screen-creativemaster -->
 
-    <div class="screen" id="screen-crmmaster" data-sbg="crmmaster">
-      <div class="screen-title"><i class="fa-solid fa-toolbox"></i> <span>CRM Master</span></div>
-      <div class="screen-title-niche">🧰 Your niche: Sales &amp; Client Management</div>
+    <div class="screen" id="screen-proshubmaster" data-sbg="proshubmaster">
+      <div class="screen-title"><i class="fa-solid fa-layer-group"></i> <span>ProsHub Master</span></div>
+      <div class="screen-title-niche">🗂️ Your niche: CRM, Marketing &amp; Client Management</div>
       <div class="master-course-section"><div class="master-course-label">📚 Course for this niche</div>
-        <div class="master-course-soon">A dedicated Sales &amp; Client Management course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
+        <div class="master-course-soon">A dedicated CRM &amp; Marketing course is coming soon. <a href="javascript:void(0)" onclick="showScreen('universitymaster')">Browse all courses →</a></div>
       </div>
       <div class="genie-upsell" onclick="showScreen('geniemaster')">🧞 Add AI Genie Assistant <span class="genie-upsell-arrow">→</span></div>
 
-      <div class="cm-tabs">
-        <button class="cm-tab active" id="crmVTools" onclick="crmViewSwitch('tools')">🧰 CRM</button>
-        <button class="cm-tab" id="crmVAdmin" onclick="crmViewSwitch('admin')">🏛️ Administrative</button>
+      <div class="cm-tabs" style="flex-wrap:wrap">
+        <button class="cm-tab active" id="phubVCrm" onclick="proshubViewSwitch('crm')">🤝 Clients</button>
+        <button class="cm-tab" id="phubVLeads" onclick="proshubViewSwitch('leads')">📈 Pipeline</button>
+        <button class="cm-tab" id="phubVConvos" onclick="proshubViewSwitch('convos')">📞 Conversations</button>
+        <button class="cm-tab" id="phubVMarketing" onclick="proshubViewSwitch('marketing')">📣 Marketing</button>
+        <button class="cm-tab" id="phubVAdmin" onclick="proshubViewSwitch('admin')">🏛️ Administrative</button>
       </div>
 
       <div id="crmToolsTab">
 
         <div class="fm-demo-banner">
-          <div class="fm-demo-icon">🧰</div>
+          <div class="fm-demo-icon">🗂️</div>
           <div>
             <b>Your real CRM</b> — clients, projects, and invoices below are saved to your account for real (not a demo), the moment you add them.
             <p>Runs entirely inside Money Masteries — there's no separate app to deploy or connect. The AI assistant is grounded in this same data, and your own AI agents/automations can read and write it too — see "API Access for AI Agents" below.</p>
@@ -9273,13 +9229,13 @@ document.addEventListener('DOMContentLoaded', function() {
           </details>
         </div>
 
-        <div class="fm-section-label" style="margin-top:4px">🧰 Ask Pros Hub — your AI CRM assistant</div>
+        <div class="fm-section-label" style="margin-top:4px">🗂️ Ask ProsHub — your AI CRM &amp; marketing assistant</div>
         <div class="fm-card">
-          <div class="mpm-sub" style="margin-bottom:14px">Knows your clients, active projects, and invoices — ask it who to follow up with, what's overdue, or what to prioritize.</div>
+          <div class="mpm-sub" style="margin-bottom:14px">Knows your clients, leads, active projects, invoices, and your marketing tools — ask it who to follow up with, what's overdue, what to post this week, or what to prioritize.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="j-proshub-chips"></div>
           <div class="ai-chat-log" id="j-proshub-log"></div>
           <div style="display:flex;gap:8px">
-            <input class="ai-chat-input" id="j-proshub-input" maxlength="300" placeholder="Ask Pros Hub about your clients, projects, or invoices..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('proshub')">
+            <input class="ai-chat-input" id="j-proshub-input" maxlength="300" placeholder="Ask ProsHub about your clients, leads, invoices, or marketing..." onkeydown="if(event.key==='Enter')sendJarvisQuestion('proshub')">
             <button class="ai-chat-send" id="j-proshub-send" onclick="sendJarvisQuestion('proshub')">➤</button>
           </div>
         </div>
@@ -9337,8 +9293,80 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
 
+      <div id="phubLeadsTab" style="display:none">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">📈</div>
+          <div>
+            <b>Your real pipeline</b> — leads below are saved to your account for real, the moment you add them. Real Estate Master leads you save land in their own tab there; this pipeline is for every other kind of lead.
+          </div>
+        </div>
+        <div class="fm-section-label">📈 Leads &amp; Pipeline</div>
+        <div class="fm-card">
+          <div class="bm-form-row">
+            <input id="phLeadName" placeholder="Name">
+            <input id="phLeadSource" placeholder="Source (referral, ad, etc.)">
+            <select id="phLeadStage">
+              <option>New</option><option>Contacted</option><option>Engaged</option>
+              <option>Appointment Set</option><option>Negotiating</option><option>Sold</option><option>Lost</option>
+            </select>
+            <input id="phLeadValue" placeholder="Est. value ($)" type="number" min="0" style="max-width:130px">
+            <button class="bm-add-btn" onclick="phAddLead()">+ Add Lead</button>
+          </div>
+          <div class="admin-table-wrap">
+            <div style="overflow-x:auto"><table class="admin-table">
+              <thead><tr><th>Name</th><th>Source</th><th>Stage</th><th>Value</th><th>Added</th><th></th></tr></thead>
+              <tbody id="phLeadsBody"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="phubConvosTab" style="display:none">
+        <div class="fm-demo-banner">
+          <div class="fm-demo-icon">📞</div>
+          <div>
+            <b>Every conversation, in one place</b> — texts and calls your AI Receptionist and AI Outreach handle for you, plus every billed call/SMS event, newest first.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="phubConvoFilters">
+          <button class="cm-tab active" data-phcf="all" onclick="phConvoSetFilter('all')">Everyone</button>
+          <button class="cm-tab" data-phcf="ai" onclick="phConvoSetFilter('ai')">🤖 AI-handled</button>
+          <button class="cm-tab" data-phcf="calls" onclick="phConvoSetFilter('calls')">📞 Calls</button>
+          <button class="cm-tab" data-phcf="sms" onclick="phConvoSetFilter('sms')">💬 Texts</button>
+          <button class="cm-tab" data-phcf="inbound" onclick="phConvoSetFilter('inbound')">↙️ Inbound</button>
+          <button class="cm-tab" data-phcf="outbound" onclick="phConvoSetFilter('outbound')">↗️ Outbound</button>
+        </div>
+        <div class="fm-card" id="phubConvoList">Loading…</div>
+        <div id="phubConvoDetail" style="display:none;margin-top:16px"></div>
+      </div>
+
+      <div id="phubMarketingTab" style="display:none">
+        <div id="mktMasterInbox" class="fm-card" style="display:none;margin-bottom:18px"></div>
+        <div class="mk-grid" style="margin-bottom:18px">
+          <div class="mk-card">
+            <span class="mk-badge purple">ADD-ON</span>
+            <div class="mk-emoji">📣</div>
+            <div class="mk-name">Ads &amp; Ad Spend Access</div>
+            <div class="mk-desc">Push and manage paid ads directly from ProsHub Master — no AI agent included, just the ads &amp; ad spend tooling on its own.</div>
+            <div class="mk-price-row"><span class="mk-price">$25</span></div>
+            <div class="mk-actions">
+              <button class="mk-share" onclick="shareProduct('s-adsaccess', this)">🔗 Share &amp; Earn</button>
+              <button class="mk-buy" onclick="buyProduct('s-adsaccess')">Buy</button>
+            </div>
+          </div>
+        </div>
+        <div class="payout-card" style="margin-bottom:20px">
+          <div class="po-title">🔗 Connect Your Social Accounts</div>
+          <div class="po-sub">Connect your real accounts, then post to them straight from here — or ask Genie to do it for you. Open to every member, including Basic/free — you get immediate access, no plan upgrade needed.</div>
+          <div id="mmSocialConnectStatus" style="font-size:.72rem;color:#6b7280;margin:6px 0 4px">Loading…</div>
+          <div id="mmSocialFeeNote" style="font-size:.68rem;color:#9ca3af;margin:0 0 12px;font-style:italic"></div>
+          <div id="mmSocialConnectGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
+          <div id="mmSocialComposer"></div>
+        </div>
+      </div>
+
       <div id="crmAdminTab" style="display:none">
-      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations and bookkeeping &amp; financial coaching, now folded into CRM Master.</div>
+      <div class="mpm-sub" style="padding:0 0 16px">Your back-office toolkit, all in one place — business operations and bookkeeping &amp; financial coaching, now folded into ProsHub Master.</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
         <div class="mk-card" onclick="showScreen('businessmaster')" style="cursor:pointer">
           <div style="font-size:2rem">🏢</div>
@@ -9351,8 +9379,32 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="mpm-sub">Bookkeeping, financial coaching, and money-management tools.</div>
         </div>
       </div>
+
+      <div class="fm-section-label" style="margin-top:22px">👥 Team</div>
+      <div class="fm-card">
+        <div class="mpm-sub" style="margin-bottom:12px">Add your team members here so your AI receptionist can transfer calls to them by name.</div>
+        <div class="bm-form-row">
+          <input id="crmTeamName" placeholder="Name">
+          <input id="crmTeamPhone" placeholder="Phone number (e.g. +15551234567)">
+          <button class="bm-add-btn" onclick="crmTeamAdd()">+ Add Team Member</button>
+        </div>
+        <div id="crmTeamMsg" style="font-size:.8rem;color:#f87171;margin-bottom:8px"></div>
+        <div class="admin-table-wrap">
+          <div style="overflow-x:auto"><table class="admin-table">
+            <thead><tr><th>Name</th><th>Phone</th><th></th></tr></thead>
+            <tbody id="crmTeamBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="fm-section-label" style="margin-top:22px">🎙️ AI Voice</div>
+      <div class="fm-card">
+        <div class="mpm-sub" style="margin-bottom:12px">Choose the voice your AI receptionist uses on calls. Preview a voice before selecting it.</div>
+        <div id="aiVoiceMsg" style="font-size:.8rem;color:#f87171;margin-bottom:8px"></div>
+        <div id="aiVoiceGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">Loading voices…</div>
+      </div>
       </div><!-- /crmAdminTab -->
-    </div><!-- /screen-crmmaster -->
+    </div><!-- /screen-proshubmaster -->
 
     <!-- BUSINESS MASTER (demo) -->
     <div class="screen" id="screen-businessmaster" data-sbg="businessmaster">
@@ -9417,9 +9469,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="fm-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
         <div>
           <div class="mpm-title" style="color:#14b8a6;margin-bottom:2px">📇 Looking for your customers &amp; jobs?</div>
-          <div class="mpm-sub" style="margin-bottom:0">Your client CRM, projects, and invoices moved to their own tool — <b>Pros Hub</b> — right below Business Master in the sidebar.</div>
+          <div class="mpm-sub" style="margin-bottom:0">Your client CRM, projects, invoices, leads, and marketing tools moved to their own tool — <b>ProsHub Master</b> — right below Business Master in the sidebar.</div>
         </div>
-        <button class="bm-add-btn" onclick="showScreen('crmmaster')" style="background:#14b8a6">🧰 Open CRM Master</button>
+        <button class="bm-add-btn" onclick="showScreen('proshubmaster')" style="background:#14b8a6">🗂️ Open ProsHub Master</button>
       </div>
 
       <div class="fm-section-label">⚡ Active Business</div>
@@ -11217,10 +11269,9 @@ var MM_LG_SCREEN_PHOTOS = {
   universitymaster: { kw: 'private,jet,airplane,sky',       lock: 401, pos: 'center 45%' },
   mystoremaster:    { kw: 'city,lights,aerial,night',       lock: 302, pos: 'center 40%' },
   reimaster:        { kw: 'aerial,city,skyscrapers',        lock: 302, pos: 'center 40%' },
-  marketingmaster:  { kw: 'clouds,sky,aerial,sunrise',      lock: 302, pos: 'center 55%' },
-  marketsmaster:    { kw: 'city,skyline,night,aerial',      lock: 302, pos: 'center 55%' },
+    marketsmaster:    { kw: 'city,skyline,night,aerial',      lock: 302, pos: 'center 55%' },
   creativemaster:   { kw: 'clouds,aerial,golden,hour',      lock: 301, pos: 'center 45%' },
-  crmmaster:        { kw: 'aerial,city,downtown',           lock: 301, pos: 'center 40%' },
+  proshubmaster:    { kw: 'aerial,city,downtown',           lock: 301, pos: 'center 40%' },
   communitymaster:  { kw: 'city,lights,aerial,dusk',        lock: 302, pos: 'center 45%' },
   commissions:      { kw: 'aerial,skyline,financial,district', lock: 301, pos: 'center 55%' },
   plans:            { kw: 'airplane,wing,clouds,sky',       lock: 402, pos: 'center 45%' },
@@ -11369,10 +11420,9 @@ function showScreen(id) {
   if (id === 'commissions') setTimeout(function(){ if (typeof buildMLMTree === 'function') buildMLMTree(); if (typeof buildBankMarket === 'function') buildBankMarket(); if (typeof runCalc === 'function') runCalc(); if (typeof buildCompTicker === 'function') buildCompTicker(); if (typeof buildCompTable === 'function') buildCompTable(); if (typeof renderPayoutRequestStatus === 'function') renderPayoutRequestStatus(); const nudge = document.getElementById('paypalNudgeBanner'); if (nudge) nudge.style.display = (window.userData && window.userData.payoutInfo && window.userData.payoutInfo.paypal) ? 'none' : 'flex'; }, 50);
   if (id === 'aicoach') setTimeout(function(){ if (typeof renderAiCoach === 'function') renderAiCoach(); }, 30);
   if (id === 'marketsmaster') setTimeout(function(){ if (typeof renderEliteTools === 'function') renderEliteTools(); if (typeof renderMarketsMaster === 'function') renderMarketsMaster(); }, 30);
-  if (id === 'marketingmaster') setTimeout(function(){ if (typeof renderJarvisChips === 'function') renderJarvisChips('marketingmaster'); if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid(); if (typeof renderMasterInbox === 'function') renderMasterInbox('marketingmaster', 'mktMasterInbox'); }, 30);
   if (id === 'mystoremaster') setTimeout(function(){ if (typeof renderMasterInbox === 'function') renderMasterInbox('mystoremaster', 'storeMasterInbox'); }, 30);
   if (id === 'creativemaster') setTimeout(function(){ if (typeof cmLoadLibrary === 'function') cmLoadLibrary(); }, 30);
-  if (id === 'crmmaster') setTimeout(function(){ if (typeof renderProsHub === 'function') renderProsHub(); if (typeof renderJarvisChips === 'function') renderJarvisChips('proshub'); }, 30);
+  if (id === 'proshubmaster') setTimeout(function(){ if (typeof renderProsHub === 'function') renderProsHub(); if (typeof renderJarvisChips === 'function') renderJarvisChips('proshub'); if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid(); if (typeof renderMasterInbox === 'function') renderMasterInbox('proshubmaster', 'mktMasterInbox'); if (typeof renderProsHubConversations === 'function') renderProsHubConversations(); }, 30);
   if (id === 'opshub') setTimeout(function(){ if (typeof renderOpsHub === 'function') renderOpsHub(); }, 30);
   if (id === 'marketplace')  setTimeout(function(){ if (typeof renderMarketplace === 'function') renderMarketplace(); }, 30);
   if (id === 'studio')       setTimeout(function(){ if (typeof renderStudio === 'function') renderStudio(); }, 30);
@@ -13172,7 +13222,7 @@ window.showScreen = function(id) {
   // Basic/free members can navigate in and SEE the real screen, but get a
   // non-interactive preview overlay on top (see showMasterPreviewOverlay)
   // instead of being blocked from entering at all.
-  var MASTER_SCREENS = ['reimaster','marketingmaster','marketsmaster','businessmaster','financialmaster','creativemaster'];
+  var MASTER_SCREENS = ['reimaster','marketsmaster','businessmaster','financialmaster','creativemaster'];
   var mpoLocked = MASTER_SCREENS.indexOf(id) !== -1 && typeof mastersEligible === 'function' && !mastersEligible(id);
   _origShow(id);
   if (mpoLocked) {
@@ -14229,7 +14279,7 @@ window.showLoggedIn = function(user, data) {
   // badge on whichever ones they haven't unlocked yet. ProsHub/CRM Master is
   // sold à la carte exactly like the others now (it used to be Pro/Elite-only).
   var mastersUnlocked = (data && (data.plan === 'pro' || data.plan === 'elite')) || window.isMaster === true;
-  [['nav-reimaster','reimaster','fa-city','Real Estate Master'],['nav-marketingmaster','marketingmaster','fa-rocket','Marketing Master'],
+  [['nav-reimaster','reimaster','fa-city','Real Estate Master'],
    ['nav-marketsmaster','marketsmaster','fa-chart-line','Markets Master'],
    ['nav-creativemaster','creativemaster','fa-clapperboard','Creative Master']].forEach(function(row){
     var el = document.getElementById(row[0]);
@@ -14244,7 +14294,7 @@ window.showLoggedIn = function(user, data) {
   // Genie Agent Master, My Store Master, University Master, Community Master,
   // CRM Master — free Essentials/organizational Masters, not gated by plan,
   // so always visible once logged in with no lock badge.
-  ['nav-geniemaster', 'nav-mystoremaster', 'nav-universitymaster', 'nav-communitymaster', 'nav-crmmaster'].forEach(function(id){
+  ['nav-geniemaster', 'nav-mystoremaster', 'nav-universitymaster', 'nav-communitymaster', 'nav-proshubmaster'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.style.display = 'flex';
   });
@@ -14983,10 +15033,9 @@ var MM_GENIE_SCREEN_HELP = {
   universitymaster:  "University Master — video courses (day trading, real estate, e-commerce), the Revalidation service tab, and the Impact webapp tab.",
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
-  marketingmaster:   "Marketing Master — AI-assisted marketing content, plus REAL social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once the member connects an account here. This is open to every member including free/Basic — connecting isn't gated by plan, but IS a separately billed usage/activity fee (roughly $6/mo per connected account before the first 2 platform-wide, which are free) — not part of their membership price. If they ask about connecting, mention the fee honestly rather than implying it's included or free. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate. If the status line/elements show accounts aren't connected yet or posting isn't configured, say so honestly rather than claiming you posted something.",
   marketsmaster:     "Markets Master — live crypto/forex/stock/futures data plus AI market Q&A. Also has a 🤖 Trading Bots tab with TWO free downloadable Python bots (EVAL_PASS_BOT_v1.1.zip and TEST_BOT_v0.1.zip) for running your OWN Topstep $50K Combine evaluation locally, using your own Topstep API key — neither is run by us, both start in safe/dry-run mode, and neither has a proven trading edge yet (only their risk engines are tested). If asked about them, describe them honestly and point to that tab rather than claiming either is a guaranteed-profit tool. You (Genie) can walk them through downloading, installing, and troubleshooting either one step by step — see the detailed support knowledge included below when relevant.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
-  crmmaster:         "CRM Master — a simple CRM for leads/clients, plus the Administrative Master tab.",
+  proshubmaster:     "ProsHub Master — the member's CRM (clients/projects/invoices/leads pipeline), a Conversations tab logging every AI-handled call/text, real social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once they connect an account, and the Administrative Master tab. Social posting is open to every member regardless of plan but IS a separately billed usage fee (roughly $6/mo per connected account after the first 2 platform-wide, which are free) — mention that honestly if asked. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate.",
   communitymaster:   "Community Master — the live member feed, plus a link out to BizBuzz.",
   commissions:       "Payouts/Bank — commission tree, payout requests, PayPal setup, and Elite Dividends (Elite members only).",
   plans:             "Plans & Pricing — compare Basic/Pro/Elite and upgrade or downgrade.",
@@ -15228,7 +15277,7 @@ window.genieScanInteractive = genieScanInteractive;
 // its name to the ACTIONS list baked into the prompt in sendGenieFab().
 var MM_GENIE_ACTIONS = {
   navigate_to_screen: {
-    describe: "Take the member to a different screen in the app. Params: {\"screen\":\"<one of: dashboard, geniemaster, universitymaster, mystoremaster, reimaster, marketingmaster, marketsmaster, creativemaster, crmmaster, communitymaster, commissions, plans, account>\"}. Use this whenever the member asks to go to / open / take me to / show me a Master or section by name (map names loosely: 'real estate' -> reimaster, 'store' -> mystoremaster, 'crm' -> crmmaster, 'payouts'/'bank' -> commissions, 'pricing' -> plans, 'my account' -> account, 'university'/'courses' -> universitymaster, 'community' -> communitymaster, 'markets'/'trading' -> marketsmaster, 'marketing' -> marketingmaster, 'creative'/'video' -> creativemaster, 'genie agent' -> geniemaster). This just switches screens — it is instant and free, no confirmation needed.",
+    describe: "Take the member to a different screen in the app. Params: {\"screen\":\"<one of: dashboard, geniemaster, universitymaster, mystoremaster, reimaster, marketsmaster, creativemaster, proshubmaster, communitymaster, commissions, plans, account>\"}. Use this whenever the member asks to go to / open / take me to / show me a Master or section by name (map names loosely: 'real estate' -> reimaster, 'store' -> mystoremaster, 'crm'/'marketing'/'proshub' -> proshubmaster, 'payouts'/'bank' -> commissions, 'pricing' -> plans, 'my account' -> account, 'university'/'courses' -> universitymaster, 'community' -> communitymaster, 'markets'/'trading' -> marketsmaster, 'creative'/'video' -> creativemaster, 'genie agent' -> geniemaster). This just switches screens — it is instant and free, no confirmation needed.",
     instant: true,
     confirmText: function(p){ return "Taking you to " + (MM_GENIE_SCREEN_HELP[p.screen] ? p.screen : 'that screen') + "…"; },
     run: async function(p){
@@ -15246,7 +15295,7 @@ var MM_GENIE_ACTIONS = {
   // member only ever talks to "Genie"; which specialist actually answers is
   // an implementation detail they never have to think about.
   ask_specialist: {
-    describe: "Answer a business question using the right specialist knowledge, without leaving the Genie panel or navigating anywhere. Params: {\"specialist\":\"<one of: reimaster, businessmaster, financialmaster, proshub, marketingmaster, productionmaster>\", \"question\":\"...\"}. Pick the specialist by topic: reimaster for real estate investing/deal analysis, businessmaster for general operations/HR/compliance coaching, financialmaster for cash flow/bookkeeping/tax-prep questions, proshub for CRM/client/invoice/job-pricing questions for a contractor or service business, marketingmaster for content/ad copy/platform strategy, productionmaster for website/domain/hosting/AI-video build questions. Use this for almost any substantive business question the member asks — it's instant, free (billed the same as any other Genie message, no extra confirmation needed), and lets you answer directly instead of just pointing them to a screen.",
+    describe: "Answer a business question using the right specialist knowledge, without leaving the Genie panel or navigating anywhere. Params: {\"specialist\":\"<one of: reimaster, businessmaster, financialmaster, proshub, productionmaster>\", \"question\":\"...\"}. Pick the specialist by topic: reimaster for real estate investing/deal analysis, businessmaster for general operations/HR/compliance coaching, financialmaster for cash flow/bookkeeping/tax-prep questions, proshub for CRM/client/invoice/job-pricing/pipeline questions for a contractor or service business as well as content/ad copy/platform strategy questions, productionmaster for website/domain/hosting/AI-video build questions. Use this for almost any substantive business question the member asks — it's instant, free (billed the same as any other Genie message, no extra confirmation needed), and lets you answer directly instead of just pointing them to a screen.",
     instant: true,
     confirmText: function(p){ return "Let me check on that…"; },
     run: async function(p){
@@ -15322,13 +15371,13 @@ var MM_GENIE_ACTIONS = {
     }
   },
   crm_save_lead: {
-    describe: "Add a new client/lead to CRM Master. Params: {\"name\":\"...\", \"email\"?:\"...\", \"stage\"?:\"New\", \"value\"?:\"$0\"}. Requires at least a name. Free — just writes a record.",
+    describe: "Add a new client/lead to ProsHub Master. Params: {\"name\":\"...\", \"email\"?:\"...\", \"stage\"?:\"New\", \"value\"?:\"$0\"}. Requires at least a name. Free — just writes a record.",
     confirmText: function(p){ return "Add <b>" + String(p.name||'').replace(/</g,'&lt;') + "</b> to your CRM as a client?"; },
     run: async function(p){
       if (!p.name) throw new Error("I need at least a name to add a CRM client.");
       await window.callCrmSave('clients', { name: p.name, email: p.email || '', stage: p.stage || 'New', value: p.value || '$0', lastContact: 'Just now' });
-      if (typeof window.showScreen === 'function') window.showScreen('crmmaster');
-      return { text: "Added " + p.name.replace(/</g,'&lt;') + " to your CRM. Switched you to CRM Master.", done: true };
+      if (typeof window.showScreen === 'function') window.showScreen('proshubmaster');
+      return { text: "Added " + p.name.replace(/</g,'&lt;') + " to your CRM. Switched you to ProsHub Master.", done: true };
     }
   },
   creative_video_generate: {
@@ -15359,8 +15408,8 @@ var MM_GENIE_ACTIONS = {
       var targets = wanted.length ? accounts.filter(function(a){ return wanted.indexOf(a.platform) !== -1; }) : accounts;
       if (!targets.length) throw new Error("None of those platforms are connected yet.");
       var result = await window.callSocialPublish({ text: p.text, accountIds: targets.map(function(a){ return a._id; }) });
-      if (typeof window.showScreen === 'function') window.showScreen('marketingmaster');
-      return { text: "Posted to " + targets.length + " account" + (targets.length===1?'':'s') + ". Switched you to Marketing Master so you can see it.", done: true };
+      if (typeof window.showScreen === 'function') window.showScreen('proshubmaster');
+      return { text: "Posted to " + targets.length + " account" + (targets.length===1?'':'s') + ". Switched you to ProsHub Master so you can see it.", done: true };
     }
   },
   // ── GENERIC ON-SCREEN ACTIONS — these let Genie operate ANY current or
@@ -16343,8 +16392,7 @@ var JARVIS_PERSONAS = {
   reimaster: "You are the Real Estate Master AI assistant inside the Money Masteries platform — a sharp, practical real-estate investing analyst and deal coach. Help with deal analysis, lead evaluation, offer strategy, and general real-estate investing concepts.",
   businessmaster: "You are Jarvis, the AI mentor and butler running inside Business Master on the Money Masteries platform. You act like a combination COO, HR manager, and business coach for a small business owner: you know their entity setup, licenses, team, and customers, and you help them run day-to-day operations, decide what to prioritize, and think through hiring, compliance, and growth.",
   financialmaster: "You are the Financial Master AI assistant inside the Money Masteries platform — a sharp, encouraging financial analyst and bookkeeper for a small business owner. Help with understanding cash flow, expenses, tax prep, and what it takes to make the business more sellable.",
-  proshub: "You are the Pros Hub AI assistant inside the Money Masteries platform — a sharp CRM and operations coach for a contractor/service-business owner. You know their clients, active projects, and invoices, and you help them decide who to follow up with, what's overdue, how to price/scope a job, and how to keep their pipeline moving.",
-  marketingmaster: "You are the Marketing Master AI coach inside the Money Masteries platform — a sharp, energetic marketing strategist and copywriter for a small business owner. Help them plan content, write ad copy and captions, decide which platforms to post on, and think through what to run ads on and how to budget for it.",
+  proshub: "You are the ProsHub Master AI assistant inside the Money Masteries platform — a sharp CRM, sales, and marketing coach for a small business owner. You know their clients, leads/pipeline, active projects, invoices, and their marketing tools (social accounts, ad spend). You help them decide who to follow up with, what's overdue, how to price/scope a job, keep their pipeline moving, plan content and captions, and think through ad budget and posting strategy.",
   productionmaster: "You are the Production Master AI coach inside the Money Masteries platform — a practical build-and-launch specialist who helps members figure out what to build next: a website, a domain name, hosting setup, an AI video, or promotional content. Help them scope the request clearly before they submit it, and explain what to expect from the process."
 };
 // Routes through the real, token-metered askAI Cloud Function (see
@@ -16393,7 +16441,7 @@ window.askMasterJarvis = async function(masterKey, question, lang){
 function jarvisBubble(masterKey, text, who){
   var log = document.getElementById('j-' + masterKey + '-log');
   if(!log) return null;
-  var tag = { reimaster:'🏘️ Real Estate Master', businessmaster:'🤵 Jarvis', financialmaster:'💰 Financial Master', proshub:'🧰 Pros Hub', marketingmaster:'🚀 Marketing Master', productionmaster:'🏭 Production Master' }[masterKey] || '🤖 Assistant';
+  var tag = { reimaster:'🏘️ Real Estate Master', businessmaster:'🤵 Jarvis', financialmaster:'💰 Financial Master', proshub:'🧰 Pros Hub', productionmaster:'🏭 Production Master' }[masterKey] || '🤖 Assistant';
   var d = document.createElement('div');
   d.className = 'ai-msg ' + who;
   d.innerHTML = (who==='bot' ? '<span class="ai-msg-tag">'+tag+'</span>' : '') + '<div>' + text + '</div>';
@@ -16426,8 +16474,7 @@ var JARVIS_QUICK_QUESTIONS = {
   reimaster: [["What's my next best move?","🎯 Next move"], ["How do I evaluate a wholesale deal?","🧮 Evaluate a deal"], ["What should I offer on a distressed property?","💬 Offer strategy"]],
   businessmaster: [["What licenses am I missing or close to expiring?","📋 Licenses"], ["Who on my team should I check in with?","👥 Team check-in"], ["What should I focus on this week?","🗓️ This week's priorities"]],
   financialmaster: [["How much should I set aside for taxes?","🧾 Tax reserve"], ["What's dragging down my margin?","📉 Margin check"], ["What would make my business more sellable?","🤝 Sellability"]],
-  proshub: [["Which clients need a follow-up?","📞 Follow-ups"], ["What invoices are overdue?","🧾 Overdue invoices"], ["What should I prioritize on my active projects this week?","🗓️ This week's priorities"]],
-  marketingmaster: [["Write me 3 social captions for this week","✍️ Captions"], ["What should I post about this week?","🗓️ Content ideas"], ["Help me plan a small ad budget","📣 Ad budget"]],
+  proshub: [["Which clients need a follow-up?","📞 Follow-ups"], ["What invoices are overdue?","🧾 Overdue invoices"], ["What should I prioritize on my active projects this week?","🗓️ This week's priorities"], ["Write me 3 social captions for this week","✍️ Captions"], ["What should I post about this week?","🗓️ Content ideas"], ["Help me plan a small ad budget","📣 Ad budget"]],
   productionmaster: [["Help me scope a website I want built","🌐 Scope a website"], ["What domain name should I get?","🔤 Domain ideas"], ["What should I include in an AI video request?","🎬 AI video"]]
 };
 function renderJarvisChips(masterKey){
@@ -16711,16 +16758,18 @@ async function bmAddEmployee(){
 /* ── ProsHub/CRM Master (native CRM tab — REAL per-member Firestore data,
    via crmList/crmSave/crmDelete in functions/index.js; AI agents can reach
    the exact same data through the crmApi REST endpoint + X-API-Key). ── */
-window.MM_CRM_DATA = { clients: [], projects: [], invoices: [] };
+window.MM_CRM_DATA = { clients: [], projects: [], invoices: [], leads: [] };
 async function renderProsHub(){
   if (typeof window.callCrmList !== 'function') return;
   try {
     var clientsRes = await window.callCrmList('clients');
     var projRes = await window.callCrmList('projects');
     var invRes = await window.callCrmList('invoices');
+    var leadsRes = await window.callCrmList('leads');
     window.MM_CRM_DATA.clients = (clientsRes && clientsRes.items) || [];
     window.MM_CRM_DATA.projects = (projRes && projRes.items) || [];
     window.MM_CRM_DATA.invoices = (invRes && invRes.items) || [];
+    window.MM_CRM_DATA.leads = (leadsRes && leadsRes.items) || [];
   } catch(e) {
     console.log('renderProsHub: could not load CRM data', e);
   }
@@ -16761,7 +16810,36 @@ async function renderProsHub(){
     }).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:16px">No invoices yet — add one above.</td></tr>';
   }
 
+  var leadsBody = document.getElementById('phLeadsBody');
+  if(leadsBody){
+    leadsBody.innerHTML = p.leads.map(function(l){
+      var stagePill = { New:'lead', Contacted:'lead', Engaged:'active', 'Appointment Set':'active', Negotiating:'active', Sold:'active', Lost:'past' }[l.stage] || 'lead';
+      return '<tr><td>'+bmEsc(l.name)+'</td><td>'+bmEsc(l.source||'—')+'</td>' +
+        '<td><span class="bm-status-pill '+stagePill+'">'+bmEsc(l.stage)+'</span></td>' +
+        '<td>$'+Number(l.value||0).toLocaleString()+'</td><td>'+phTsLabel(l.createdAt)+'</td>' +
+        '<td><button class="bm-mini-btn" style="background:#ef4444" onclick="phDeleteRecord(\'leads\',\''+l.id+'\')">Delete</button></td></tr>';
+    }).join('') || '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:16px">No leads yet — add one above.</td></tr>';
+  }
+
   crmLoadApiKeyDisplay();
+}
+function phTsLabel(ts){
+  if (!ts) return 'Just now';
+  var ms = (ts && typeof ts.toMillis === 'function') ? ts.toMillis() : (ts && ts._seconds ? ts._seconds * 1000 : (ts && ts.seconds ? ts.seconds * 1000 : null));
+  if (!ms) return 'Just now';
+  try { return new Date(ms).toLocaleDateString(); } catch(e) { return 'Just now'; }
+}
+async function phAddLead(){
+  var name = document.getElementById('phLeadName').value.trim();
+  var source = document.getElementById('phLeadSource').value.trim();
+  var stage = document.getElementById('phLeadStage').value;
+  var value = Number(document.getElementById('phLeadValue').value) || 0;
+  if(!name || typeof window.callCrmSave !== 'function') return;
+  await window.callCrmSave('leads', { name:name, source:source, stage:stage, value:value });
+  document.getElementById('phLeadName').value = '';
+  document.getElementById('phLeadSource').value = '';
+  document.getElementById('phLeadValue').value = '';
+  renderProsHub();
 }
 async function phAddClient(){
   var name = document.getElementById('phClientName').value.trim();
@@ -16816,6 +16894,212 @@ async function phDeleteRecord(kind, id){
   if (typeof window.callCrmDelete !== 'function') return;
   await window.callCrmDelete(kind, id);
   renderProsHub();
+}
+
+// -- Team roster (AI receptionist live-call-transfer) -- generic CRM kind:'team' --
+async function renderCrmTeamSection(){
+  var body = document.getElementById('crmTeamBody');
+  if (!body || typeof window.callCrmList !== 'function') return;
+  try {
+    var res = await window.callCrmList('team');
+    var items = (res && res.items) || [];
+    body.innerHTML = items.map(function(m){
+      return '<tr><td>'+bmEsc(m.name)+'</td><td>'+bmEsc(m.phone)+'</td>' +
+        '<td><button class="bm-mini-btn" style="background:#ef4444" onclick="crmTeamDelete(\''+m.id+'\')">Delete</button></td></tr>';
+    }).join('') || '<tr><td colspan="3" style="text-align:center;color:#6b7280;padding:16px">No team members yet — add one above.</td></tr>';
+  } catch(e) {
+    body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#f87171;padding:16px">Could not load team — ' + bmEsc(e.message || 'try again') + '</td></tr>';
+  }
+}
+window.renderCrmTeamSection = renderCrmTeamSection;
+
+async function crmTeamAdd(){
+  var msgEl = document.getElementById('crmTeamMsg');
+  if (msgEl) msgEl.textContent = '';
+  var nameEl = document.getElementById('crmTeamName');
+  var phoneEl = document.getElementById('crmTeamPhone');
+  var name = (nameEl && nameEl.value || '').trim();
+  var phone = (phoneEl && phoneEl.value || '').trim();
+  if (!name) { if (msgEl) msgEl.textContent = 'Name is required.'; return; }
+  if (!phone || !/^\+?[0-9()\-.\s]{7,20}$/.test(phone)) { if (msgEl) msgEl.textContent = 'Enter a valid phone number.'; return; }
+  if (typeof window.callCrmSave !== 'function') return;
+  try {
+    await window.callCrmSave('team', { name: name, phone: phone });
+    if (nameEl) nameEl.value = '';
+    if (phoneEl) phoneEl.value = '';
+    renderCrmTeamSection();
+  } catch(e) {
+    if (msgEl) msgEl.textContent = e.message || 'Could not add team member.';
+  }
+}
+window.crmTeamAdd = crmTeamAdd;
+
+async function crmTeamDelete(id){
+  if (typeof window.callCrmDelete !== 'function') return;
+  await window.callCrmDelete('team', id);
+  renderCrmTeamSection();
+}
+window.crmTeamDelete = crmTeamDelete;
+
+// -- AI Voice picker (ElevenLabs voices for AI Receptionist) --
+var aiVoiceOptions = [];
+var aiVoiceCurrentId = '';
+async function renderAiVoiceSection(){
+  var grid = document.getElementById('aiVoiceGrid');
+  var msgEl = document.getElementById('aiVoiceMsg');
+  if (!grid) return;
+  if (msgEl) msgEl.textContent = '';
+  if (typeof window.callGetAiVoiceOptions !== 'function') return;
+  try {
+    var res = await window.callGetAiVoiceOptions();
+    aiVoiceOptions = (res && res.voices) || [];
+    aiVoiceCurrentId = (res && res.defaultVoiceId) || '';
+    if (typeof window.callGetMyPhoneStatus === 'function') {
+      try {
+        var statusRes = await window.callGetMyPhoneStatus();
+        if (statusRes && statusRes.phone && statusRes.phone.voiceId) aiVoiceCurrentId = statusRes.phone.voiceId;
+      } catch(e2) { /* Business Phone may not be set up yet -- default stands */ }
+    }
+    renderAiVoiceGrid();
+  } catch(e) {
+    grid.innerHTML = '';
+    if (msgEl) msgEl.textContent = e.message || 'Could not load voices.';
+  }
+}
+window.renderAiVoiceSection = renderAiVoiceSection;
+
+function renderAiVoiceGrid(){
+  var grid = document.getElementById('aiVoiceGrid');
+  if (!grid) return;
+  grid.innerHTML = aiVoiceOptions.map(function(v){
+    var selected = v.id === aiVoiceCurrentId;
+    return '<div class="fm-card" style="margin:0' + (selected ? ';border:2px solid #22c55e' : '') + '" id="aiVoiceCard_' + bmEsc(v.id) + '">' +
+      (selected ? '<div style="font-size:.7rem;color:#22c55e;font-weight:700;margin-bottom:4px">✓ Currently selected</div>' : '') +
+      '<div class="mk-card-title" style="margin-bottom:4px">' + bmEsc(v.name) + '</div>' +
+      '<div class="mpm-sub" style="margin-bottom:12px">' + bmEsc(v.desc || '') + '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="bm-mini-btn" id="aiVoicePreviewBtn_' + bmEsc(v.id) + '" onclick="aiVoicePreview(\''+v.id+'\')">▶ Preview</button>' +
+        '<button class="bm-add-btn" id="aiVoiceSelectBtn_' + bmEsc(v.id) + '" onclick="aiVoiceSelect(\''+v.id+'\')" ' + (selected ? 'disabled' : '') + '>' + (selected ? 'Selected' : 'Use this voice') + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') || '<div class="mpm-sub">No voices available.</div>';
+}
+
+async function aiVoicePreview(voiceId){
+  var msgEl = document.getElementById('aiVoiceMsg');
+  var btn = document.getElementById('aiVoicePreviewBtn_' + voiceId);
+  if (msgEl) msgEl.textContent = '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  try {
+    if (typeof window.callPreviewAiVoice !== 'function') throw new Error('Preview not available.');
+    var res = await window.callPreviewAiVoice({ voiceId: voiceId });
+    var audio = new Audio('data:' + (res.mimeType || 'audio/mpeg') + ';base64,' + res.audioBase64);
+    audio.play();
+  } catch(e) {
+    if (msgEl) msgEl.textContent = e.message || 'Could not preview this voice.';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Preview'; }
+  }
+}
+window.aiVoicePreview = aiVoicePreview;
+
+async function aiVoiceSelect(voiceId){
+  var msgEl = document.getElementById('aiVoiceMsg');
+  var btn = document.getElementById('aiVoiceSelectBtn_' + voiceId);
+  if (msgEl) msgEl.textContent = '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    if (typeof window.callSetAiVoicePreference !== 'function') throw new Error('Saving voice preference not available.');
+    await window.callSetAiVoicePreference({ voiceId: voiceId });
+    aiVoiceCurrentId = voiceId;
+    renderAiVoiceGrid();
+    if (typeof showNotifToast === 'function') showNotifToast('✓ AI voice updated', '');
+  } catch(e) {
+    if (msgEl) msgEl.textContent = e.message || 'Could not save this voice.';
+    if (btn) { btn.disabled = false; btn.textContent = 'Use this voice'; }
+  }
+}
+window.aiVoiceSelect = aiVoiceSelect;
+window.PHUB_CONVO_FILTER = 'all';
+window.PHUB_CONVO_DATA = { events: [], conversations: [] };
+async function renderProsHubConversations(){
+  var list = document.getElementById('phubConvoList');
+  if (!list) return;
+  if (typeof window.callGetPhoneConversationLog !== 'function') { list.innerHTML = 'Not available yet.'; return; }
+  list.innerHTML = 'Loading…';
+  try {
+    var res = await window.callGetPhoneConversationLog();
+    window.PHUB_CONVO_DATA.events = (res && res.events) || [];
+    window.PHUB_CONVO_DATA.conversations = (res && res.conversations) || [];
+  } catch(e) {
+    console.log('renderProsHubConversations:', e);
+    list.innerHTML = 'Could not load conversations right now.';
+    return;
+  }
+  phConvoRenderList();
+}
+function phConvoSetFilter(f){
+  window.PHUB_CONVO_FILTER = f;
+  var chips = document.getElementById('phubConvoFilters');
+  if (chips) {
+    Array.prototype.forEach.call(chips.querySelectorAll('[data-phcf]'), function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-phcf') === f);
+    });
+  }
+  phConvoRenderList();
+}
+function phConvoRenderList(){
+  var list = document.getElementById('phubConvoList');
+  if (!list) return;
+  var f = window.PHUB_CONVO_FILTER;
+  var rows = [];
+  window.PHUB_CONVO_DATA.conversations.forEach(function(c){
+    rows.push({ kind:'convo', ts: c.lastAt, direction: c.direction, mode: c.mode, other: c.otherPartyNumber, summary: c.lastText || '(no transcript yet)', turnCount: c.turnCount || 0, id: c.id });
+  });
+  window.PHUB_CONVO_DATA.events.forEach(function(e){
+    rows.push({ kind:'event', ts: e.createdAt, direction: e.direction, type: e.type, other: e.otherPartyNumber, summary: e.type === 'call' ? ((e.durationSeconds||0) + 's call') : 'Text message', cost: e.billedCost, id: e.id });
+  });
+  rows.sort(function(a,b){
+    var am = (a.ts && typeof a.ts.toMillis === 'function') ? a.ts.toMillis() : 0;
+    var bm = (b.ts && typeof b.ts.toMillis === 'function') ? b.ts.toMillis() : 0;
+    return bm - am;
+  });
+  rows = rows.filter(function(r){
+    if (f === 'all') return true;
+    if (f === 'ai') return r.kind === 'convo';
+    if (f === 'calls') return r.kind === 'event' ? r.type === 'call' : true;
+    if (f === 'sms') return r.kind === 'event' ? r.type === 'sms' : false;
+    if (f === 'inbound') return r.direction === 'inbound';
+    if (f === 'outbound') return r.direction === 'outbound';
+    return true;
+  });
+  if (!rows.length) { list.innerHTML = '<div style="text-align:center;color:#6b7280;padding:20px">No conversations yet — once your AI Receptionist or AI Outreach handles a call or text, it shows up here.</div>'; return; }
+  list.innerHTML = rows.map(function(r){
+    var dirIcon = r.direction === 'inbound' ? '↙️' : r.direction === 'outbound' ? '↗️' : '•';
+    var kindLabel = r.kind === 'convo' ? (r.mode === 'outbound' ? '🤖 AI Outreach' : '🤖 AI Receptionist') : (r.type === 'call' ? '📞 Call' : '💬 Text');
+    var clickAttr = r.kind === 'convo' ? ' onclick="phConvoOpenDetail(\''+r.id+'\')" style="cursor:pointer"' : '';
+    return '<div class="bm-list-row"'+clickAttr+' style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,0.06)">' +
+      '<div><b>'+dirIcon+' '+kindLabel+'</b> &middot; '+bmEsc(r.other || 'Unknown number')+'<br><span style="color:#8ba0c4;font-size:0.9em">'+bmEsc(r.summary)+(r.turnCount ? ' ('+r.turnCount+' turns)' : '')+'</span></div>' +
+      '<div style="color:#6b7280;font-size:0.85em">'+phTsLabel(r.ts)+'</div></div>';
+  }).join('');
+}
+async function phConvoOpenDetail(conversationId){
+  var detail = document.getElementById('phubConvoDetail');
+  if (!detail || typeof window.callGetPhoneConversationDetail !== 'function') return;
+  detail.style.display = 'block';
+  detail.innerHTML = 'Loading transcript…';
+  try {
+    var res = await window.callGetPhoneConversationDetail(conversationId);
+    var turns = (res && res.turns) || [];
+    detail.innerHTML = '<div class="fm-card"><div class="fm-section-label">Transcript</div>' +
+      (turns.length ? turns.map(function(t){
+        var who = t.from === 'ai' ? '🤖 AI' : '👤 Caller';
+        return '<div style="padding:6px 0"><b>'+who+':</b> '+bmEsc(t.text)+'</div>';
+      }).join('') : '<div style="color:#6b7280">No transcript recorded for this conversation.</div>') +
+      '<button class="bm-mini-btn" style="margin-top:10px" onclick="document.getElementById(\'phubConvoDetail\').style.display=\'none\'">Close</button></div>';
+  } catch(e) {
+    detail.innerHTML = 'Could not load transcript.';
+  }
 }
 async function crmLoadApiKeyDisplay(){
   var input = document.getElementById('crmApiKeyDisplay');
@@ -17145,7 +17429,6 @@ window.UPLOADED_PRODUCTS = window.UPLOADED_PRODUCTS || [];
 // deliberately left out of this list (see SUBSCRIPTION_ONLY_MASTERS above
 // mastersEligible()).
 var MASTER_PRODUCTS = [
-  { id:'master-marketingmaster',  screenId:'marketingmaster',  type:'master', emoji:'🚀', name:'Marketing Master — Individual Access',  price:25, desc:'One-time unlock for Marketing Master — the full marketing tool suite. Included free with Pro or Elite.' },
   { id:'master-creativemaster', screenId:'creativemaster', type:'master', emoji:'🎬', name:'Creative Master — Individual Access', price:25, desc:'One-time unlock for Creative Master — AI video generation via SkyReels, plus the Production Master toolkit (website/domain/software requests). Included free with Pro or Elite.' }
   // CRM Master used to be here as a $25 unlock — it's now free for every
   // member (see MASTER_SCREENS in showScreen / Essentials tiles on the
@@ -17427,7 +17710,7 @@ function mastersEligible(id){
 function eliteDividendsEligible(){ var pl=(window.userData&&window.userData.plan)||'free'; return pl==='elite' || window.isMaster===true; }
 
 var MASTER_DISPLAY_NAMES = {
-  reimaster: 'Real Estate Master', marketingmaster: 'Marketing Master', marketsmaster: 'Markets Master',
+  reimaster: 'Real Estate Master', marketsmaster: 'Markets Master',
   businessmaster: 'Business Master', financialmaster: 'Financial Master', creativemaster: 'Creative Master',
 };
 var __mpoCurrentMasterId = null;
@@ -19924,16 +20207,6 @@ var SCREEN_THEMES = {
     ],
     rings: { color:'rgba(217,119,6,0.14)', x:'70%', y:'25%', size:400, delay:1 }
   },
-  marketingmaster: {
-    bg: 'sbg-marketingmaster', grid: false,
-    particles: [
-      { type:'dot',  color:'rgba(236,72,153,0.65)', r:2,   speed:.4,  count:16 },
-      { type:'dot',  color:'rgba(139,92,246,0.4)',  r:1.5, speed:.3,  count:12 },
-      { type:'beam', color:'rgba(236,72,153,0.2)',  speed:.25, count:6 },
-      { type:'spark',color:'rgba(139,92,246,0.4)',  r:1,   speed:.5,  count:12 }
-    ],
-    rings: { color:'rgba(236,72,153,0.15)', x:'25%', y:'20%', size:400, delay:0 }
-  },
   marketsmaster: {
     bg: 'sbg-marketsmaster', grid: true,
     particles: [
@@ -19974,7 +20247,7 @@ var SCREEN_THEMES = {
     ],
     rings: { color:'rgba(168,85,247,0.13)', x:'65%', y:'25%', size:400, delay:1 }
   },
-  crmmaster: {
+  proshubmaster: {
     bg: 'sbg-proshub', grid: true,
     particles: [
       { type:'dot',  color:'rgba(20,184,166,0.6)', r:2,   speed:.32, count:15 },
@@ -21518,13 +21791,27 @@ function cmViewSwitch(which){
 }
 window.cmViewSwitch = cmViewSwitch;
 
-function crmViewSwitch(which){
-  document.getElementById('crmToolsTab').style.display = which === 'tools' ? 'block' : 'none';
-  document.getElementById('crmAdminTab').style.display = which === 'admin' ? 'block' : 'none';
-  document.getElementById('crmVTools').classList.toggle('active', which === 'tools');
-  document.getElementById('crmVAdmin').classList.toggle('active', which === 'admin');
+function proshubViewSwitch(which){
+  var panels = { crm:'crmToolsTab', leads:'phubLeadsTab', convos:'phubConvosTab', marketing:'phubMarketingTab', admin:'crmAdminTab' };
+  var buttons = { crm:'phubVCrm', leads:'phubVLeads', convos:'phubVConvos', marketing:'phubVMarketing', admin:'phubVAdmin' };
+  Object.keys(panels).forEach(function(key){
+    var panel = document.getElementById(panels[key]);
+    if (panel) panel.style.display = (key === which) ? 'block' : 'none';
+    var btn = document.getElementById(buttons[key]);
+    if (btn) btn.classList.toggle('active', key === which);
+  });
+  if (which === 'leads' && typeof renderProsHub === 'function') renderProsHub();
+  if (which === 'convos' && typeof renderProsHubConversations === 'function') renderProsHubConversations();
+  if (which === 'marketing') {
+    if (typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid();
+    if (typeof renderMasterInbox === 'function') renderMasterInbox('proshubmaster', 'mktMasterInbox');
+  }
+  if (which === 'admin') {
+    if (typeof renderCrmTeamSection === 'function') renderCrmTeamSection();
+    if (typeof renderAiVoiceSection === 'function') renderAiVoiceSection();
+  }
 }
-window.crmViewSwitch = crmViewSwitch;
+window.proshubViewSwitch = proshubViewSwitch;
 
 function cmUpdateEstCost(){
   const dur = Number(document.getElementById('cmVideoDuration').value) || 5;
@@ -21608,7 +21895,7 @@ async function cmSendToMaster(toMaster){
       caption: v.prompt || '',
     });
     if (statusEl) statusEl.textContent = '✓ Sent';
-    const label = toMaster === 'marketingmaster' ? 'Marketing Master' : 'My Store Master';
+    const label = toMaster === 'proshubmaster' ? 'ProsHub Master' : 'My Store Master';
     if (typeof showNotifToast === 'function') showNotifToast('✓ Sent to ' + label, 'Open ' + label + ' to see it in the inbox.');
   } catch (e) {
     if (statusEl) statusEl.textContent = '';
@@ -22694,7 +22981,7 @@ async function mmSaveAiReceptionist(btn){
 window.mmSaveAiReceptionist = mmSaveAiReceptionist;
 
 function mmMasterLabel(route){
-  var labels = { geniemaster:'Genie', businessmaster:'Business Master', marketingmaster:'Marketing Master', crmmaster:'CRM', reimaster:'Lead Gen', creativemaster:'Creative Master', communitymaster:'Community' };
+  var labels = { geniemaster:'Genie', businessmaster:'Business Master', proshubmaster:'ProsHub', reimaster:'Lead Gen', creativemaster:'Creative Master', communitymaster:'Community' };
   return labels[route] || route;
 }
 
@@ -22716,8 +23003,8 @@ function mmMasterLabel(route){
 // not a dead click.
 var MM_GAIN_STEP_CHAT = {
   website:   { screen: 'creativemaster', masterKey: 'productionmaster', tab: 'production' },
-  social:    { screen: 'marketingmaster', masterKey: 'marketingmaster' },
-  marketing: { screen: 'marketingmaster', masterKey: 'marketingmaster' },
+  social:    { screen: 'proshubmaster', masterKey: 'proshub' },
+  marketing: { screen: 'proshubmaster', masterKey: 'proshub' },
   ein:       { screen: 'businessmaster', masterKey: 'businessmaster' },
 };
 function mmLaunchGainPrompt(tileIdOrKey){
@@ -23881,7 +24168,7 @@ if (typeof window !== 'undefined' && /[?&]zernioConnected=1/.test(location.searc
   try { history.replaceState(null, '', location.pathname + location.hash); } catch(e) {}
 }
 window.addEventListener('focus', function(){
-  if (window.mmCurrentScreen === 'marketingmaster' && typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid();
+  if (window.mmCurrentScreen === 'proshubmaster' && typeof renderSocialConnectGrid === 'function') renderSocialConnectGrid();
 });
 
 function openProductStudio(){
