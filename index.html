@@ -482,6 +482,13 @@
   window.callSetAiVoicePreference = async (data) => (await httpsCallable(functionsClient, 'setAiVoicePreference')(data)).data;
   window.callPreviewAiVoice = async (data) => (await httpsCallable(functionsClient, 'previewAiVoice')(data)).data;
 
+  // Ad-spend control / ads list — see functions/index.js mmSetAdsSpendCap /
+  // mmAdsList / mmAdsUpdate. mmAdsUpdate without confirm:true returns a
+  // {preview:true, current, proposed} diff and changes nothing.
+  window.callMmSetAdsSpendCap = async (data) => (await httpsCallable(functionsClient, 'mmSetAdsSpendCap')(data)).data;
+  window.callMmAdsList = async (data) => (await httpsCallable(functionsClient, 'mmAdsList')(data || {})).data;
+  window.callMmAdsUpdate = async (data) => (await httpsCallable(functionsClient, 'mmAdsUpdate')(data)).data;
+
   // Small generic helper so plain (non-module) scripts further down the
   // page can patch the logged-in member's own Firestore doc without each
   // needing their own Firebase import wiring.
@@ -9406,6 +9413,35 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="aiVoiceMsg" style="font-size:.8rem;color:#f87171;margin-bottom:8px"></div>
         <div id="aiVoiceGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">Loading voices…</div>
       </div>
+
+      <div class="fm-section-label" style="margin-top:22px">📱 Business Phone</div>
+      <div class="fm-card">
+        <div class="mpm-sub" style="margin-bottom:12px">Activate a real business phone number for calls, SMS, and your AI Receptionist.</div>
+        <div id="crmPhoneMsg" style="font-size:.8rem;margin-bottom:8px"></div>
+        <div id="crmPhoneStatus">Loading…</div>
+      </div>
+
+      <div class="fm-section-label" style="margin-top:22px">💸 Ad Spend Cap</div>
+      <div class="fm-card">
+        <div class="mpm-sub" style="margin-bottom:12px">The hard daily budget ceiling your ads (managed through Zernio) can never exceed, across all your connected accounts.</div>
+        <div class="bm-form-row">
+          <input id="crmAdsSpendCapInput" type="number" min="0" step="1" placeholder="Daily budget ($)" style="max-width:180px">
+          <button class="bm-add-btn" id="crmAdsSpendCapSaveBtn" onclick="crmAdsSpendCapSave()">Save Cap</button>
+        </div>
+        <div id="crmAdsSpendCapMsg" style="font-size:.8rem;margin-bottom:8px"></div>
+      </div>
+
+      <div class="fm-section-label" style="margin-top:22px">📣 Your Ads</div>
+      <div class="fm-card">
+        <div class="mpm-sub" style="margin-bottom:12px">Ads across your connected social accounts, pushed and managed through Zernio. Connect accounts under Marketing → Connect Your Social Accounts.</div>
+        <div id="crmAdsListMsg" style="font-size:.8rem;margin-bottom:8px"></div>
+        <div class="admin-table-wrap">
+          <div style="overflow-x:auto"><table class="admin-table">
+            <thead><tr><th>Ad</th><th>Platform</th><th>Status</th><th>Budget</th><th></th></tr></thead>
+            <tbody id="crmAdsListBody"><tr><td colspan="5" style="text-align:center;color:#6b7280;padding:16px">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
       </div><!-- /crmAdminTab -->
     </div><!-- /screen-proshubmaster -->
 
@@ -17023,6 +17059,199 @@ async function aiVoiceSelect(voiceId){
   }
 }
 window.aiVoiceSelect = aiVoiceSelect;
+
+// -- Payment-method-required helper shared by Business Phone / Ad Spend Cap
+// / Ads -- provisionBusinessPhoneNumber, mmSetAdsSpendCap-gated actions,
+// mmSocialConnectStart, and mmAdsUpdate all call requireBusinessPaymentMethod
+// server-side and throw HttpsError('failed-precondition', ...) with
+// err.details.code === 'PAYMENT_METHOD_REQUIRED' when there's no card on
+// file -- show a clear inline message + link to the real Add Payment Method
+// flow instead of a raw error toast.
+function crmShowPaymentOrError(el, e){
+  if (!el) return;
+  if (e && e.details && e.details.code === 'PAYMENT_METHOD_REQUIRED') {
+    el.innerHTML = '⚠ Add a payment method to activate this — this feature has real usage costs. ' +
+      '<a href="#" onclick="mmShowBillingSetupModal();return false;" style="color:#60a5fa;text-decoration:underline">Add payment method →</a>';
+  } else {
+    el.textContent = (e && e.message) || 'Something went wrong — please try again.';
+  }
+}
+
+// -- Business Phone activation (Administrative tab) -- see
+// functions/index.js getMyPhoneStatus / provisionBusinessPhoneNumber.
+async function renderCrmPhoneSection(){
+  var wrap = document.getElementById('crmPhoneStatus');
+  var msgEl = document.getElementById('crmPhoneMsg');
+  if (!wrap) return;
+  if (msgEl) msgEl.textContent = '';
+  if (typeof window.callGetMyPhoneStatus !== 'function') return;
+  try {
+    var res = await window.callGetMyPhoneStatus();
+    var phone = res && res.phone;
+    if (phone && phone.number) {
+      wrap.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          '<div style="font-size:1.1rem;font-weight:700">' + bmEsc(phone.number) + '</div>' +
+          '<span style="font-size:.72rem;padding:3px 10px;border-radius:999px;background:' + (phone.status === 'active' ? '#10b98122' : '#37415122') + ';color:' + (phone.status === 'active' ? '#10b981' : '#9ca3af') + '">' +
+            (phone.status === 'active' ? '● Active' : bmEsc(phone.status || 'unknown')) +
+          '</span>' +
+        '</div>';
+    } else {
+      wrap.innerHTML =
+        '<div class="bm-form-row">' +
+          '<input id="crmPhoneAreaCode" placeholder="Area code (optional)" maxlength="3" style="max-width:160px">' +
+          '<button class="bm-add-btn" id="crmPhoneActivateBtn" onclick="crmPhoneActivate()">📱 Activate Phone Number</button>' +
+        '</div>';
+    }
+  } catch(e) {
+    wrap.innerHTML = '';
+    if (msgEl) msgEl.textContent = e.message || 'Could not load phone status.';
+  }
+}
+window.renderCrmPhoneSection = renderCrmPhoneSection;
+
+async function crmPhoneActivate(){
+  var msgEl = document.getElementById('crmPhoneMsg');
+  var btn = document.getElementById('crmPhoneActivateBtn');
+  var areaCode = (document.getElementById('crmPhoneAreaCode') || {}).value || '';
+  if (msgEl) msgEl.innerHTML = '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Activating…'; }
+  try {
+    if (typeof window.callProvisionBusinessPhoneNumber !== 'function') throw new Error('Not available.');
+    await window.callProvisionBusinessPhoneNumber({ areaCode: areaCode.trim() });
+    if (typeof showNotifToast === 'function') showNotifToast('📱 Phone activated', 'Your business phone number is ready.');
+    renderCrmPhoneSection();
+  } catch(e) {
+    crmShowPaymentOrError(msgEl, e);
+    if (btn) { btn.disabled = false; btn.textContent = '📱 Activate Phone Number'; }
+  }
+}
+window.crmPhoneActivate = crmPhoneActivate;
+
+// -- Ad Spend Cap (Administrative tab) -- see functions/index.js
+// mmSetAdsSpendCap. No "get current cap" callable exists on the backend,
+// so this sets/updates the value blind rather than pre-filling it.
+async function crmAdsSpendCapSave(){
+  var input = document.getElementById('crmAdsSpendCapInput');
+  var msgEl = document.getElementById('crmAdsSpendCapMsg');
+  var btn = document.getElementById('crmAdsSpendCapSaveBtn');
+  if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = ''; }
+  var val = Number(input && input.value);
+  if (!(val >= 0)) { if (msgEl) msgEl.textContent = 'Enter a valid non-negative daily budget.'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    if (typeof window.callMmSetAdsSpendCap !== 'function') throw new Error('Not available.');
+    var res = await window.callMmSetAdsSpendCap({ maxDailyBudgetUsd: val });
+    var saved = (res && res.maxDailyBudgetUsd != null) ? res.maxDailyBudgetUsd : val;
+    if (msgEl) { msgEl.style.color = '#10b981'; msgEl.textContent = '✓ Daily ad spend cap saved: $' + saved + '/day.'; }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Ad spend cap saved', '$' + saved + '/day');
+  } catch(e) {
+    crmShowPaymentOrError(msgEl, e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Cap'; }
+  }
+}
+window.crmAdsSpendCapSave = crmAdsSpendCapSave;
+
+// -- Your Ads list (Administrative tab) -- see functions/index.js
+// mmAdsList / mmAdsUpdate. mmAdsUpdate without confirm:true returns a
+// {preview:true, current, proposed} diff and changes nothing -- both the
+// status toggle and the budget input below do that preview-then-confirm
+// round trip before the second, confirm:true call actually commits.
+async function renderCrmAdsList(){
+  var body = document.getElementById('crmAdsListBody');
+  var msgEl = document.getElementById('crmAdsListMsg');
+  if (!body) return;
+  if (msgEl) msgEl.textContent = '';
+  body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:16px">Loading…</td></tr>';
+  try {
+    if (typeof window.callMmAdsList !== 'function') throw new Error('Not available.');
+    var res = await window.callMmAdsList({});
+    var ads = (res && res.ads) || [];
+    if (res && res.notConfigured) {
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#f59e0b;padding:16px">🧪 Ads aren\'t finished setting up on the site owner\'s end yet.</td></tr>';
+      return;
+    }
+    if (!ads.length) {
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:16px">No ads yet — connect an account in Marketing, then create ads through Zernio.</td></tr>';
+      return;
+    }
+    body.innerHTML = ads.map(function(a){
+      var id = a._id || a.id;
+      var status = a.status || 'unknown';
+      var budget = (a.budget && a.budget.amount != null) ? ('$' + a.budget.amount + '/' + (a.budget.type || 'daily')) : '—';
+      var isActive = status === 'active';
+      return '<tr><td>' + bmEsc(a.name || id) + '</td><td>' + bmEsc(a.platform || '') + '</td>' +
+        '<td>' + bmEsc(status) + '</td><td>' + bmEsc(budget) +
+        ' <input type="number" min="0" step="1" placeholder="new $/day" id="crmAdBudgetInput_' + bmEsc(id) + '" style="width:76px;margin-left:6px;padding:3px 6px;font-size:.7rem;background:#0d1119;border:1px solid #374151;border-radius:5px;color:#e5e7eb"></td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="bm-mini-btn" id="crmAdToggleBtn_' + bmEsc(id) + '" onclick="crmAdToggleStatus(\'' + id + '\',\'' + (isActive ? 'paused' : 'active') + '\')">' + (isActive ? 'Pause' : 'Activate') + '</button> ' +
+          '<button class="bm-mini-btn" id="crmAdBudgetBtn_' + bmEsc(id) + '" onclick="crmAdSetBudget(\'' + id + '\')">Set Budget</button>' +
+        '</td></tr>';
+    }).join('');
+  } catch(e) {
+    body.innerHTML = '';
+    crmShowPaymentOrError(msgEl, e);
+  }
+}
+window.renderCrmAdsList = renderCrmAdsList;
+
+async function crmAdToggleStatus(adId, newStatus){
+  var msgEl = document.getElementById('crmAdsListMsg');
+  var btn = document.getElementById('crmAdToggleBtn_' + adId);
+  var restoreLabel = newStatus === 'active' ? 'Activate' : 'Pause';
+  if (msgEl) msgEl.textContent = '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  try {
+    if (typeof window.callMmAdsUpdate !== 'function') throw new Error('Not available.');
+    var preview = await window.callMmAdsUpdate({ adId: adId, status: newStatus });
+    if (preview && preview.preview) {
+      var cur = preview.current || {};
+      if (!confirm('Change this ad from "' + (cur.status || '?') + '" to "' + newStatus + '"?')) {
+        if (btn) { btn.disabled = false; btn.textContent = restoreLabel; }
+        return;
+      }
+      if (btn) btn.textContent = 'Saving…';
+      await window.callMmAdsUpdate({ adId: adId, status: newStatus, confirm: true });
+    }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Ad updated', 'Status set to ' + newStatus + '.');
+    renderCrmAdsList();
+  } catch(e) {
+    crmShowPaymentOrError(msgEl, e);
+    if (btn) { btn.disabled = false; btn.textContent = restoreLabel; }
+  }
+}
+window.crmAdToggleStatus = crmAdToggleStatus;
+
+async function crmAdSetBudget(adId){
+  var input = document.getElementById('crmAdBudgetInput_' + adId);
+  var msgEl = document.getElementById('crmAdsListMsg');
+  var btn = document.getElementById('crmAdBudgetBtn_' + adId);
+  if (msgEl) msgEl.textContent = '';
+  var val = Number(input && input.value);
+  if (!(val >= 0)) { if (msgEl) msgEl.textContent = 'Enter a valid budget amount.'; return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  try {
+    if (typeof window.callMmAdsUpdate !== 'function') throw new Error('Not available.');
+    var preview = await window.callMmAdsUpdate({ adId: adId, budget: { amount: val, type: 'daily' } });
+    if (preview && preview.preview) {
+      var cur = preview.current || {};
+      var curBudget = (cur.budget && cur.budget.amount != null) ? ('$' + cur.budget.amount) : 'none set';
+      if (!confirm('Change daily budget from ' + curBudget + ' to $' + val + '/day?')) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Set Budget'; }
+        return;
+      }
+      if (btn) btn.textContent = 'Saving…';
+      await window.callMmAdsUpdate({ adId: adId, budget: { amount: val, type: 'daily' }, confirm: true });
+    }
+    if (typeof showNotifToast === 'function') showNotifToast('✓ Budget updated', '$' + val + '/day');
+    renderCrmAdsList();
+  } catch(e) {
+    crmShowPaymentOrError(msgEl, e);
+    if (btn) { btn.disabled = false; btn.textContent = 'Set Budget'; }
+  }
+}
+window.crmAdSetBudget = crmAdSetBudget;
 window.PHUB_CONVO_FILTER = 'all';
 window.PHUB_CONVO_DATA = { events: [], conversations: [] };
 async function renderProsHubConversations(){
@@ -21812,6 +22041,8 @@ function proshubViewSwitch(which){
   if (which === 'admin') {
     if (typeof renderCrmTeamSection === 'function') renderCrmTeamSection();
     if (typeof renderAiVoiceSection === 'function') renderAiVoiceSection();
+    if (typeof renderCrmPhoneSection === 'function') renderCrmPhoneSection();
+    if (typeof renderCrmAdsList === 'function') renderCrmAdsList();
   }
 }
 window.proshubViewSwitch = proshubViewSwitch;
