@@ -4409,6 +4409,41 @@ body { font-family: 'Inter', 'Segoe UI', sans-serif !important; }
   box-shadow: 0 0 20px rgba(46,123,255,0.3) !important;
 }
 
+/* ── Pricing cards: solid background, not the frosted-glass treatment ──
+   .feat-card's background is only 65% opaque + blur, which is meant to
+   let the page's own dark background show through. With the Spline robot
+   iframe as the sitewide background (its scene isn't exported transparent
+   yet, so it currently renders a light-gray fill), that blur let enough
+   of that light gray bleed through to wash the card out toward white --
+   right where the light body text (price, description) needs contrast
+   most. Pricing cards get a fully opaque dark background instead so
+   they're readable regardless of what's behind them. */
+#pricingCards .feat-card {
+  background: #0b0f19 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.pricing-zero {
+  display: inline-block;
+  font-size: 2.4rem;
+  font-weight: 900;
+  margin: 4px 0 8px;
+  color: #34d399;
+  text-shadow: 0 0 24px rgba(52,211,153,0.45);
+}
+.pricing-limited-badge {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.35);
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin-bottom: 10px;
+}
+
 /* ════════════════════════════════
    STEP CARDS — Glass + Number Glow
    ════════════════════════════════ */
@@ -7697,10 +7732,11 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="lsec-title">Start <span>Free</span>. Upgrade Whenever You're Ready.</div>
     <div class="lsec-sub">No credit card to join. Unlock every course and Master when you're ready to go all in.</div>
   </div>
-  <div class="landing-features" style="margin-top:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+  <div class="landing-features" id="pricingCards" style="margin-top:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
     <div class="feat-card" style="border-color:#10b98150">
       <div class="feat-title" style="color:#34d399">Free</div>
-      <div style="font-size:1.4rem;font-weight:800;margin:6px 0">$0</div>
+      <div class="pricing-limited-badge">⏳ For a limited time — Start Free</div>
+      <div class="pricing-zero">$0</div>
       <div class="feat-desc">Create an account and start the Affiliate Fast Track course right away — no payment required.</div>
       <button class="lnav-cta" style="width:100%;margin-top:12px" onclick="switchAuthTab('signup');document.querySelector('.auth-box').scrollIntoView({behavior:'smooth',block:'center'})">Join Free →</button>
     </div>
