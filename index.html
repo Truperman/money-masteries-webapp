@@ -7201,11 +7201,18 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
 </head>
 <body>
 <!-- Sitewide ambient 3D background (Spline) -- fixed, full-viewport, behind everything.
-     z-index:-1 keeps it beneath the app own per-screen backgrounds (#sbgLayer z:0,
-     #sbgCanvas z:1, .app-layout/.main z:2), so it only shows through on the public
-     landing/login screen and any transparent gaps -- real screens keep their own opaque
-     backgrounds and stay fully legible. pointer-events:none so clicks pass through to the UI. -->
-<iframe id="mmSiteSplineBg" src="https://my.spline.design/nexbotrobotcharacterconcept-ngGihQtogHAhFGOT6bKrSU8V/" frameborder="0" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;border:0" aria-hidden="true"></iframe>
+     z-index:0 (NOT -1) is deliberate: the <body> background-color (#0A0E1A, see the
+     `body{background:...}` rule) is the page's own canvas paint, and per the CSS spec
+     that paints beneath EVERY positioned descendant, negative z-index included -- so a
+     z-index:-1 iframe here was invisible everywhere, full stop, not just "buried on
+     opaque screens" as originally intended. z-index:0 sits above that canvas paint but
+     still below the app's own per-screen backgrounds (#sbgCanvas z:1, #dashLiquidBg z:0
+     but later in the DOM so it still wins ties, .app-layout/.main z:2), so it shows
+     through on the public landing/login screen and any screen/gap that doesn't paint its
+     own opaque backdrop -- screens with their own photo/3D backdrop (e.g. the dashboard's
+     #dashLiquidBg) still correctly keep that on top and stay fully legible.
+     pointer-events:none so clicks pass through to the UI. -->
+<iframe id="mmSiteSplineBg" src="https://my.spline.design/nexbotrobotcharacterconcept-ngGihQtogHAhFGOT6bKrSU8V/" frameborder="0" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;border:0" aria-hidden="true"></iframe>
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <filter id="lg-distort-side" x="-20%" y="-20%" width="140%" height="140%">
     <feTurbulence type="fractalNoise" baseFrequency="0.009 0.009" numOctaves="2" seed="7" result="turb"/>
