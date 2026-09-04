@@ -4094,12 +4094,20 @@ body{top:0 !important;position:static !important}
 body { font-family: 'Inter', 'Segoe UI', sans-serif !important; }
 
 /* ── Canvas Background ── */
+/* Retired: this particle/orb canvas lived INSIDE .landing, which is its own
+   z-index:2 stacking context -- so even at z-index:0 here, its drawn pixels
+   composited above the sitewide Spline robot iframe (#mmSiteSplineBg, a
+   z-index:0 sibling of .landing at the document root), completely hiding it.
+   The Spline background replaces this effect, so it's switched off outright
+   rather than reworking the stacking order. Safe to delete the JS engine
+   below too if this sticks. */
 #mm-bg-canvas {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none;
   z-index: 0;
   opacity: 1;
+  display: none !important;
 }
 
 /* ── Landing wrapper needs stacking context ── */
