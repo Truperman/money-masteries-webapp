@@ -4110,6 +4110,23 @@ body { font-family: 'Inter', 'Segoe UI', sans-serif !important; }
   display: none !important;
 }
 
+/* Same fix, extended to every logged-in dashboard screen: #sbgCanvas,
+   #sbgLayer, #dashLiquidBg and #mmDashVantaBg all live inside
+   .app-layout (id="appLayout"), which is its own z-index:2 stacking
+   context -- so they always composited above the sitewide Spline robot
+   iframe no matter their own z-index, exactly like #mm-bg-canvas did
+   inside .landing above. Requested: the robot background on every page,
+   not just the logged-out landing screen -- so these are switched off
+   sitewide too. #bg-grid (barely-visible 2.5%-opacity line grid) and
+   #mmCockpitHud (vignette + corner brackets, no real fill) are left
+   alone since neither meaningfully blocks the view. */
+#sbgCanvas,
+#sbgLayer,
+#dashLiquidBg,
+#mmDashVantaBg {
+  display: none !important;
+}
+
 /* ── Landing wrapper needs stacking context ── */
 .landing {
   position: relative;
