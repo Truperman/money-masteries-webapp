@@ -7171,7 +7171,9 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
    .active on a timer; layers sit at z-index:-1 so they paint behind the
    hero's normal (non-positioned) child elements without needing to touch
    those elements' own z-index. */
-.landing-hero-bg{position:absolute;inset:0;z-index:-1;overflow:hidden;border-radius:inherit}
+/* Rotating hero photo backgrounds (skyline/gold-coins/etc) disabled per request --
+   only the sitewide Spline robot background (#mmSiteSplineBg) should show. */
+.landing-hero-bg{display:none !important;position:absolute;inset:0;z-index:-1;overflow:hidden;border-radius:inherit}
 .landing-hero-bg-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease;animation:mmHeroBgPan 22s ease-in-out infinite alternate}
 .landing-hero-bg-layer.active{opacity:1}
 .landing-hero-bg-scrim{position:absolute;inset:0;background:linear-gradient(180deg, rgba(6,9,18,.62) 0%, rgba(6,9,18,.72) 45%, rgba(6,9,18,.88) 100%)}
