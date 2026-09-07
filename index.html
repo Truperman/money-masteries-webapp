@@ -2933,6 +2933,85 @@ td .admnt-preview{margin-top:4px}
 .mm-tools-banner:hover .mm-tools-banner-arrow{transform:translateX(3px)}
 @media (prefers-reduced-motion: reduce){ .mm-tools-banner,.mm-tools-banner-arrow{transition:none} }
 
+/* Discover/Setup + Necessary Tools -- floating side rail instead of a
+   stacked column of full-width cards. Those cards used to sit right in
+   the main content column at the top of the dashboard, which is exactly
+   where the sitewide Spline robot's face renders behind everything --
+   so they blocked it out completely. Pulled out of document flow with
+   position:fixed onto a slim rail on the left edge instead, restyled as
+   compact icon+label pills, and given the same gold/pink glimmer sweep
+   already used on the Genie FAB (see mm-icon-glimmer-genie) so they still
+   read as "tap me", just off to the side instead of center-stage. */
+#dashTopTabs{
+  position:fixed;
+  top:112px;
+  right:16px;
+  z-index:420;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin:0;
+  border:none;
+  padding:0;
+}
+#dashTopTabs .dash-tab{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  width:68px;
+  padding:14px 8px;
+  margin:0;
+  border-radius:16px;
+  border:1px solid rgba(46,123,255,.35);
+  background:linear-gradient(110deg,#0d1420 0%,#152037 25%,#0d1420 50%,#152037 75%,#0d1420 100%);
+  background-size:250% 100%;
+  animation:mm-icon-glimmer-genie 3.6s ease-in-out infinite;
+  color:#9ca3af;
+  font-size:.66rem;
+  font-weight:700;
+  text-align:center;
+  white-space:normal;
+  line-height:1.15;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);
+  transition:transform .2s ease,border-color .2s ease,color .2s ease;
+}
+#dashTopTabs .dash-tab i{margin:0;font-size:1.05rem}
+#dashTopTabs .dash-tab:hover{transform:translateX(4px);color:#e5e7eb}
+#dashTopTabs .dash-tab.active{border-color:#2E7BFF;color:#2E7BFF;box-shadow:0 8px 22px rgba(46,123,255,.35)}
+@media (prefers-reduced-motion:reduce){ #dashTopTabs .dash-tab{animation:none} }
+@media (max-width:900px){ #dashTopTabs{right:8px;top:100px;gap:8px} #dashTopTabs .dash-tab{width:52px;padding:10px 5px;font-size:.58rem} }
+
+#mmToolsBanner{
+  position:fixed;
+  top:340px;
+  right:16px;
+  z-index:420;
+  width:68px;
+  margin:0;
+  padding:14px 8px;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  border-radius:16px;
+  background:linear-gradient(110deg,#0d1420 0%,#152037 25%,#0d1420 50%,#152037 75%,#0d1420 100%);
+  background-size:250% 100%;
+  animation:mm-icon-glimmer-genie 3.6s ease-in-out infinite;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);
+}
+#mmToolsBanner:hover{transform:translateX(4px)}
+#mmToolsBanner .mm-tools-banner-icon{font-size:1.05rem}
+#mmToolsBanner .mm-tools-banner-text{align-items:center;text-align:center;gap:0}
+#mmToolsBanner .mm-tools-banner-title{font-size:.66rem;font-weight:700;color:#9ca3af;white-space:normal;line-height:1.15}
+#mmToolsBanner .mm-tools-banner-sub,
+#mmToolsBanner .mm-tools-banner-arrow{display:none}
+@media (prefers-reduced-motion:reduce){ #mmToolsBanner{animation:none} }
+@media (max-width:900px){ #mmToolsBanner{right:8px;width:52px;padding:10px 5px;top:296px} #mmToolsBanner .mm-tools-banner-title{font-size:.58rem} }
+
+
 /* Necessary Tools modal — wide, scrollable, holds every non-GAIN$ category. */
 .mm-tools-modal{position:relative;max-width:960px;width:94%;max-height:86vh;display:flex;flex-direction:column;text-align:left;padding:28px}
 .mm-tools-modal-head{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:800;color:#e7ecf5;margin-bottom:14px;flex:none}
@@ -3444,6 +3523,43 @@ a.course-card:visited{color:inherit}
 .site-lang-btn{font-size:.7rem;font-weight:800;color:#9ca3af;padding:5px 8px;border-radius:7px;cursor:pointer;transition:.15s;user-select:none}
 .site-lang-btn:hover{color:#2E7BFF}
 .site-lang-btn.active{background:#2E7BFF;color:#ffffff}
+
+/* ── LIGHT / DARK MODE TOGGLE ──────────────────────────────────────────
+   The whole site is hand-authored in hardcoded dark colors (no CSS
+   variables), so a "real" per-element light theme would mean re-touching
+   thousands of color declarations. Instead: flip the WHOLE rendered page
+   with a CSS filter (invert + hue-rotate cancels back to the original
+   hues, just light<->dark swapped) when data-theme="light" is set on
+   <html>, then cancel that same filter on anything that's already real
+   photographic/rendered pixels -- images, video, canvases, the Spline
+   robot -- so those don't get inverted along with the UI chrome. This is
+   a well-known trick for bolting a second theme onto a site that was
+   only ever designed for one. */
+.theme-toggle-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;margin-right:8px;flex-shrink:0;
+  border:1px solid #1f2937;border-radius:10px;background:#111827;
+  color:#facc15;font-size:.9rem;cursor:pointer;transition:background .15s,transform .15s,color .15s;
+}
+.theme-toggle-btn:hover{background:#1c2637;transform:translateY(-1px)}
+html[data-theme="light"] .theme-toggle-btn{color:#2E7BFF}
+html{transition:filter .25s ease}
+html[data-theme="light"] body{
+  filter:invert(1) hue-rotate(180deg);
+  background:#f3f4f6;
+}
+html[data-theme="light"] img,
+html[data-theme="light"] video,
+html[data-theme="light"] canvas,
+html[data-theme="light"] iframe,
+html[data-theme="light"] spline-viewer,
+html[data-theme="light"] svg image,
+html[data-theme="light"] .landing-hero-bg-layer,
+html[data-theme="light"] .theme-toggle-btn{
+  filter:invert(1) hue-rotate(180deg);
+}
+@media (prefers-reduced-motion:reduce){ html{transition:none} }
+
 /* hide Google's default translate bar/tooltip */
 .goog-te-banner-frame,.goog-te-gadget-icon,.goog-tooltip,.goog-te-balloon-frame{display:none !important}
 .goog-text-highlight{background:none !important;box-shadow:none !important}
@@ -7266,6 +7382,17 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
      completely separate window/document that page-level mouse events never
      reach at all. -->
 <script type="module" src="https://cdn.spline.design/@splinetool/viewer@2.0.36/build/spline-viewer.js"></script>
+<!-- Light/dark mode: apply the saved choice before first paint so there's
+     no flash of the wrong theme. mmToggleTheme() (defined later, with the
+     rest of the app's JS) flips it and persists the choice. -->
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('mmTheme');
+    if(saved === 'light'){ document.documentElement.setAttribute('data-theme','light'); }
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <!-- Sitewide ambient 3D background (Spline robot) -- fixed, full-viewport, behind
@@ -7308,6 +7435,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="nav-share-btn" id="navShareBtn" onclick="openShareModal()" title="Sharing keeps you active and earns points every day — $0.05 in redeemable value each, no penalty for sitting out a day.">📢 Share</button>
   </div>
   <div class="nav-right">
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="mmToggleTheme()" title="Switch between dark and light mode" aria-label="Toggle light/dark mode"><i class="fa-solid fa-moon" id="themeToggleIcon"></i></button>
     <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
     <div class="nav-user" id="navUser" onclick="toggleNavUserDropdown(event)">
       <img class="nav-avatar" id="navAvatar" src="" alt="">
@@ -7648,7 +7776,8 @@ document.addEventListener('DOMContentLoaded', function() {
       Money <span>Masteries</span>
     </div>
     <div class="lnav-links">
-      <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="mmToggleTheme()" title="Switch between dark and light mode" aria-label="Toggle light/dark mode"><i class="fa-solid fa-moon" id="themeToggleIcon"></i></button>
+    <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
       <div class="lnav-link" onclick="document.getElementById('secPaths').scrollIntoView({behavior:'smooth'})">Income Paths</div>
       <div class="lnav-link" onclick="document.getElementById('secHow').scrollIntoView({behavior:'smooth'})">How It Works</div>
       <div class="lnav-link" onclick="document.getElementById('secWhy').scrollIntoView({behavior:'smooth'})">Why Us</div>
@@ -7926,7 +8055,7 @@ document.addEventListener('DOMContentLoaded', function() {
            absence, so hiding rather than deleting avoids breaking that
            code while still giving the simplified dashboard this redesign
            calls for. -->
-      <div class="dash-tabs">
+      <div class="dash-tabs" id="dashTopTabs">
         <div class="dash-tab active" id="dtab-discover" onclick="switchDashTab('discover')"><i class="fa-solid fa-compass"></i> Discover</div>
         <div class="dash-tab" id="dtab-setup" onclick="switchDashTab('setup')"><i class="fa-solid fa-list-check"></i> Setup</div>
       </div>
@@ -18927,6 +19056,30 @@ function mmSetLang(lang){
   mmMarkLang();
   try{ if(typeof setCourseLang==='function' && typeof courseLang!=='undefined' && courseLang!==lang) setCourseLang(lang, null, true); }catch(e){}
 }
+
+// ── Light/dark mode toggle ──────────────────────────────────────────────
+// Flips html[data-theme], persists the choice, and syncs every moon/sun
+// icon on the page (there are two toggle buttons -- landing nav + app
+// topbar -- so update all of them, not just the one that was clicked).
+function mmSyncThemeIcons(){
+  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  document.querySelectorAll('.theme-toggle-btn i').forEach(function(i){
+    i.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  });
+}
+function mmToggleTheme(){
+  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if(isLight){
+    document.documentElement.removeAttribute('data-theme');
+    try{ localStorage.setItem('mmTheme','dark'); }catch(e){}
+  } else {
+    document.documentElement.setAttribute('data-theme','light');
+    try{ localStorage.setItem('mmTheme','light'); }catch(e){}
+  }
+  mmSyncThemeIcons();
+}
+if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', mmSyncThemeIcons); } else { mmSyncThemeIcons(); }
+
 var mmMO = new MutationObserver(function(muts){
   if(MM_LANG==='en') return;
   for(var i=0;i<muts.length;i++){
