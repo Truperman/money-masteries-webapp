@@ -8175,10 +8175,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <div class="mmf-controls">
-  <div class="lang" role="group" aria-label="Language">
-    <button type="button" data-lang="en" aria-pressed="true">EN</button>
-    <button type="button" data-lang="es" aria-pressed="false">ES</button>
-  </div>
+  <!-- Genie's spoken/written language now follows the site's own EN/ES/PT
+       switcher in the nav (mmSetLang) instead of a separate toggle here --
+       see the mm:langchange listener near the bottom of this script. -->
   <button class="snd" id="snd" data-on="true" aria-pressed="true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
     <span data-i18n="sound">Voice on</span>
@@ -8876,10 +8875,32 @@ var Genie = (function(){
 /* ============================================================
    STATE
    ============================================================ */
-function detectLang(){
-  try{ var s = localStorage.getItem("mm_lang"); if(s === "en" || s === "es") return s; }catch(e){}
+/* Genie's funnel currently has full copy in English and Spanish only --
+   no Portuguese translation exists yet (flag this to David if he wants
+   one written). resolveContentLang() is the single place that decision
+   lives: any site language that isn't "es" falls back to "en" content
+   *and* the English ElevenLabs voice (Zoltan) -- correct, since the
+   voice should match whatever text is actually being read aloud. */
+function resolveContentLang(siteLang){
+  return siteLang === "es" ? "es" : "en";
+}
+function siteLangNow(){
+  // The site's own EN/ES/PT switcher (mmSetLang) -- checked three ways
+  // since this script can run before that switcher's own script block
+  // has executed and defined window.MM_LANG: the mmlang cookie it writes
+  // (works regardless of script order), then window.MM_LANG once it
+  // exists, then the funnel's own fallback detection.
+  try{
+    var m = document.cookie.match(/(?:^|;\s*)mmlang=([a-z]{2})/);
+    if(m && ["en","es","pt"].indexOf(m[1]) >= 0) return m[1];
+  }catch(e){}
   var f = String(window.MM_LANG || "").toLowerCase();
-  if(f === "en" || f === "es") return f;
+  if(["en","es","pt"].indexOf(f) >= 0) return f;
+  return null;
+}
+function detectLang(){
+  var site = siteLangNow();
+  if(site) return resolveContentLang(site);
   var c = String(window.MM_COUNTRY || "").toUpperCase();
   if(c) return ES_COUNTRIES.indexOf(c) >= 0 ? "es" : "en";
   var L = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"]).join(",").toLowerCase();
@@ -9096,9 +9117,6 @@ function applyLang(){
   wrapEl.querySelectorAll("[data-i18n-ph]").forEach(function(el){
     var v = txt(el.getAttribute("data-i18n-ph")); if(v != null) el.setAttribute("placeholder", v);
   });
-  wrapEl.querySelectorAll(".lang button").forEach(function(b){
-    b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
-  });
   paintSound(); markChips(); headings(); paintRail();
 
   if(seen.intro) Genie.render(block("intro"), txt("intro"));
@@ -9118,13 +9136,6 @@ function paintSound(){
   b.querySelector("span").textContent = sound ? txt("sound") : txt("soundOff");
 }
 
-wrapEl.querySelectorAll(".lang button").forEach(function(b){
-  b.addEventListener("click", function(){
-    Genie.stop(); lang = b.dataset.lang;
-    try{ localStorage.setItem("mm_lang", lang); }catch(e){}
-    applyLang();
-  });
-});
 document.getElementById("snd").addEventListener("click", function(){
   sound = !sound;
   try{ localStorage.setItem("mm_sound", sound ? "1" : "0"); }catch(e){}
@@ -9326,6 +9337,21 @@ document.getElementById("signup").addEventListener("submit", function(e){
 });
 
 document.addEventListener("visibilitychange", function(){ if(document.hidden) Genie.stop(); });
+
+/* Follow the site's own EN/ES/PT switcher instead of a separate one --
+   mmSetLang() (defined later in the page, with the rest of the site's
+   JS) dispatches this event every time David or a visitor clicks
+   EN/ES/PT in the nav. A plain event listener works fine even though
+   mmSetLang itself doesn't exist yet at the moment this script runs --
+   the event only fires later, on a real click. */
+document.addEventListener("mm:langchange", function(e){
+  var site = (e.detail && e.detail.lang) || "en";
+  var next = resolveContentLang(site);
+  if(next === lang) return;
+  Genie.stop();
+  lang = next;
+  applyLang();
+});
 
 applyLang();
 paintRail();
@@ -20600,6 +20626,10 @@ function mmSetLang(lang){
   mmApplyAll();
   mmMarkLang();
   try{ if(typeof setCourseLang==='function' && typeof courseLang!=='undefined' && courseLang!==lang) setCourseLang(lang, null, true); }catch(e){}
+  // Lets the Genie landing-page funnel (and anything else that cares)
+  // follow this same EN/ES/PT choice for its spoken/written language --
+  // see the #mmFunnelWrap script's mm:langchange listener.
+  try{ document.dispatchEvent(new CustomEvent('mm:langchange', { detail:{ lang:lang } })); }catch(e){}
 }
 
 // ── Light/dark mode toggle ──────────────────────────────────────────────
