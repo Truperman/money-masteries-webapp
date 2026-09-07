@@ -4205,6 +4205,7 @@ body{top:0 !important;position:static !important}
 
 /* ── Google Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap'); /* Genie funnel display face */
 
 /* ── Base Upgrades ── */
 body { font-family: 'Inter', 'Segoe UI', sans-serif !important; }
@@ -7787,6 +7788,1456 @@ document.addEventListener('DOMContentLoaded', function() {
       <button class="lnav-cta" onclick="switchAuthTab('signup');document.querySelector('.auth-box').scrollIntoView({behavior:'smooth',block:'center'})">Join Free →</button>
     </div>
   </nav>
+
+<!-- ============================================================
+     GENIE FUNNEL — 9-slide guided enrollment deck
+     Adapted from funnel_1.html. Everything below is scoped under
+     #mmFunnelWrap (every CSS selector and the one document.body
+     reference) so it cannot leak into or collide with the rest of
+     the site. It sits inline at the top of the landing page, above
+     the hero — the robot background shows straight through (no
+     background is painted here), and the hero/pricing/etc. below
+     are untouched and still scroll normally.
+
+     The deck's own duplicate top header/nav was removed (the site
+     already has one, right above this); only its sound + language
+     toggle survive, tucked into the corner of the widget. The final
+     "account" step no longer navigates away — it hands the visitor's
+     name + email straight to the site's real signup form (.auth-box)
+     and opens it, since that is how this site actually creates
+     accounts (free signup now, card/upgrade later from inside the
+     app — there is no separate payment step at signup).
+     ============================================================ -->
+<div id="mmFunnelWrap">
+<style>
+#mmFunnelWrap{
+  position:relative; margin:0; background:transparent; color:var(--mmf-ink,#F7EEDC);
+  font-family:var(--mmf-ui,"Inter",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif);
+  font-size:1.0625rem; line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+
+  --surface:rgba(255,255,255,.05);
+  --raise:rgba(255,255,255,.08);
+  --line:rgba(255,255,255,.10);
+  --line-2:rgba(255,255,255,.18);
+  --btn-2:rgba(255,255,255,.10);
+  --chrome:rgba(0,0,0,.42);
+  --scrim:rgba(0,0,0,.52);
+
+  --ink:#F7EEDC; --ink-2:#C6B79E; --ink-3:#93866F;
+
+  --gold:#E8C27A; --gold-soft:#FFF3D6;
+  --gold-grad:linear-gradient(100deg,#B98F3E 0%,#EFD08E 26%,#FFF6DE 46%,#EFD08E 66%,#B98F3E 100%);
+
+  --green:#2FD07C; --green-soft:#8FF3BE; --green-ink:#03230F;
+  --green-grad:linear-gradient(135deg,#7BF0B0 0%,#2FD07C 46%,#12A559 100%);
+
+  --ac:var(--gold); --ac-soft:var(--gold-soft);
+  --btn:var(--green-grad); --btn-ink:var(--green-ink);
+  --ok:var(--green);
+  --wash:rgba(232,194,122,.14);
+  --glow:rgba(47,208,124,.42);
+
+  --display:"Outfit",system-ui,sans-serif;
+  --ui:"Inter",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --r:16px; --r-sm:10px; --r-btn:8px; --col:720px; --topH:12px; --botH:64px;
+}
+
+@keyframes mmfGlimmer{ to{ background-position:-220% 0 } }
+
+#mmFunnelWrap *,#mmFunnelWrap *::before,#mmFunnelWrap *::after{box-sizing:border-box}
+#mmFunnelWrap p{margin:0}
+#mmFunnelWrap h1,#mmFunnelWrap h2,#mmFunnelWrap h3{margin:0; font-family:var(--display); font-weight:500; letter-spacing:-.04em; line-height:1.02; text-wrap:balance}
+#mmFunnelWrap a{color:inherit}
+#mmFunnelWrap :focus-visible{outline:2px solid var(--ac); outline-offset:3px; border-radius:4px}
+#mmFunnelWrap .col{width:min(100% - 2.4rem, var(--col)); margin-inline:auto}
+#mmFunnelWrap .wide{width:min(100% - 2.4rem, 960px); margin-inline:auto}
+#mmFunnelWrap .lab{font-size:.78rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--ink-3)}
+
+/* ---------- corner controls (sound + language — the deck's own header was dropped, the site nav above already has EN/ES) ---------- */
+#mmFunnelWrap .mmf-controls{position:absolute; top:10px; right:10px; z-index:5; display:flex; align-items:center; gap:.5rem}
+#mmFunnelWrap .lang{display:flex; background:var(--btn-2); border:0; border-radius:8px; padding:2px}
+#mmFunnelWrap .lang button{appearance:none; border:0; cursor:pointer; background:transparent; font-family:var(--ui); font-size:.74rem; font-weight:500; padding:.3rem .62rem; border-radius:6px; color:var(--ink-3)}
+#mmFunnelWrap .lang button[aria-pressed="true"]{background:var(--green-grad); color:var(--green-ink)}
+#mmFunnelWrap .snd{
+  appearance:none; cursor:pointer; display:flex; align-items:center; gap:.4rem;
+  background:var(--btn-2); border:0; border-radius:8px;
+  color:var(--ink-2); font-family:var(--ui); font-size:.78rem; font-weight:450; padding:.4rem .7rem;
+}
+#mmFunnelWrap .snd svg{width:14px; height:14px}
+#mmFunnelWrap .snd[data-on="true"]{color:var(--green)}
+@media (max-width:640px){ #mmFunnelWrap .snd span{display:none} }
+
+/* ---------- the deck ---------- */
+#mmFunnelWrap .stage{position:relative; overflow:hidden; padding-top:var(--topH); min-height:100svh}
+#mmFunnelWrap .stage::before{
+  content:""; position:absolute; top:-24%; left:50%; transform:translateX(-50%);
+  width:min(140vw,1200px); aspect-ratio:1; pointer-events:none; z-index:0;
+  background:radial-gradient(ellipse at center, var(--scrim) 0%, transparent 68%);
+  filter:blur(34px);
+}
+#mmFunnelWrap .slide > .col{position:relative; z-index:1; width:min(100% - 2.4rem, var(--col)); max-width:100%}
+#mmFunnelWrap .slide h1,#mmFunnelWrap .slide .q,#mmFunnelWrap .slide .hero-sub,#mmFunnelWrap .slide .fine,#mmFunnelWrap .slide .hint{margin-inline:auto}
+#mmFunnelWrap .slide{
+  position:absolute; top:var(--topH); left:0; width:100%;
+  min-height:calc(100svh - var(--topH));
+  display:flex; align-items:center; justify-content:center;
+  text-align:center;
+  padding:clamp(1.6rem,4.5vw,3rem) 0 calc(var(--botH) + 2.5rem);
+  opacity:0; transform:translateX(46px); visibility:hidden; pointer-events:none;
+  transition:opacity .38s ease, transform .42s cubic-bezier(.22,.72,.28,1);
+}
+#mmFunnelWrap .slide.behind{transform:translateX(-46px)}
+#mmFunnelWrap .slide.on{position:relative; top:0; opacity:1; transform:none; visibility:visible; pointer-events:auto}
+
+/* ---------- genie ---------- */
+#mmFunnelWrap .genie{display:flex; align-items:center; justify-content:center; gap:.85rem; margin-bottom:1.3rem}
+#mmFunnelWrap .who{text-align:left}
+#mmFunnelWrap .face{
+  position:relative; width:50px; height:50px; border-radius:50%; flex:none;
+  background:radial-gradient(circle at 32% 26%, #FFFFFF 0%, var(--ac-soft) 30%, var(--ac) 74%);
+  box-shadow:0 0 22px -2px var(--glow);
+}
+#mmFunnelWrap .face::after{content:""; position:absolute; inset:-10px; border-radius:50%; border:1px solid var(--ac); opacity:0}
+#mmFunnelWrap.speaking .face::after{animation:mmfPing 1.5s ease-out infinite}
+@keyframes mmfPing{0%{opacity:.5; transform:scale(.9)} 100%{opacity:0; transform:scale(1.25)}}
+#mmFunnelWrap .who .nm{font-family:var(--display); font-weight:500; font-size:1rem; letter-spacing:-.02em; display:block}
+#mmFunnelWrap .who .rl{font-size:.82rem; color:var(--ink-3)}
+#mmFunnelWrap .eq{display:flex; align-items:flex-end; gap:3px; height:16px; opacity:0; transition:opacity .2s ease}
+#mmFunnelWrap.speaking .eq{opacity:1}
+#mmFunnelWrap .eq i{display:block; width:3px; border-radius:2px; background:var(--ac); height:4px}
+#mmFunnelWrap.speaking .eq i{animation:mmfBounce .9s ease-in-out infinite}
+#mmFunnelWrap .eq i:nth-child(2){animation-delay:.15s} #mmFunnelWrap .eq i:nth-child(3){animation-delay:.3s} #mmFunnelWrap .eq i:nth-child(4){animation-delay:.45s}
+@keyframes mmfBounce{0%,100%{height:4px} 50%{height:15px}}
+
+#mmFunnelWrap h1{font-size:clamp(2.2rem,1.3rem + 3.8vw,3.55rem); max-width:16ch}
+#mmFunnelWrap h1,#mmFunnelWrap .q,#mmFunnelWrap .who .nm,#mmFunnelWrap .total .v{
+  background:var(--gold-grad); background-size:220% 100%;
+  -webkit-background-clip:text; background-clip:text;
+  color:var(--gold); -webkit-text-fill-color:transparent;
+  animation:mmfGlimmer 9s linear infinite;
+}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  #mmFunnelWrap h1,#mmFunnelWrap .q,#mmFunnelWrap .who .nm,#mmFunnelWrap .total .v{ -webkit-text-fill-color:var(--gold); color:var(--gold) }
+}
+#mmFunnelWrap h1 .hl{-webkit-text-fill-color:transparent}
+#mmFunnelWrap .hero-sub{margin-top:1.15rem; font-size:1.02rem; font-weight:400; line-height:1.6; color:var(--ink-2); max-width:46ch}
+
+/* ---------- spoken ---------- */
+#mmFunnelWrap .says{margin-top:1.5rem; padding-top:1.4rem; position:relative}
+#mmFunnelWrap .says::before{
+  content:""; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:44px; height:1px; background:var(--line-2); transition:background .3s ease, width .3s ease;
+}
+#mmFunnelWrap .says.active::before{background:var(--ink-2); width:78px}
+#mmFunnelWrap .says .line{
+  font-size:1.12rem; font-weight:400; line-height:1.58;
+  max-width:min(42ch, 100%); margin-inline:auto; letter-spacing:-.008em;
+  overflow-wrap:break-word;
+}
+#mmFunnelWrap .says .w{color:rgba(247,238,220,.40); transition:color .18s ease}
+#mmFunnelWrap .says .w.said{color:var(--gold)}
+#mmFunnelWrap .says .w.now{color:var(--gold-soft)}
+#mmFunnelWrap .replay{
+  appearance:none; cursor:pointer; margin-top:.85rem; display:inline-flex; align-items:center; gap:.45rem;
+  background:transparent; border:0; padding:0; color:var(--ink-3);
+  font-family:var(--ui); font-size:.8rem; font-weight:600;
+}
+#mmFunnelWrap .replay:hover{color:var(--ac)}
+#mmFunnelWrap .replay svg{width:13px; height:13px}
+
+/* ---------- buttons ---------- */
+#mmFunnelWrap .cont,#mmFunnelWrap .begin,#mmFunnelWrap .go{
+  position:relative; overflow:hidden;
+  appearance:none; cursor:pointer; border:0; border-radius:var(--r-btn);
+  background:var(--green-grad); background-size:180% 100%; color:var(--green-ink);
+  font-family:var(--ui); font-weight:600; letter-spacing:-.01em; font-size:.94rem;
+  padding:.85rem 1.4rem;
+  box-shadow:0 10px 30px -12px var(--glow), inset 0 1px 0 rgba(255,255,255,.35);
+  transition:filter .16s ease, transform .16s ease;
+  display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
+  animation:mmfGlimmer 7s linear infinite;
+}
+#mmFunnelWrap .cont::after,#mmFunnelWrap .begin::after,#mmFunnelWrap .go::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(104deg,transparent 36%,rgba(255,255,255,.55) 50%,transparent 62%);
+  transform:translateX(-130%);
+  animation:mmfSheen 5.4s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes mmfSheen{ 0%,76%{ transform:translateX(-130%) } 100%{ transform:translateX(130%) } }
+#mmFunnelWrap .cont:hover,#mmFunnelWrap .begin:hover,#mmFunnelWrap .go:hover{filter:brightness(1.06)}
+#mmFunnelWrap .cont:active,#mmFunnelWrap .begin:active,#mmFunnelWrap .go:active{transform:scale(.985)}
+#mmFunnelWrap .cont{margin-top:1.6rem}
+#mmFunnelWrap .begin{margin-top:1.8rem}
+#mmFunnelWrap .go{justify-content:center; width:100%}
+#mmFunnelWrap .cont svg,#mmFunnelWrap .begin svg{width:14px; height:14px}
+#mmFunnelWrap .hint{margin-top:.8rem; font-size:.85rem; color:var(--ink-3)}
+#mmFunnelWrap .askfirst{
+  margin-top:1.4rem; background:none; border:0; padding:0; cursor:pointer; display:block;
+  font-family:var(--ui); font-size:.9rem; color:var(--ink-2);
+  text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line-2);
+}
+#mmFunnelWrap .askfirst:hover{color:var(--ac)}
+
+/* ---------- promises ---------- */
+#mmFunnelWrap .promises{display:grid; gap:.65rem; margin-top:clamp(1.8rem,5vw,2.6rem); grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+#mmFunnelWrap .pr{background:var(--surface); backdrop-filter:blur(12px); border:1px solid var(--line); border-radius:var(--r); padding:1.15rem}
+#mmFunnelWrap .pr .ic{width:32px; height:32px; border-radius:50%; background:var(--wash); color:var(--ac); display:grid; place-items:center; margin:0 auto .7rem}
+#mmFunnelWrap .pr .ic svg{width:15px; height:15px}
+#mmFunnelWrap .pr h3{font-size:1rem; margin-bottom:.28rem; letter-spacing:-.02em}
+#mmFunnelWrap .pr p{font-size:.9rem; color:var(--ink-2); line-height:1.48}
+
+/* ---------- questions ---------- */
+#mmFunnelWrap .q{font-size:clamp(1.6rem,1.25rem + 1.5vw,2.35rem); margin-top:.75rem; max-width:20ch}
+#mmFunnelWrap .micwrap{display:grid; justify-items:center; gap:.75rem; margin-top:1.7rem}
+#mmFunnelWrap .micwrap[hidden]{display:none}
+#mmFunnelWrap .mic{
+  position:relative; width:88px; height:88px; border-radius:50%; border:0; cursor:pointer;
+  background:var(--btn-2); color:var(--ink); display:grid; place-items:center;
+  transition:background .2s ease, color .2s ease, transform .16s ease;
+}
+#mmFunnelWrap .mic svg{width:34px; height:34px}
+#mmFunnelWrap .mic:hover{background:rgba(255,255,255,.16)}
+#mmFunnelWrap .mic:active{transform:scale(.96)}
+#mmFunnelWrap .mic[data-on="true"]{background:var(--green-grad); color:var(--green-ink)}
+#mmFunnelWrap .mic[data-on="true"]::after{
+  content:""; position:absolute; inset:-9px; border-radius:50%;
+  border:2px solid var(--green); animation:mmfMicping 1.3s ease-out infinite;
+}
+@keyframes mmfMicping{ 0%{opacity:.7; transform:scale(.94)} 100%{opacity:0; transform:scale(1.25)} }
+#mmFunnelWrap .mic.sm{width:52px; height:52px}
+#mmFunnelWrap .mic.sm svg{width:21px; height:21px}
+#mmFunnelWrap .miclab{font-size:.85rem; color:var(--ink-3)}
+#mmFunnelWrap .orline{font-size:.8rem; color:var(--ink-3); margin-top:1.5rem}
+#mmFunnelWrap .namerow{display:flex; align-items:center; justify-content:center; gap:.8rem; margin-top:1.25rem; flex-wrap:wrap}
+
+#mmFunnelWrap .chips{display:flex; flex-wrap:wrap; justify-content:center; gap:.55rem; margin-top:1.25rem}
+#mmFunnelWrap .chip{
+  appearance:none; cursor:pointer; font-family:var(--ui);
+  font-size:.95rem; font-weight:450; line-height:1.3; padding:.7rem 1.05rem;
+  border-radius:var(--r-btn); background:var(--btn-2); color:var(--ink); border:1px solid transparent;
+  transition:background .15s ease, border-color .15s ease, color .15s ease;
+}
+#mmFunnelWrap .chip:hover{background:rgba(255,255,255,.14)}
+#mmFunnelWrap .chip[aria-pressed="true"]{background:var(--wash); border-color:var(--gold); color:var(--gold-soft)}
+#mmFunnelWrap .picked{display:inline-flex; align-items:center; justify-content:center; gap:.4rem; margin-top:.9rem; font-size:.79rem; font-weight:500; color:var(--ink-3)}
+#mmFunnelWrap .picked svg{width:12px; height:12px; color:var(--ac)}
+#mmFunnelWrap .namebox{display:flex; justify-content:center; gap:.6rem; margin-top:1.25rem; flex-wrap:wrap; max-width:470px; margin-inline:auto}
+#mmFunnelWrap .namebox input{text-align:center}
+#mmFunnelWrap .namebox input{
+  flex:1 1 200px; min-width:0; font-family:var(--ui); font-size:1rem; color:var(--ink);
+  padding:.82rem 1.1rem; border-radius:var(--r-btn); background:var(--btn-2); border:1px solid transparent;
+}
+#mmFunnelWrap .namebox input::placeholder{color:var(--ink-3)}
+#mmFunnelWrap .namebox input:focus{outline:2px solid var(--ac); outline-offset:1px; border-color:transparent}
+#mmFunnelWrap .namebox button{
+  appearance:none; cursor:pointer; border:0; border-radius:var(--r-btn); flex:none;
+  font-family:var(--ui); font-size:.94rem; font-weight:600; padding:.82rem 1.35rem;
+  background:var(--green-grad); color:var(--green-ink);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35); transition:filter .15s ease;
+}
+#mmFunnelWrap .namebox button:hover{filter:brightness(1.06)}
+
+/* ---------- plan ---------- */
+#mmFunnelWrap .echo{display:flex; flex-wrap:wrap; justify-content:center; gap:.38rem; margin-bottom:1.1rem}
+#mmFunnelWrap .echo span{font-size:.76rem; font-weight:450; padding:.3rem .66rem; border-radius:var(--r-sm); background:var(--wash); color:var(--gold)}
+#mmFunnelWrap .setup{margin:1.3rem 0 0; padding:0; display:grid; gap:.55rem}
+#mmFunnelWrap .setup li{
+  list-style:none; display:grid; grid-template-columns:1fr; justify-items:center; gap:.6rem;
+  background:var(--surface); backdrop-filter:blur(12px); border:1px solid var(--line); border-radius:var(--r-sm);
+  padding:1.05rem 1.1rem; font-size:.97rem; line-height:1.48;
+}
+#mmFunnelWrap .setup .tick{width:20px; height:20px; border-radius:50%; background:var(--green-grad); color:var(--green-ink); display:grid; place-items:center}
+#mmFunnelWrap .setup .tick svg{width:11px; height:11px}
+#mmFunnelWrap .setup .by{display:block; font-size:.76rem; color:var(--gold); opacity:.72; margin-top:.15rem; font-weight:600}
+#mmFunnelWrap .first{
+  margin-top:1.2rem; padding:1.4rem 1.35rem; border-radius:var(--r);
+  background:var(--surface); backdrop-filter:blur(12px); border:1px solid var(--line-2);
+}
+#mmFunnelWrap .first .lab{color:var(--gold)}
+#mmFunnelWrap .first .says{margin-top:.5rem; padding-left:0; border-left:0}
+#mmFunnelWrap .first .says .line{font-size:1.1rem; max-width:40ch; margin-inline:auto}
+
+/* ---------- account ---------- */
+#mmFunnelWrap form{margin-top:1.5rem; display:grid; gap:.9rem; max-width:440px; margin-inline:auto}
+#mmFunnelWrap label{display:grid; gap:.4rem; justify-items:center}
+#mmFunnelWrap label .lb{font-size:.8rem; color:var(--ink-2); font-weight:600}
+#mmFunnelWrap input[type=email]{
+  font-family:var(--ui); font-size:1rem; color:var(--ink); text-align:center; width:100%;
+  padding:.88rem 1.05rem; border-radius:var(--r-btn);
+  background:var(--btn-2); border:1px solid transparent;
+}
+#mmFunnelWrap input[type=email]::placeholder{color:var(--ink-3)}
+#mmFunnelWrap input[type=email]:focus{outline:2px solid var(--ac); outline-offset:1px; border-color:transparent}
+#mmFunnelWrap .card{background:var(--surface); backdrop-filter:blur(12px); border:1px solid var(--line-2); border-radius:var(--r); padding:1.1rem 1.15rem}
+#mmFunnelWrap .card .hd{display:flex; align-items:center; justify-content:center; gap:.9rem; flex-wrap:wrap; margin-bottom:.55rem}
+#mmFunnelWrap .card .hd .t{font-weight:700; font-size:.96rem}
+#mmFunnelWrap .card .marks{display:flex; gap:.3rem}
+#mmFunnelWrap .card .marks i{
+  width:30px; height:19px; border-radius:3px; background:var(--raise);
+  border:1px solid var(--line-2); font-style:normal; font-size:.5rem; font-weight:800;
+  color:var(--ink-3); display:grid; place-items:center; letter-spacing:.03em;
+}
+#mmFunnelWrap .card .why{font-size:.86rem; color:var(--ink-2); line-height:1.5; margin:0 auto .9rem; max-width:38ch}
+#mmFunnelWrap #card-element{
+  border-radius:var(--r-sm); border:1px dashed var(--line-2); background:rgba(255,255,255,.04);
+  padding:.9rem 1rem; min-height:50px; display:flex; align-items:center; justify-content:center; gap:.65rem;
+  color:var(--ink-3); font-size:.93rem;
+}
+#mmFunnelWrap #card-element .lock{width:15px; height:15px; flex:none; color:var(--ok)}
+#mmFunnelWrap .total{display:grid; justify-items:center; gap:.15rem; margin-top:1rem; padding-top:.95rem; border-top:1px solid var(--line)}
+#mmFunnelWrap .total .l{font-size:.8rem; color:var(--ink-3); font-weight:450}
+#mmFunnelWrap .total .v{font-family:var(--display); font-weight:500; font-size:1.75rem; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+#mmFunnelWrap .fine{margin-top:.9rem; font-size:.84rem; color:var(--ink-3); max-width:44ch; line-height:1.5}
+
+/* ---------- bottom rail (anchored to the widget itself, not the viewport, so it scrolls away with the deck) ---------- */
+#mmFunnelWrap .rail{
+  position:absolute; inset:auto 0 0 0; z-index:60; height:var(--botH);
+  background:var(--chrome); backdrop-filter:blur(16px);
+  border-top:1px solid var(--line); display:flex; align-items:center;
+}
+#mmFunnelWrap .rail .in{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem}
+#mmFunnelWrap .rail .in > :last-child{justify-self:end}
+#mmFunnelWrap .dots{justify-self:center}
+#mmFunnelWrap .back{
+  appearance:none; cursor:pointer; background:transparent; border:1px solid var(--line-2);
+  border-radius:999px; width:38px; height:38px; display:grid; place-items:center; color:var(--ink-2);
+  transition:color .15s ease, border-color .15s ease, opacity .15s ease;
+}
+#mmFunnelWrap .back:hover{color:var(--ac); border-color:var(--ac)}
+#mmFunnelWrap .back svg{width:15px; height:15px}
+#mmFunnelWrap .back[disabled]{opacity:.25; cursor:default}
+#mmFunnelWrap .dots{display:flex; gap:.34rem; align-items:center}
+#mmFunnelWrap .dots i{width:7px; height:7px; border-radius:50%; background:var(--line-2); transition:background .25s ease, width .25s ease}
+#mmFunnelWrap .dots i.done{background:var(--ink-3)}
+#mmFunnelWrap .dots i.now{background:var(--green); width:22px; border-radius:999px}
+#mmFunnelWrap .stepn{font-size:.76rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); font-variant-numeric:tabular-nums}
+
+/* ---------- info overlay (a real modal, so this one stays viewport-fixed on purpose) ---------- */
+#mmFunnelWrap .sheet{
+  position:fixed; inset:0; z-index:9000; display:none;
+  background:color-mix(in srgb, #000 62%, transparent); backdrop-filter:blur(4px);
+}
+#mmFunnelWrap .sheet.open{display:block}
+#mmFunnelWrap .sheet .panel{
+  position:absolute; inset:auto 0 0 0; max-height:88svh; overflow-y:auto;
+  background:rgba(8,8,10,.93); backdrop-filter:blur(18px); border-top:1px solid var(--line-2);
+  border-radius:var(--r) var(--r) 0 0; padding:1.5rem 0 2.5rem;
+  animation:mmfUp .32s cubic-bezier(.22,.72,.28,1) both;
+}
+@keyframes mmfUp{from{transform:translateY(28px); opacity:0} to{transform:none; opacity:1}}
+#mmFunnelWrap .sheet h2{font-size:1.35rem; margin-bottom:1rem}
+#mmFunnelWrap .sheet .x{
+  position:absolute; top:.9rem; right:1.1rem; appearance:none; cursor:pointer;
+  background:var(--surface); border:1px solid var(--line-2); border-radius:50%;
+  width:34px; height:34px; display:grid; place-items:center; color:var(--ink-2);
+}
+#mmFunnelWrap .sheet .x svg{width:14px; height:14px}
+#mmFunnelWrap .rows{display:grid; gap:.55rem; margin-bottom:1.6rem}
+#mmFunnelWrap .row{display:grid; grid-template-columns:minmax(112px,auto) 1fr; gap:.45rem 1.3rem; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-sm); padding:1rem 1.15rem}
+#mmFunnelWrap .row .k{font-weight:800; font-size:1.1rem; letter-spacing:-.02em; color:var(--ac); font-variant-numeric:tabular-nums}
+#mmFunnelWrap .row .v{color:var(--ink-2); font-size:.92rem; line-height:1.5}
+@media (max-width:560px){ #mmFunnelWrap .row{grid-template-columns:1fr; gap:.18rem} }
+#mmFunnelWrap details{border-top:1px solid var(--line); padding:.95rem 0}
+#mmFunnelWrap details:last-of-type{border-bottom:1px solid var(--line)}
+#mmFunnelWrap summary{cursor:pointer; list-style:none; font-weight:700; font-size:.98rem; display:flex; justify-content:space-between; gap:1rem; align-items:center}
+#mmFunnelWrap summary::-webkit-details-marker{display:none}
+#mmFunnelWrap summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--ink-3); border-bottom:2px solid var(--ink-3); transform:rotate(45deg) translateY(-2px); flex:none; transition:transform .2s ease}
+#mmFunnelWrap details[open] summary::after{transform:rotate(225deg) translateY(-2px)}
+#mmFunnelWrap details p{margin-top:.6rem; color:var(--ink-2); font-size:.93rem; line-height:1.58; max-width:56ch}
+#mmFunnelWrap .disc{margin-top:1.6rem; font-size:.76rem; color:var(--ink-3); line-height:1.6}
+
+#mmFunnelWrap img{max-width:100%; height:auto}
+#mmFunnelWrap [hidden]{display:none!important}
+
+@media (prefers-reduced-motion:reduce){ #mmFunnelWrap *{animation:none !important; transition:none !important} }
+</style>
+
+<div class="mmf-controls">
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="es" aria-pressed="false">ES</button>
+  </div>
+  <button class="snd" id="snd" data-on="true" aria-pressed="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    <span data-i18n="sound">Voice on</span>
+  </button>
+</div>
+
+<main class="stage" id="stage">
+
+  <!-- 1 · WELCOME -->
+  <section class="slide on" data-slide="welcome">
+    <div class="col">
+      <span class="lab" data-i18n="welcome">Welcome to Money Masteries</span>
+      <div class="genie">
+        <span class="face" aria-hidden="true"></span>
+        <span class="who"><span class="nm">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </div>
+      <h1 data-i18n-html="h1">I'm Genie, your <span class="hl">AI super agent</span>.</h1>
+      <p class="hero-sub" data-i18n="heroSub">All the tools, and a done-for-you system that builds your money making machine. From your phone or your computer. Free to start.</p>
+      <button class="begin" id="begin">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <span data-i18n="begin">Begin</span>
+      </button>
+      <p class="hint" data-i18n="hint">Free to start. You only pay for what you use.</p>
+      <div class="promises">
+        <div class="pr">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+          <h3 data-i18n="p1h">You sit back</h3>
+          <p data-i18n="p1p">I do the searching, the setup and the writing. You only ever have to say yes.</p>
+        </div>
+        <div class="pr">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg></span>
+          <h3 data-i18n="p2h">All from home</h3>
+          <p data-i18n="p2p">No truck, no store, no boss. It is all online. A phone is enough.</p>
+        </div>
+        <div class="pr">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <h3 data-i18n="p3h">You only pay for use</h3>
+          <p data-i18n="p3p">You begin free. The only thing you ever pay for is what you use, once you are already making moves.</p>
+        </div>
+      </div>
+      <button class="askfirst" data-sheet data-i18n="askfirst">Questions first? What it costs, and straight answers.</button>
+    </div>
+  </section>
+
+  <!-- 2 · INTRO -->
+  <section class="slide" data-slide="intro">
+    <div class="col">
+      <div class="genie">
+        <span class="face" aria-hidden="true"></span>
+        <span class="who"><span class="nm">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </div>
+      <div class="says" data-says="intro">
+        <p class="line"></p>
+        <button class="replay" data-replay="intro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+          <span data-i18n="replay">Hear it again</span>
+        </button>
+      </div>
+      <button class="cont" data-go="name"><span data-i18n="continue">Continue</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 3 · NAME -->
+  <section class="slide" data-slide="name">
+    <div class="col">
+      <span class="lab" data-i18n="nameTag">First — let's meet</span>
+      <h2 class="q" data-i18n="nameQ">What should I call you?</h2>
+      <div class="micwrap" data-micwrap>
+        <button class="mic" type="button" data-mic="name" data-on="false" aria-label="Speak your name">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        </button>
+        <p class="miclab" data-miclab data-i18n="micName">Tap and say your name</p>
+      </div>
+      <p class="orline" data-i18n="micOr">or type it below</p>
+      <div class="namebox">
+        <input type="text" id="fname" autocomplete="given-name" data-i18n-ph="namePh" placeholder="Your first name" aria-label="Your first name">
+        <button type="button" id="nameGo" data-i18n="continue">Continue</button>
+      </div>
+      <div class="says" data-says="name" hidden><p class="line"></p></div>
+    </div>
+  </section>
+
+  <!-- 4 · WHY -->
+  <section class="slide" data-slide="why">
+    <div class="col">
+      <span class="lab" data-i18n="whyTag2">Question 1 of 4</span>
+      <h2 class="q" data-i18n="qWhy">What brought you here today?</h2>
+      <div class="micwrap" data-micwrap>
+        <button class="mic" type="button" data-mic="why" data-on="false" aria-label="Speak your answer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        </button>
+        <p class="miclab" data-miclab data-i18n="micTap">Tap and say your answer</p>
+      </div>
+      <p class="orline" data-i18n="micOr">or tap an answer below</p>
+      <div class="chips" data-q="why">
+        <button class="chip" type="button" data-v="new" aria-pressed="false" data-i18n="why_a">I need new ways to make money</button>
+        <button class="chip" type="button" data-v="grow" aria-pressed="false" data-i18n="why_b">I have something I want to grow and sell more of</button>
+        <button class="chip" type="button" data-v="unsure" aria-pressed="false" data-i18n="why_c">I honestly don't know yet</button>
+      </div>
+      <p class="picked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="prefilled">I have already chosen for you. Change it, or just continue.</span></p>
+      <div class="says" data-says="why" hidden><p class="line"></p></div>
+      <button class="cont" data-go="time"><span data-i18n="continue">Continue</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 5 · TIME -->
+  <section class="slide" data-slide="time">
+    <div class="col">
+      <span class="lab" data-i18n="timeTag">Question 2 of 4</span>
+      <h2 class="q" data-i18n="qTime">How much time do you really have in a week?</h2>
+      <div class="micwrap" data-micwrap>
+        <button class="mic" type="button" data-mic="time" data-on="false" aria-label="Speak your answer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        </button>
+        <p class="miclab" data-miclab data-i18n="micTap">Tap and say your answer</p>
+      </div>
+      <p class="orline" data-i18n="micOr">or tap an answer below</p>
+      <div class="chips" data-q="time">
+        <button class="chip" type="button" data-v="few" aria-pressed="false" data-i18n="time_a">A few hours</button>
+        <button class="chip" type="button" data-v="evenings" aria-pressed="false" data-i18n="time_b">Most evenings</button>
+        <button class="chip" type="button" data-v="all" aria-pressed="false" data-i18n="time_c">As much as it takes</button>
+      </div>
+      <p class="picked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="prefilled">I have already chosen for you. Change it, or just continue.</span></p>
+      <div class="says" data-says="time" hidden><p class="line"></p></div>
+      <button class="cont" data-go="niche"><span data-i18n="continue">Continue</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 6 · NICHE -->
+  <section class="slide" data-slide="niche">
+    <div class="col">
+      <span class="lab" data-i18n="nicheTag">Question 3 of 4</span>
+      <h2 class="q" data-i18n="qNiche">Which one sounds most like you?</h2>
+      <div class="micwrap" data-micwrap>
+        <button class="mic" type="button" data-mic="niche" data-on="false" aria-label="Speak your answer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        </button>
+        <p class="miclab" data-miclab data-i18n="micTap">Tap and say your answer</p>
+      </div>
+      <p class="orline" data-i18n="micOr">or tap an answer below</p>
+      <div class="chips" data-q="niche">
+        <button class="chip" type="button" data-v="houses" aria-pressed="false" data-i18n="niche_a">Houses</button>
+        <button class="chip" type="button" data-v="store" aria-pressed="false" data-i18n="niche_b">Selling online</button>
+        <button class="chip" type="button" data-v="trading" aria-pressed="false" data-i18n="niche_c">Trading</button>
+        <button class="chip" type="button" data-v="link" aria-pressed="false" data-i18n="niche_d">Sharing a link</button>
+        <button class="chip" type="button" data-v="pick" aria-pressed="false" data-i18n="niche_e">You pick for me</button>
+      </div>
+      <p class="picked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="prefilled">I have already chosen for you. Change it, or just continue.</span></p>
+      <div class="says" data-says="niche" hidden><p class="line"></p></div>
+      <button class="cont" data-go="goal"><span data-i18n="continue">Continue</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 7 · GOAL -->
+  <section class="slide" data-slide="goal">
+    <div class="col">
+      <span class="lab" data-i18n="goalTag">Question 4 of 4</span>
+      <h2 class="q" data-i18n="qGoal">What would the money change first?</h2>
+      <div class="micwrap" data-micwrap>
+        <button class="mic" type="button" data-mic="goal" data-on="false" aria-label="Speak your answer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+        </button>
+        <p class="miclab" data-miclab data-i18n="micTap">Tap and say your answer</p>
+      </div>
+      <p class="orline" data-i18n="micOr">or tap an answer below</p>
+      <div class="chips" data-q="goal">
+        <button class="chip" type="button" data-v="bills" aria-pressed="false" data-i18n="goal_a">Catching up on bills</button>
+        <button class="chip" type="button" data-v="debt" aria-pressed="false" data-i18n="goal_b">Getting out of debt</button>
+        <button class="chip" type="button" data-v="family" aria-pressed="false" data-i18n="goal_c">More time with my family</button>
+        <button class="chip" type="button" data-v="job" aria-pressed="false" data-i18n="goal_d">Leaving my job one day</button>
+        <button class="chip" type="button" data-v="own" aria-pressed="false" data-i18n="goal_e">Building something of my own</button>
+      </div>
+      <p class="picked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="prefilled">I have already chosen for you. Change it, or just continue.</span></p>
+      <div class="says" data-says="goal" hidden><p class="line"></p></div>
+      <button class="cont" data-go="plan"><span data-i18n="buildPlan">Build my plan</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 8 · PLAN -->
+  <section class="slide" data-slide="plan">
+    <div class="col">
+      <div class="echo" id="echo"></div>
+      <h2 class="q" id="planH" data-i18n="planH">Your plan is built. Say the word.</h2>
+      <div class="says" data-says="planask" hidden><p class="line"></p></div>
+      <ul class="setup" id="setup"></ul>
+      <div class="first">
+        <span class="lab" data-i18n="firstTag">Your one step tonight</span>
+        <div class="says" data-says="first"><p class="line"></p>
+          <button class="replay" data-replay="first">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+            <span data-i18n="replay">Hear it again</span>
+          </button>
+        </div>
+      </div>
+      <button class="cont" data-go="account"><span data-i18n="continue">Continue</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- 9 · ACCOUNT -->
+  <section class="slide" data-slide="account">
+    <div class="col">
+      <span class="lab" data-i18n="enrollTag">Last step</span>
+      <h2 class="q" id="joinH" data-i18n="joinH">Let's open your account.</h2>
+      <div class="says" data-says="accountask" hidden><p class="line"></p></div>
+      <form id="signup" action="#" method="get" onsubmit="return false">
+        <label>
+          <span class="lb" data-i18n="fEmail">Email</span>
+          <input name="email" type="email" autocomplete="email" data-i18n-ph="fEmailPh" placeholder="you@email.com" required>
+        </label>
+        <div class="card">
+          <div class="hd">
+            <span class="t" data-i18n="cardT">Card on file</span>
+            <span class="marks" aria-hidden="true"><i>VISA</i><i>MC</i><i>AMEX</i></span>
+          </div>
+          <p class="why" data-i18n="cardWhy">You begin free. The only thing you ever pay for is what you use &mdash; and I show you the price before anything costs you. The card just sits here so nothing stops you later.</p>
+          <div id="card-element">
+            <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            <span data-i18n="cardMount">Secure card field — you'll set your password and confirm on the next step</span>
+          </div>
+          <div class="total">
+            <span class="l" data-i18n="totalL">You pay today</span>
+            <span class="v">$0.00</span>
+          </div>
+        </div>
+        <button class="go" type="submit" data-i18n="fGo">Finish and open my account</button>
+      </form>
+      <p class="fine" data-i18n="fFine">Cancel any time. Nothing runs without you tapping it.</p>
+      <button class="askfirst" data-sheet data-i18n="askfirst">Questions first? What it costs, and straight answers.</button>
+    </div>
+  </section>
+</main>
+
+<nav class="rail">
+  <div class="wide in">
+    <button class="back" id="back" aria-label="Back" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <span class="stepn" id="stepn"></span>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="col">
+      <button class="x" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <h2 data-i18n="costH">What it costs</h2>
+      <div class="rows">
+        <div class="row"><span class="k">$0</span><span class="v" data-i18n="cost1">Today, and every day you do not run anything.</span></div>
+        <div class="row"><span class="k" data-i18n="cost2k">Pay as you go</span><span class="v" data-i18n="cost2">Only the tools you actually run. The price shows first, every time.</span></div>
+        <div class="row"><span class="k" data-i18n="cost3k">A plan, later</span><span class="v" data-i18n="cost3">If you end up running a lot, a monthly plan costs less than paying per use.</span></div>
+      </div>
+      <h2 data-i18n="qaH">Straight answers</h2>
+      <details><summary data-i18n="qa1q">Why do you need my card if it's free?</summary><p data-i18n="qa1a"></p></details>
+      <details><summary data-i18n="qa2q">So when do I actually pay?</summary><p data-i18n="qa2a"></p></details>
+      <details><summary data-i18n="qa3q">What if I pick the wrong thing?</summary><p data-i18n="qa3a"></p></details>
+      <details><summary data-i18n="qa4q">Do I need to be good with computers?</summary><p data-i18n="qa4a"></p></details>
+      <details><summary data-i18n="qa5q">Is this one of those pyramid things?</summary><p data-i18n="qa5a"></p></details>
+      <details><summary data-i18n="qa6q">Will I actually make money?</summary><p data-i18n="qa6a"></p></details>
+      <p class="disc" data-i18n="disc"></p>
+    </div>
+  </div>
+</div>
+</div><!-- /#mmFunnelWrap -->
+
+<script>
+(function(){
+/* ============================================================
+   CONFIG — Genie's voice + his pre-picked default answer per
+   question. There is no separate signupUrl any more: the account
+   slide hands off to this site's own real signup form (.auth-box)
+   instead of navigating away — see the submit handler at the
+   bottom of this script.
+   ============================================================ */
+var CONFIG = {
+  voice:{ rate:0.94, pitch:0.82, volume:1 },
+  defaults:{ why:"new", time:"few", niche:"pick", goal:"bills" }
+};
+
+var ES_COUNTRIES=["AR","BO","CL","CO","CR","CU","DO","EC","SV","GQ","GT","HN","MX","NI","PA","PY","PE","PR","ES","UY","VE"];
+var ES_ZONES=["America/Mexico_City","America/Cancun","America/Merida","America/Monterrey","America/Matamoros","America/Chihuahua","America/Ojinaga","America/Hermosillo","America/Mazatlan","America/Bahia_Banderas","America/Tijuana","Europe/Madrid","Atlantic/Canary","Africa/Ceuta","America/Bogota","America/Lima","America/Caracas","America/Santiago","America/Punta_Arenas","Pacific/Easter","America/Guayaquil","Pacific/Galapagos","America/La_Paz","America/Asuncion","America/Montevideo","America/Argentina","America/Guatemala","America/El_Salvador","America/Tegucigalpa","America/Managua","America/Costa_Rica","America/Panama","America/Havana","America/Santo_Domingo","America/Puerto_Rico","Africa/Malabo"];
+
+var T={
+ en:{
+  login:"Log in", sound:"Voice on", soundOff:"Voice off",
+  welcome:"Welcome to Money Masteries",
+  role:"Your guide. He does the work.",
+  h1:"I'm Genie, your <span class=\"hl\">AI super agent</span>.",
+  intro:"Welcome to Money Masteries. I'm Genie, your AI super agent. Here you will have all the tools and done-for-you system that will build your money making machine. From the comfort of your phone or computer, put me to work. It's free to start.",
+  continue:"Continue", buildPlan:"Build my plan", begin:"Begin",
+  micTap:"Tap and say your answer", micOn:"Listening…", micOr:"or tap an answer below", micName:"Tap and say your name",
+  askfirst:"Questions first? What it costs, and straight answers.",
+  stepOf:"Step {n} of {t}",
+  heroSub:"All the tools, and a done-for-you system that builds your money making machine. From your phone or your computer. Free to start.",
+  hint:"Free to start. You only pay for what you use.",
+  replay:"Hear it again",
+  prefilled:"I have already chosen for you. Change it, or just continue.",
+  p1h:"You sit back", p1p:"I do the searching, the setup and the writing. You only ever have to say yes.",
+  p2h:"All from home", p2p:"No truck, no store, no boss. It is all online. A phone is enough.",
+  p3h:"You only pay for use", p3p:"You begin free. The only thing you ever pay for is what you use, once you are already making moves.",
+
+  nameTag:"First — let's meet", nameQ:"What should I call you?", namePh:"Your first name",
+  whyTag2:"Question 1 of 4", qWhy:"What brought you here today?",
+  why_a:"I need new ways to make money", why_b:"I have something I want to grow and sell more of", why_c:"I honestly don't know yet",
+  timeTag:"Question 2 of 4", qTime:"How much time do you really have in a week?",
+  time_a:"A few hours", time_b:"Most evenings", time_c:"As much as it takes",
+  nicheTag:"Question 3 of 4", qNiche:"Which one sounds most like you?",
+  niche_a:"Houses", niche_b:"Selling online", niche_c:"Trading", niche_d:"Sharing a link", niche_e:"You pick for me",
+  goalTag:"Question 4 of 4", qGoal:"What would the money change first?",
+  goal_a:"Catching up on bills", goal_b:"Getting out of debt", goal_c:"More time with my family",
+  goal_d:"Leaving my job one day", goal_e:"Building something of my own",
+
+  planH:"Your plan is built. Say the word.", planHName:"Your plan is built, {name}. Say the word.",
+  by:"Genie does this", firstTag:"Your one step tonight",
+  enrollTag:"Last step",
+  joinH:"Let's open your account.", joinHName:"Let's open your account, {name}.",
+  joinSub:"I have everything else. I just need where to send it, and a card to keep on file for later.",
+  fEmail:"Email", fEmailPh:"you@email.com",
+  cardT:"Card on file",
+  cardWhy:"You begin free. The only thing you ever pay for is what you use — and I show you the price before anything costs you. The card just sits here so nothing stops you later.",
+  cardMount:"Secure card field — you'll set your password and confirm on the next step",
+  totalL:"You pay today",
+  fGo:"Finish and open my account",
+  fFine:"Cancel any time. Nothing runs without you tapping it, and every price is shown before it costs you a cent.",
+  skip:"Skip ahead — just open my free account",
+
+  whyTag:"Why this matters", whyH:"This is the part that changes a life.",
+  why1:"Not the videos. Not the dashboard. The fact that tomorrow night you will do one small thing you did not know how to do tonight, and then do it again the night after.",
+  why2:"Most people never start, because starting means deciding, and deciding is the hard part. I take that part. You just do the step in front of you.",
+  why3:"I can't promise you money. Nobody honest can. What I promise is that you will never again sit there wondering what to do next.",
+  costH:"What it costs",
+  cost1:"Today, and every day you do not run anything. Your account, the lessons, your link, and me.",
+  cost2k:"Pay as you go", cost2:"Only the tools you actually run — a lead pull, a video, a report, time with the AI agent. The price shows first, every time.",
+  cost3k:"A plan, later", cost3:"If you end up running a lot, a monthly plan costs less than paying per use. Start free and switch when it makes sense.",
+  qaH:"Straight answers",
+  qa1q:"Why do you need my card if it's free?", qa1a:"So nothing stops later. The account and the lessons are free forever. But when you decide to pull house leads or make a video, that costs a small amount, and I would rather it just run than make you go find your wallet. You see every price before it happens, and you can remove the card any time.",
+  qa2q:"So when do I actually pay?", qa2a:"You begin free. The only thing you ever pay for is what you use — a lead pull, a video, a report, time with me. The price shows before it costs you anything, so nothing is ever a surprise.",
+  qa3q:"What if I pick the wrong thing?", qa3a:"You change it any time, free. Most people try two before one sticks, and nothing you learned in the first is wasted.",
+  qa4q:"Do I need to be good with computers?", qa4a:"No. If you can send a text message, you can do this. I fill out the forms, write the messages, and run the tools. You confirm.",
+  qa5q:"Is this one of those pyramid things?", qa5a:"No. Sharing a link is one path of several, and every other path — houses, stores, trading — earns without referring a single person.",
+  qa6q:"Will I actually make money?", qa6a:"I don't know, and anyone who says they do is selling you something. What's certain is the tools, the lessons, and a next step every day. The work stays yours.",
+  endH:"I'll be waiting when you get there.", endHName:"I'll be waiting when you get there, {name}.",
+  end:"Nothing to pay. Nothing to get ready. Come in, and I will show you the first thing myself.",
+  endGo:"Start free",
+  disc:"Money Masteries is an education and software platform. We do not promise, guarantee, or predict that you will earn money. Results depend on your own effort, skill, market conditions, and the time you put in, and many people earn nothing. Nothing here is financial, tax, legal, or investment advice. Trading stocks, options, and crypto carries real risk, including losing everything you put in. Real estate and business results vary widely by market."
+ },
+ es:{
+  login:"Entrar", sound:"Voz activada", soundOff:"Voz apagada",
+  welcome:"Bienvenido a Money Masteries",
+  role:"Tu guía. Él hace el trabajo.",
+  h1:"Soy Genie, tu <span class=\"hl\">súper agente de IA</span>.",
+  intro:"Bienvenido a Money Masteries. Soy Genie, tu súper agente de IA. Aquí vas a tener todas las herramientas y un sistema hecho para ti que va a construir tu máquina de hacer dinero. Desde la comodidad de tu teléfono o tu computadora, ponme a trabajar. Empezar es gratis.",
+  continue:"Continuar", buildPlan:"Arma mi plan", begin:"Comenzar",
+  micTap:"Toca y di tu respuesta", micOn:"Escuchando…", micOr:"o toca una respuesta abajo", micName:"Toca y di tu nombre",
+  askfirst:"¿Preguntas primero? Cuánto cuesta, y respuestas claras.",
+  stepOf:"Paso {n} de {t}",
+  heroSub:"Todas las herramientas, y un sistema hecho para ti que construye tu máquina de hacer dinero. Desde tu teléfono o tu computadora. Empezar es gratis.",
+  hint:"Gratis para empezar. Solo pagas lo que usas.",
+  replay:"Escuchar otra vez",
+  prefilled:"Ya escogí por ti. Cámbialo, o solo continúa.",
+  p1h:"Tú te relajas", p1p:"Yo busco, yo preparo y yo escribo. Tú solo tienes que decir que sí.",
+  p2h:"Todo desde tu casa", p2p:"Sin camioneta, sin local, sin jefe. Todo en línea. Con un teléfono alcanza.",
+  p3h:"Solo pagas lo que usas", p3p:"Empiezas gratis. Lo único que pagas es lo que usas, cuando ya estás en movimiento.",
+
+  nameTag:"Primero — conozcámonos", nameQ:"¿Cómo te digo?", namePh:"Tu nombre",
+  whyTag2:"Pregunta 1 de 4", qWhy:"¿Qué te trajo aquí hoy?",
+  why_a:"Necesito nuevas formas de ganar dinero", why_b:"Ya tengo algo que quiero crecer y vender más", why_c:"La verdad, todavía no sé",
+  timeTag:"Pregunta 2 de 4", qTime:"¿Cuánto tiempo tienes de verdad por semana?",
+  time_a:"Unas pocas horas", time_b:"Casi todas las noches", time_c:"El que haga falta",
+  nicheTag:"Pregunta 3 de 4", qNiche:"¿Cuál se parece más a ti?",
+  niche_a:"Casas", niche_b:"Vender por internet", niche_c:"Trading", niche_d:"Compartir un enlace", niche_e:"Escoge tú por mí",
+  goalTag:"Pregunta 4 de 4", qGoal:"¿Qué cambiaría el dinero primero?",
+  goal_a:"Ponerme al día con las cuentas", goal_b:"Salir de deudas", goal_c:"Más tiempo con mi familia",
+  goal_d:"Dejar mi trabajo algún día", goal_e:"Construir algo mío",
+
+  planH:"Tu plan está armado. Solo di la palabra.", planHName:"Tu plan está armado, {name}. Solo di la palabra.",
+  by:"Genie lo hace", firstTag:"Tu único paso de esta noche",
+  enrollTag:"Último paso",
+  joinH:"Vamos a abrir tu cuenta.", joinHName:"Vamos a abrir tu cuenta, {name}.",
+  joinSub:"Yo ya tengo todo lo demás. Solo necesito a dónde mandarlo, y una tarjeta guardada para después.",
+  fEmail:"Correo", fEmailPh:"tu@correo.com",
+  cardT:"Tarjeta guardada",
+  cardWhy:"Empiezas gratis. Lo único que pagas es lo que usas — y siempre te muestro el precio antes de que te cueste algo. La tarjeta solo queda guardada para que después nada te detenga.",
+  cardMount:"Campo seguro de tarjeta — vas a poner tu contraseña y confirmar en el siguiente paso",
+  totalL:"Pagas hoy",
+  fGo:"Terminar y abrir mi cuenta",
+  fFine:"Cancela cuando quieras. Nada se ejecuta sin que tú lo toques, y cada precio se muestra antes de costarte un centavo.",
+  skip:"Saltar — solo abre mi cuenta gratis",
+
+  whyTag:"Por qué esto importa", whyH:"Esta es la parte que cambia una vida.",
+  why1:"No son los videos. No es el panel. Es que mañana en la noche vas a hacer una cosa pequeña que hoy no sabías hacer, y después la vas a hacer otra vez.",
+  why2:"Casi nadie empieza, porque empezar significa decidir, y decidir es lo difícil. Esa parte la hago yo. Tú solo haces el paso que tienes enfrente.",
+  why3:"No te puedo prometer dinero. Nadie honesto puede. Lo que sí te prometo es que nunca más te vas a quedar sentado sin saber qué hacer.",
+  costH:"Cuánto cuesta",
+  cost1:"Hoy, y todos los días que no uses nada. Tu cuenta, las lecciones, tu enlace, y yo.",
+  cost2k:"Pagas al usar", cost2:"Solo las herramientas que de verdad usas — una búsqueda de contactos, un video, un reporte, tiempo con el agente. El precio se ve antes, siempre.",
+  cost3k:"Un plan, después", cost3:"Si terminas usando mucho, un plan mensual sale más barato que pagar por uso. Empieza gratis y cambia cuando tenga sentido.",
+  qaH:"Respuestas claras",
+  qa1q:"¿Por qué necesitas mi tarjeta si es gratis?", qa1a:"Para que después nada se detenga. La cuenta y las lecciones son gratis para siempre. Pero cuando decidas buscar casas o hacer un video, eso cuesta un poco, y prefiero que simplemente funcione en vez de mandarte a buscar tu cartera. Ves cada precio antes, y puedes quitar la tarjeta cuando quieras.",
+  qa2q:"¿Entonces cuándo pago?", qa2a:"Empiezas gratis. Lo único que pagas es lo que usas — una búsqueda de contactos, un video, un reporte, tiempo conmigo. El precio se ve antes de que te cueste algo, así que nunca hay sorpresas.",
+  qa3q:"¿Y si escojo mal?", qa3a:"Lo cambias cuando quieras, gratis. Casi todos prueban dos antes de quedarse con uno, y nada de lo que aprendiste se pierde.",
+  qa4q:"¿Tengo que ser bueno con las computadoras?", qa4a:"No. Si sabes mandar un mensaje de texto, puedes hacer esto. Yo lleno los formularios, escribo los mensajes y manejo las herramientas. Tú solo confirmas.",
+  qa5q:"¿Esto es una pirámide?", qa5a:"No. Compartir un enlace es uno de varios caminos, y todos los demás — casas, tiendas, trading — ganan sin recomendar a nadie.",
+  qa6q:"¿De verdad voy a ganar dinero?", qa6a:"No lo sé, y quien te diga que sí te está vendiendo algo. Lo seguro son las herramientas, las lecciones, y un paso siguiente cada día. El trabajo sigue siendo tuyo.",
+  endH:"Aquí te espero cuando llegues.", endHName:"Aquí te espero cuando llegues, {name}.",
+  end:"Nada que pagar. Nada que preparar. Entra, y yo mismo te muestro lo primero.",
+  endGo:"Empezar gratis",
+  disc:"Money Masteries es una plataforma de educación y software. No prometemos, garantizamos ni predecimos que vayas a ganar dinero. Los resultados dependen de tu propio esfuerzo, tu habilidad, las condiciones del mercado y el tiempo que le dediques, y muchas personas no ganan nada. Nada de esto es asesoría financiera, fiscal, legal o de inversión. Operar acciones, opciones y cripto tiene riesgo real, incluyendo perder todo lo que pongas. Los resultados en bienes raíces y en negocios varían mucho según el mercado."
+ }
+};
+
+/* what Genie says when a question slide arrives */
+var ASK={
+ en:{
+  why:"What brought you here today? You can say: I need new ways to make money. Or: I have something I want to grow and sell more of. Or: I honestly do not know yet. Pick the one that best describes you.",
+  time:"How much time do you really have in a week? A few hours. Most evenings. Or as much as it takes. Pick the one that best describes you.",
+  niche:"Which one sounds most like you? Houses. Selling online. Trading. Sharing a link. Or, you pick for me. Pick the one that best describes you.",
+  goal:"What would the money change first? Catching up on bills. Getting out of debt. More time with your family. Leaving your job one day. Or building something of your own. Pick the one that best describes you.",
+  name:"First, what should I call you? Tap the microphone and say your name, or type it in below.",
+  plan:"Done. Here is everything I will have set up for you the moment you are in. You will not have to build any of it.",
+  account:"Last step. I need an email so I know where to send your account, and a card on file so nothing stops you later. You begin free. The only thing you ever pay for is what you use, once you are already making moves."
+ },
+ es:{
+  why:"¿Qué te trajo aquí hoy? Puedes decir: necesito nuevas formas de ganar dinero. O: ya tengo algo que quiero crecer y vender más. O: la verdad todavía no sé. Escoge la que mejor te describe.",
+  time:"¿Cuánto tiempo tienes de verdad por semana? Unas pocas horas. Casi todas las noches. O el que haga falta. Escoge la que mejor te describe.",
+  niche:"¿Cuál se parece más a ti? Casas. Vender por internet. Trading. Compartir un enlace. O, escoge tú por mí. Escoge la que mejor te describe.",
+  goal:"¿Qué cambiaría el dinero primero? Ponerte al día con las cuentas. Salir de deudas. Más tiempo con tu familia. Dejar tu trabajo algún día. O construir algo tuyo. Escoge la que mejor te describe.",
+  name:"Primero, ¿cómo te digo? Toca el micrófono y di tu nombre, o escríbelo aquí abajo.",
+  plan:"Listo. Esto es todo lo que voy a dejar armado en cuanto entres. Tú no vas a tener que construir nada.",
+  account:"Último paso. Necesito un correo para saber a dónde mandarte tu cuenta, y una tarjeta guardada para que después nada te detenga. Empiezas gratis. Lo único que pagas es lo que usas, cuando ya estás en movimiento."
+ }
+};
+
+var SAID={
+ en:{
+  name:"Good to meet you, {name}. From here you decide, and I execute. Four quick picks and your plan is built.",
+  why:{"new":"Perfect, {name}. New ways it is. I know which ones move fastest, and I will line them up for you.",
+       grow:"Even better. You already have something, {name}. I will help you put it in front of far more people.",
+       unsure:"That is the most honest answer there is. I will choose for you, {name}, and you can change it any time."},
+  time:{few:"A few hours is plenty. I will keep every step small enough to finish.",
+        evenings:"That is real momentum. I will give you a little more each night.",
+        all:"Then I will keep up with you. Nothing will ever be waiting on me."},
+  niche:{houses:"Houses it is. I already know which tools to open for you.",
+         store:"A store, then. I will have the hard parts done before you log in.",
+         trading:"Trading. We start with your eyes, not your money.",
+         link:"The simplest one. Your link will be waiting for you.",
+         pick:"Leave it to me. I read your answers, and I know the shortest road for you."},
+  goal:{bills:"Then that is what we aim at first. Breathing room. Every step I give you points at that.",
+        debt:"Getting free of that changes everything else, {name}. We chip at it, month by month.",
+        family:"That is the best reason there is. Time is the one thing you cannot buy back.",
+        job:"Okay. We build until that job is a choice, not a need. It takes a while. It is worth it.",
+        own:"Something with your name on it. I like that, {name}. We will build it properly."}
+ },
+ es:{
+  name:"Mucho gusto, {name}. De aquí en adelante tú decides y yo ejecuto. Cuatro selecciones rápidas y tu plan queda armado.",
+  why:{"new":"Perfecto, {name}. Nuevas formas, entonces. Sé cuáles se mueven más rápido y te las voy a preparar.",
+       grow:"Aún mejor. Ya tienes algo, {name}. Te voy a ayudar a ponerlo frente a mucha más gente.",
+       unsure:"Esa es la respuesta más honesta que hay. Yo elijo por ti, {name}, y lo cambias cuando quieras."},
+  time:{few:"Con unas pocas horas alcanza. Voy a hacer cada paso lo bastante pequeño para terminarlo.",
+        evenings:"Eso es impulso de verdad. Te voy a dar un poco más cada noche.",
+        all:"Entonces te sigo el paso. Nunca vas a estar esperándome a mí."},
+  niche:{houses:"Casas, entonces. Ya sé qué herramientas abrirte.",
+         store:"Una tienda. Voy a tener lo difícil hecho antes de que entres.",
+         trading:"Trading. Empezamos con tus ojos, no con tu dinero.",
+         link:"El más sencillo. Tu enlace te va a estar esperando.",
+         pick:"Déjamelo a mí. Leo tus respuestas y sé cuál es el camino más corto para ti."},
+  goal:{bills:"Entonces a eso le apuntamos primero. Aire para respirar. Cada paso que te doy va hacia eso.",
+        debt:"Salir de eso cambia todo lo demás, {name}. Le vamos quitando, mes con mes.",
+        family:"Esa es la mejor razón que hay. El tiempo es lo único que no se puede recuperar.",
+        job:"Muy bien. Construimos hasta que ese trabajo sea una opción, no una necesidad. Toma tiempo. Vale la pena.",
+        own:"Algo con tu nombre. Eso me gusta, {name}. Lo vamos a construir bien."}
+ }
+};
+
+var PLAN={
+ en:{
+  houses:{setup:["Your Real Estate dashboard, tuned to your area","A live list of distressed homes near you","A deal calculator that runs the numbers for you"],
+          first:"Tonight, {name}, just look at the three houses I picked for you. I will tell you which one is worth a phone call."},
+  store:{ setup:["Your store, built and named","Three products with the numbers already run","Ad videos made for you from one photo"],
+          first:"Tonight, {name}, just pick one product out of the three I chose. I will build the whole page while you sleep."},
+  trading:{setup:["Live prices and clean charts on your dashboard","Indicators loaded and explained in plain words","A trade journal that fills itself in"],
+          first:"Tonight, {name}, just watch one chart with me for ten minutes. No money goes in yet."},
+  link:{  setup:["Your own link, made and ready","Your payout page, set up","The exact messages to send, already written"],
+          first:"Tonight, {name}, just send the message I wrote to five people you know. That is all I am asking."},
+  pick:{  setup:["I read your answers and choose the shortest road","Everything for that path, ready before you log in","One step at a time, always — never a list"],
+          first:"Tonight, {name}, just say yes below. Your plan will be open on the screen the moment you land."}
+ },
+ es:{
+  houses:{setup:["Tu panel de bienes raíces, ajustado a tu zona","Una lista en vivo de casas en apuros cerca de ti","Una calculadora que saca los números por ti"],
+          first:"Esta noche, {name}, solo mira las tres casas que escogí para ti. Yo te digo cuál vale una llamada."},
+  store:{ setup:["Tu tienda, armada y con nombre","Tres productos con los números ya sacados","Videos de anuncio hechos con una sola foto"],
+          first:"Esta noche, {name}, solo escoge un producto de los tres que elegí. Yo armo la página mientras duermes."},
+  trading:{setup:["Precios en vivo y gráficas limpias en tu panel","Indicadores cargados y explicados en palabras sencillas","Un diario de operaciones que se llena solo"],
+          first:"Esta noche, {name}, solo mira una gráfica conmigo diez minutos. Todavía no entra dinero."},
+  link:{  setup:["Tu propio enlace, hecho y listo","Tu página de pagos, ya configurada","Los mensajes exactos para enviar, ya escritos"],
+          first:"Esta noche, {name}, solo mándale a cinco personas el mensaje que te escribí. Es todo lo que te pido."},
+  pick:{  setup:["Leo tus respuestas y escojo el camino más corto","Todo listo para ese camino antes de que entres","Un paso a la vez, siempre — nunca una lista"],
+          first:"Esta noche, {name}, solo di que sí aquí abajo. Tu plan va a estar abierto en cuanto entres."}
+ }
+};
+
+var Genie = (function(){
+  var synth = window.speechSynthesis || null;
+  var picked = { en:null, es:null };
+  var current = null, tick = null;
+  var wrap = document.getElementById("mmFunnelWrap");
+  var PREFER = {
+    en:["google uk english male","google us english","microsoft guy","microsoft ryan","microsoft davis","microsoft david","daniel","alex","aaron","arthur","tom","fred","nathan","rishi"],
+    es:["google español","microsoft alvaro","microsoft jorge","microsoft pablo","jorge","diego","carlos","juan","enrique"]
+  };
+  function score(v, lang){
+    var n = (v.name||"").toLowerCase(), s = 0;
+    if((v.lang||"").toLowerCase().indexOf(lang) !== 0) return -1;
+    PREFER[lang].forEach(function(p,i){ if(n.indexOf(p) >= 0) s = Math.max(s, 100 - i); });
+    if(/female|zira|samantha|victoria|karen|moira|tessa|monica|paulina|helena|sabina/.test(n)) s -= 60;
+    if(v.localService) s += 4;
+    return s;
+  }
+  function load(){
+    if(!synth) return;
+    var voices = synth.getVoices() || [];
+    ["en","es"].forEach(function(l){
+      var best = null, bs = -1;
+      voices.forEach(function(v){ var s = score(v,l); if(s > bs){ bs = s; best = v; } });
+      picked[l] = bs > 0 ? best : (voices.filter(function(v){ return (v.lang||"").toLowerCase().indexOf(l)===0; })[0] || null);
+    });
+  }
+  if(synth){ load(); synth.addEventListener && synth.addEventListener("voiceschanged", load); }
+
+  function paint(el, text){
+    var line = el.querySelector(".line");
+    line.textContent = "";
+    var parts = text.split(/(\s+)/), at = 0, spans = [];
+    parts.forEach(function(p){
+      if(/^\s+$/.test(p)){ line.appendChild(document.createTextNode(p)); at += p.length; return; }
+      var s = document.createElement("span");
+      s.className = "w"; s.textContent = p; s.dataset.at = at;
+      line.appendChild(s); spans.push(s); at += p.length;
+    });
+    return spans;
+  }
+  function clearTick(){ if(tick){ clearInterval(tick); tick = null; } }
+  function stop(){
+    clearTick();
+    if(synth){ try{ synth.cancel(); }catch(e){} }
+    wrap.classList.remove("speaking");
+    if(current){ current.classList.remove("active"); current = null; }
+  }
+
+  var spokeOnce = false;
+  function say(el, text, lang, sound, done){
+    stop();
+    var spans = paint(el, text);
+    el.hidden = false;
+    current = el; el.classList.add("active");
+
+    function upTo(i){
+      spans.forEach(function(s, j){
+        s.classList.toggle("said", j < i);
+        s.classList.toggle("now", j === i - 1);
+      });
+    }
+    var ended = false, t0 = Date.now(), expected = 0;
+    function finish(){
+      if(ended) return;
+      if(expected && (Date.now() - t0) < expected * 0.55 && i < spans.length){ run(); return; }
+      ended = true;
+      clearTick();
+      spans.forEach(function(s){ s.classList.add("said"); s.classList.remove("now"); });
+      wrap.classList.remove("speaking");
+      el.classList.remove("active");
+      if(typeof done === "function") done();
+    }
+    var i = 0, running = false;
+    var perWord = 1000 / (2.6 * CONFIG.voice.rate);
+    expected = spans.length * perWord;
+    function run(){
+      if(running) return; running = true;
+      tick = setInterval(function(){ i++; upTo(i); if(i >= spans.length) finish(); }, perWord);
+    }
+
+    upTo(0);
+    if(!sound || !synth || !window.SpeechSynthesisUtterance){ run(); return; }
+
+    var u = new SpeechSynthesisUtterance(text);
+    if(picked[lang]) u.voice = picked[lang];
+    u.lang = picked[lang] ? picked[lang].lang : (lang === "es" ? "es-MX" : "en-US");
+    u.rate = CONFIG.voice.rate; u.pitch = CONFIG.voice.pitch; u.volume = CONFIG.voice.volume;
+
+    var gotBoundary = false, started = false;
+    u.onboundary = function(e){
+      if(e.name && e.name !== "word") return;
+      gotBoundary = true; clearTick(); running = false;
+      var k = 0;
+      for(var j = 0; j < spans.length; j++){ if(+spans[j].dataset.at <= e.charIndex) k = j + 1; }
+      i = k; upTo(i);
+    };
+    u.onstart = function(){
+      started = true; spokeOnce = true;
+      wrap.classList.add("speaking");
+      setTimeout(function(){ if(!gotBoundary) run(); }, 500);
+    };
+    u.onend = finish;
+    u.onerror = function(){ finish(); };
+
+    setTimeout(function(){ if(!started) run(); }, 900);
+
+    try{ synth.speak(u); }catch(e){ run(); }
+  }
+  function render(el, text){
+    stop();
+    var spans = paint(el, text);
+    el.hidden = false;
+    spans.forEach(function(sp){ sp.classList.add("said"); });
+  }
+
+  return { say:say, stop:stop, render:render, spoke:function(){ return spokeOnce; } };
+})();
+
+
+/* ============================================================
+   STATE
+   ============================================================ */
+function detectLang(){
+  try{ var s = localStorage.getItem("mm_lang"); if(s === "en" || s === "es") return s; }catch(e){}
+  var f = String(window.MM_LANG || "").toLowerCase();
+  if(f === "en" || f === "es") return f;
+  var c = String(window.MM_COUNTRY || "").toUpperCase();
+  if(c) return ES_COUNTRIES.indexOf(c) >= 0 ? "es" : "en";
+  var L = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"]).join(",").toLowerCase();
+  if(/(^|,)es(-|,|$)/.test(L)) return "es";
+  var tz = ""; try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){}
+  for(var i = 0; i < ES_ZONES.length; i++){ if(tz === ES_ZONES[i] || tz.indexOf(ES_ZONES[i] + "/") === 0) return "es"; }
+  return "en";
+}
+
+var wrapEl = document.getElementById("mmFunnelWrap");
+var lang = detectLang();
+var sound = true;
+try{ sound = localStorage.getItem("mm_sound") !== "0"; }catch(e){}
+var person = "";
+var ORDER = ["why","time","niche","goal"];
+var answers = { why:CONFIG.defaults.why, time:CONFIG.defaults.time, niche:CONFIG.defaults.niche, goal:CONFIG.defaults.goal };
+var chosen = {};
+var seen = {};
+
+function txt(k){ return T[lang][k]; }
+function block(k){ return wrapEl.querySelector('[data-says="' + k + '"]'); }
+function fill(s){
+  if(!s) return "";
+  if(person) return s.replace(/\{name\}/g, person);
+  return s.replace(/,\s*\{name\}([,.])/g, "$1").replace(/,\s*\{name\}/g, "")
+          .replace(/\{name\},\s*/g, "").replace(/\s*\{name\}/g, "");
+}
+
+/* ============================================================
+   THE DECK
+   ============================================================ */
+var SLIDES = ["welcome","intro","name","why","time","niche","goal","plan","account"];
+var FIRST_COUNTED = 2;
+var at = 0;
+
+function slide(k){ return wrapEl.querySelector('[data-slide="' + k + '"]'); }
+
+function paintRail(){
+  var total = SLIDES.length - FIRST_COUNTED;
+  var dots = document.getElementById("dots");
+  if(dots.children.length !== total){
+    dots.innerHTML = "";
+    for(var i = 0; i < total; i++) dots.appendChild(document.createElement("i"));
+  }
+  var idx = at - FIRST_COUNTED;
+  Array.prototype.forEach.call(dots.children, function(d, i){
+    d.className = i < idx ? "done" : (i === idx ? "now" : "");
+  });
+  var on = idx >= 0;
+  dots.style.visibility = on ? "visible" : "hidden";
+  document.getElementById("stepn").textContent = on
+    ? txt("stepOf").replace("{n}", idx + 1).replace("{t}", total) : "";
+  document.getElementById("back").disabled = at === 0;
+}
+
+function show(key, back){
+  var next = slide(key);
+  var cur = wrapEl.querySelector(".slide.on");
+  if(!next || next === cur) return;
+
+  if(back){ next.classList.add("behind"); void next.offsetWidth; }
+  if(cur){
+    cur.classList.remove("on");
+    if(back) cur.classList.remove("behind"); else cur.classList.add("behind");
+  }
+  next.classList.remove("behind");
+  void next.offsetWidth;
+  next.classList.add("on");
+
+  at = SLIDES.indexOf(key);
+  if(typeof Voice !== "undefined") Voice.stop();
+  wrapEl.scrollIntoView({ behavior:"smooth", block:"start" });
+  paintRail();
+  enter(key, back);
+}
+
+function sayLine(el, text, back, done){
+  if(back){ Genie.render(el, text); return; }
+  Genie.say(el, text, lang, sound, done);
+}
+
+function enter(key, back){
+  seen[key] = true;
+
+  if(key === "intro"){
+    sayLine(block("intro"), txt("intro"), back, function(){
+      if(wrapEl.querySelector(".slide.on") === slide("intro")) show("name");
+    });
+    return;
+  }
+  if(key === "name"){
+    sayLine(block("name"), chosen.name ? fill(SAID[lang].name) : ASK[lang].name, back);
+    setTimeout(function(){ document.getElementById("fname").focus({preventScroll:true}); }, 420);
+    return;
+  }
+  if(ORDER.indexOf(key) >= 0){
+    sayLine(block(key), chosen[key] ? fill(SAID[lang][key][answers[key]]) : ASK[lang][key], back);
+    return;
+  }
+  if(key === "plan"){ renderPlan(back); return; }
+  if(key === "account"){ sayLine(block("accountask"), ASK[lang].account, back); return; }
+  Genie.stop();
+}
+
+document.getElementById("begin").addEventListener("click", function(){ show("intro"); });
+wrapEl.querySelectorAll("[data-go]").forEach(function(b){
+  b.addEventListener("click", function(){ show(b.dataset.go); });
+});
+document.getElementById("back").addEventListener("click", function(){
+  if(at > 0) show(SLIDES[at - 1], true);
+});
+document.addEventListener("keydown", function(e){
+  if(!wrapEl.querySelector(".slide.on")) return;
+  if(document.getElementById("sheet").classList.contains("open")) return;
+  if(e.target.tagName === "INPUT") return;
+  if(e.key === "ArrowLeft" && at > 0) show(SLIDES[at - 1], true);
+  if(e.key === "ArrowRight"){
+    var b = wrapEl.querySelector(".slide.on [data-go]");
+    if(b) b.click();
+  }
+});
+
+/* ============================================================
+   ANSWERS
+   ============================================================ */
+function takeName(){
+  var v = (document.getElementById("fname").value || "").trim().replace(/\s+/g," ").slice(0,32);
+  if(v.length >= 2){ person = v.charAt(0).toUpperCase() + v.slice(1); headings(); }
+  chosen.name = true;
+  Genie.say(block("name"), fill(SAID[lang].name), lang, sound, function(){
+    if(wrapEl.querySelector(".slide.on") === slide("name")) show("why");
+  });
+}
+document.getElementById("nameGo").addEventListener("click", takeName);
+document.getElementById("fname").addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ e.preventDefault(); takeName(); }
+});
+
+wrapEl.querySelectorAll(".chips").forEach(function(group){
+  var key = group.dataset.q;
+  group.querySelectorAll(".chip").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      answers[key] = chip.dataset.v;
+      chosen[key] = true;
+      markChips();
+      Genie.say(block(key), fill(SAID[lang][key][chip.dataset.v]), lang, sound);
+    });
+  });
+});
+
+function markChips(){
+  wrapEl.querySelectorAll(".chips").forEach(function(g){
+    g.querySelectorAll(".chip").forEach(function(c){
+      c.setAttribute("aria-pressed", String(c.dataset.v === answers[g.dataset.q]));
+    });
+  });
+}
+
+function renderPlan(back){
+  var p = PLAN[lang][answers.niche];
+  var echo = document.getElementById("echo");
+  echo.innerHTML = "";
+  var map = {
+    why:{"new":"why_a",grow:"why_b",unsure:"why_c"},
+    time:{few:"time_a",evenings:"time_b",all:"time_c"},
+    niche:{houses:"niche_a",store:"niche_b",trading:"niche_c",link:"niche_d",pick:"niche_e"},
+    goal:{bills:"goal_a",debt:"goal_b",family:"goal_c",job:"goal_d",own:"goal_e"}
+  };
+  ORDER.forEach(function(k){
+    var s = document.createElement("span");
+    s.textContent = txt(map[k][answers[k]]);
+    echo.appendChild(s);
+  });
+  var ul = document.getElementById("setup");
+  ul.innerHTML = "";
+  p.setup.forEach(function(line){
+    var li = document.createElement("li");
+    li.innerHTML = '<span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span></span>';
+    var t = li.lastChild;
+    t.textContent = line;
+    var by = document.createElement("span");
+    by.className = "by"; by.textContent = txt("by");
+    t.appendChild(by);
+    ul.appendChild(li);
+  });
+  headings();
+  if(back){
+    Genie.render(block("planask"), ASK[lang].plan);
+    Genie.render(block("first"), fill(p.first));
+  } else {
+    Genie.say(block("planask"), ASK[lang].plan, lang, sound, function(){
+      if(wrapEl.querySelector(".slide.on") === slide("plan")){
+        Genie.say(block("first"), fill(p.first), lang, sound);
+      }
+    });
+  }
+}
+
+function headings(){
+  document.getElementById("planH").textContent = person ? fill(txt("planHName")) : txt("planH");
+  document.getElementById("joinH").textContent = person ? fill(txt("joinHName")) : txt("joinH");
+}
+
+/* ============================================================
+   LANGUAGE, SOUND, SHEET
+   ============================================================ */
+function applyLang(){
+  wrapEl.querySelectorAll("[data-i18n]").forEach(function(el){
+    var v = txt(el.getAttribute("data-i18n")); if(v != null) el.textContent = v;
+  });
+  wrapEl.querySelectorAll("[data-i18n-html]").forEach(function(el){
+    var v = txt(el.getAttribute("data-i18n-html")); if(v != null) el.innerHTML = v;
+  });
+  wrapEl.querySelectorAll("[data-i18n-ph]").forEach(function(el){
+    var v = txt(el.getAttribute("data-i18n-ph")); if(v != null) el.setAttribute("placeholder", v);
+  });
+  wrapEl.querySelectorAll(".lang button").forEach(function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
+  });
+  paintSound(); markChips(); headings(); paintRail();
+
+  if(seen.intro) Genie.render(block("intro"), txt("intro"));
+  if(seen.name) Genie.render(block("name"), chosen.name ? fill(SAID[lang].name) : ASK[lang].name);
+  ORDER.forEach(function(k){
+    if(!seen[k]) return;
+    Genie.render(block(k), chosen[k] ? fill(SAID[lang][k][answers[k]]) : ASK[lang][k]);
+  });
+  if(seen.account) Genie.render(block("accountask"), ASK[lang].account);
+  if(seen.plan) renderPlan(true);
+}
+
+function paintSound(){
+  var b = document.getElementById("snd");
+  b.dataset.on = String(sound);
+  b.setAttribute("aria-pressed", String(sound));
+  b.querySelector("span").textContent = sound ? txt("sound") : txt("soundOff");
+}
+
+wrapEl.querySelectorAll(".lang button").forEach(function(b){
+  b.addEventListener("click", function(){
+    Genie.stop(); lang = b.dataset.lang;
+    try{ localStorage.setItem("mm_lang", lang); }catch(e){}
+    applyLang();
+  });
+});
+document.getElementById("snd").addEventListener("click", function(){
+  sound = !sound;
+  try{ localStorage.setItem("mm_sound", sound ? "1" : "0"); }catch(e){}
+  if(!sound) Genie.stop();
+  paintSound();
+});
+wrapEl.querySelectorAll("[data-replay]").forEach(function(b){
+  b.addEventListener("click", function(e){
+    e.preventDefault();
+    var k = b.dataset.replay;
+    var text = k === "first" ? fill(PLAN[lang][answers.niche].first) : txt(k);
+    if(text) Genie.say(block(k), text, lang, sound);
+  });
+});
+
+var sheet = document.getElementById("sheet");
+wrapEl.querySelectorAll("[data-sheet]").forEach(function(b){
+  b.addEventListener("click", function(){ sheet.classList.add("open"); });
+});
+sheet.addEventListener("click", function(e){
+  if(e.target === sheet || e.target.closest("[data-close]")) sheet.classList.remove("open");
+});
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") sheet.classList.remove("open"); });
+
+
+/* ============================================================
+   VOICE INPUT
+   ============================================================ */
+var HEARD = {
+  en:{
+    why:{ "new":["new","new ways","ways to make money","make money","more money","start","starting","fresh","nothing yet","dont have anything","side hustle","need money"],
+          grow:["grow","grow it","sell more","already have","i have something","have something","business","my business","product","products","expand","scale","customers","shop","store"],
+          unsure:["dont know","don't know","not sure","unsure","no idea","idk","dunno","no clue"] },
+    time:{ few:["few","couple","little","not much","some hours","two hours","hour"],
+           evenings:["evening","evenings","night","nights","after work","weeknight"],
+           all:["as much","whatever","everything","all in","full time","fulltime","takes","all day"] },
+    niche:{ houses:["house","houses","home","homes","real estate","property","properties","land","wholesale","wholesaling"],
+            store:["store","shop","online","selling","sell","ecommerce","e commerce","dropship","dropshipping","product","products","amazon"],
+            trading:["trading","trade","stock","stocks","crypto","chart","charts","forex","invest","investing"],
+            link:["link","share","sharing","affiliate","referral","refer","commission","social"],
+            pick:["you pick","pick for me","choose for me","you choose","you decide","surprise","whatever you","up to you","dont know","don't know","not sure"] },
+    goal:{ bills:["bill","bills","catch up","behind","rent","groceries","utilities"],
+           debt:["debt","debts","owe","loan","loans","credit card","student"],
+           family:["family","kids","kid","children","time with","wife","husband","son","daughter","mom","dad"],
+           job:["job","quit","leave my job","boss","nine to five","9 to 5","work","retire"],
+           own:["my own","own business","something of my own","myself","company","brand","legacy"] }
+  },
+  es:{
+    why:{ "new":["nuevas","nueva","nuevas formas","formas","maneras","ganar dinero","empezar","no tengo","nada todavia","mas dinero"],
+          grow:["crecer","vender mas","ya tengo","tengo algo","negocio","mi negocio","producto","productos","expandir","clientes","mas gente","tienda"],
+          unsure:["no se","no estoy seguro","ni idea","no sabria","ninguna"] },
+    time:{ few:["pocas","poco","unas horas","una hora","no mucho","dos horas"],
+           evenings:["noche","noches","tarde","tardes","despues del trabajo"],
+           all:["el que sea","todo","lo que haga falta","tiempo completo","completo","todo el dia"] },
+    niche:{ houses:["casa","casas","bienes raices","propiedad","propiedades","inmueble","terreno"],
+            store:["tienda","vender","venta","internet","en linea","ecommerce","producto","productos","dropship"],
+            trading:["trading","trade","acciones","cripto","bolsa","grafica","invertir"],
+            link:["enlace","link","compartir","afiliado","referido","referir","comision"],
+            pick:["escoge tu","tu decides","decide tu","lo que sea","sorprendeme","no se"] },
+    goal:{ bills:["cuenta","cuentas","renta","al dia","atrasado","recibos","despensa"],
+           debt:["deuda","deudas","debo","prestamo","tarjeta","credito"],
+           family:["familia","hijos","hijo","hija","ninos","esposa","esposo","mama","papa","tiempo con"],
+           job:["trabajo","renunciar","dejar mi trabajo","jefe","chamba","empleo","jubilar"],
+           own:["lo mio","mi propio","negocio","empresa","marca","algo mio"] }
+  }
+};
+var NAME_FILLER = /^(hi|hello|hey|my name is|i am|i'm|im|it's|its|call me|this is|me llamo|soy|hola|mi nombre es)\s+/i;
+
+var Voice = (function(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, key = null, btn = null;
+
+  function norm(t){
+    return (t||"").toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g,"")
+      .replace(/[^a-z0-9\s']/g," ").replace(/\s+/g," ").trim();
+  }
+
+  function match(text, k){
+    var table = HEARD[lang] && HEARD[lang][k];
+    if(!table) return null;
+    var t = norm(text), best = null, bestLen = 0;
+    Object.keys(table).forEach(function(opt){
+      table[opt].forEach(function(kw){
+        var kk = norm(kw);
+        if(kk && t.indexOf(kk) >= 0 && kk.length > bestLen){ best = opt; bestLen = kk.length; }
+      });
+    });
+    return best;
+  }
+
+  function paint(on){
+    if(!btn) return;
+    btn.dataset.on = String(on);
+    var lab = btn.parentNode.querySelector("[data-miclab]");
+    if(lab) lab.textContent = on ? txt("micOn") : txt(key === "name" ? "micName" : "micTap");
+  }
+
+  function stop(){
+    if(rec){ try{ rec.abort(); }catch(e){} }
+    paint(false); rec = null; btn = null; key = null;
+  }
+
+  function heard(text, k){
+    if(k === "name"){
+      var raw = String(text || "").trim().replace(NAME_FILLER, "");
+      var w = (raw.split(/\s+/)[0] || "").replace(/[^A-Za-zÀ-ɏ'\-]/g, "");
+      if(w.length >= 2){
+        document.getElementById("fname").value = w;
+        takeName();
+      }
+      return;
+    }
+    var opt = match(text, k);
+    if(!opt) return;
+    answers[k] = opt;
+    chosen[k] = true;
+    markChips();
+    Genie.say(block(k), fill(SAID[lang][k][opt]), lang, sound, function(){
+      if(wrapEl.querySelector(".slide.on") !== slide(k)) return;
+      var i = ORDER.indexOf(k);
+      show(i < ORDER.length - 1 ? ORDER[i + 1] : "plan");
+    });
+  }
+
+  function listen(k, b){
+    if(!SR) return;
+    if(rec){ stop(); return; }
+    Genie.stop();
+    key = k; btn = b;
+    var myKey = k;
+    rec = new SR();
+    rec.lang = lang === "es" ? "es-MX" : "en-US";
+    rec.interimResults = false;
+    rec.maxAlternatives = 3;
+    rec.continuous = false;
+    rec.onresult = function(e){
+      var alts = e.results[0], pick = null;
+      for(var i = 0; i < alts.length; i++){
+        var t = alts[i].transcript;
+        if(myKey === "name"){ pick = t; break; }
+        if(match(t, myKey)){ pick = t; break; }
+      }
+      var text = pick || alts[0].transcript;
+      paint(false);
+      rec = null; btn = null; key = null;
+      heard(text, myKey);
+    };
+    rec.onerror = function(){ stop(); };
+    rec.onend = function(){ paint(false); };
+    paint(true);
+    try{ rec.start(); }catch(e){ stop(); }
+  }
+
+  return { supported: !!SR, listen: listen, stop: stop };
+})();
+
+wrapEl.querySelectorAll("[data-mic]").forEach(function(b){
+  b.addEventListener("click", function(){ Voice.listen(b.dataset.mic, b); });
+});
+if(!Voice.supported){
+  wrapEl.querySelectorAll("[data-micwrap]").forEach(function(w){
+    w.hidden = true;
+    var or = w.nextElementSibling;
+    if(or && or.classList.contains("orline")) or.hidden = true;
+  });
+}
+
+/* ============================================================
+   HAND-OFF TO THE REAL SIGNUP FORM
+   Genie has everything he needs (name + the four picks). This
+   collects the email, remembers the answers, then opens and
+   pre-fills the site's own free-account form (.auth-box) instead
+   of navigating anywhere — that is how this site actually creates
+   an account. Card / upgrade happens later, from inside the app.
+   ============================================================ */
+document.getElementById("signup").addEventListener("submit", function(e){
+  e.preventDefault();
+  var emailField = this.querySelector('input[name="email"]');
+  var emailVal = ((emailField && emailField.value) || "").trim();
+  if(!emailVal){ if(emailField) emailField.focus(); return; }
+
+  try{
+    localStorage.setItem("mmFunnelAnswers", JSON.stringify({
+      name: person || "", why: answers.why, time: answers.time,
+      niche: answers.niche, goal: answers.goal, lang: lang, email: emailVal
+    }));
+  }catch(err){}
+
+  var suName = document.getElementById("suName");
+  var suEmail = document.getElementById("suEmail");
+  if(suName) suName.value = person || "";
+  if(suEmail) suEmail.value = emailVal;
+  if(typeof switchAuthTab === "function") switchAuthTab("signup");
+  var box = document.querySelector(".auth-box");
+  if(box) box.scrollIntoView({ behavior:"smooth", block:"center" });
+  var passField = document.getElementById("suPass");
+  if(passField) setTimeout(function(){ passField.focus(); }, 550);
+});
+
+document.addEventListener("visibilitychange", function(){ if(document.hidden) Genie.stop(); });
+
+applyLang();
+paintRail();
+})();
+</script>
+
 
   <!-- INTRO VIDEO — first thing visitors see -->
   <div class="top-video" id="secIntroVideo">
