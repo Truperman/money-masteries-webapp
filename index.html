@@ -7886,7 +7886,11 @@ document.addEventListener('DOMContentLoaded', function() {
   color:var(--ink-2); font-family:var(--ui); font-size:.78rem; font-weight:450; padding:.4rem .7rem;
 }
 #mmFunnelWrap .snd svg{width:14px; height:14px}
+#mmFunnelWrap .snd .ic-off{display:none}
 #mmFunnelWrap .snd[data-on="true"]{color:var(--green)}
+#mmFunnelWrap .snd[data-on="false"]{color:#f87171}
+#mmFunnelWrap .snd[data-on="false"] .ic-on{display:none}
+#mmFunnelWrap .snd[data-on="false"] .ic-off{display:block}
 @media (max-width:640px){ #mmFunnelWrap .snd span{display:none} }
 
 /* ---------- the deck ---------- */
@@ -8178,8 +8182,9 @@ document.addEventListener('DOMContentLoaded', function() {
   <!-- Genie's spoken/written language now follows the site's own EN/ES/PT
        switcher in the nav (mmSetLang) instead of a separate toggle here --
        see the mm:langchange listener near the bottom of this script. -->
-  <button class="snd" id="snd" data-on="true" aria-pressed="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+  <button class="snd" id="snd" data-on="true" aria-pressed="true" title="Mute Genie">
+    <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6"/><path d="M17 9l6 6"/></svg>
     <span data-i18n="sound">Voice on</span>
   </button>
 </div>
@@ -8192,7 +8197,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="lab" data-i18n="welcome">Welcome to Money Masteries</span>
       <div class="genie">
         <span class="face" aria-hidden="true"></span>
-        <span class="who"><span class="nm">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
+        <span class="who"><span class="nm" data-i18n="genieName">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
         <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </div>
       <h1 data-i18n-html="h1">I'm Genie, your <span class="hl">AI super agent</span>.</h1>
@@ -8228,7 +8233,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="col">
       <div class="genie">
         <span class="face" aria-hidden="true"></span>
-        <span class="who"><span class="nm">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
+        <span class="who"><span class="nm" data-i18n="genieName">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
         <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </div>
       <div class="says" data-says="intro">
@@ -8464,7 +8469,7 @@ var ES_ZONES=["America/Mexico_City","America/Cancun","America/Merida","America/M
 
 var T={
  en:{
-  login:"Log in", sound:"Voice on", soundOff:"Voice off",
+  login:"Log in", sound:"Mute", soundOff:"Unmute", genieName:"Genie",
   welcome:"Welcome to Money Masteries",
   role:"Your guide. He does the work.",
   h1:"I'm Genie, your <span class=\"hl\">AI super agent</span>.",
@@ -8527,11 +8532,11 @@ var T={
   disc:"Money Masteries is an education and software platform. We do not promise, guarantee, or predict that you will earn money. Results depend on your own effort, skill, market conditions, and the time you put in, and many people earn nothing. Nothing here is financial, tax, legal, or investment advice. Trading stocks, options, and crypto carries real risk, including losing everything you put in. Real estate and business results vary widely by market."
  },
  es:{
-  login:"Entrar", sound:"Voz activada", soundOff:"Voz apagada",
+  login:"Entrar", sound:"Silenciar", soundOff:"Activar voz", genieName:"Genio",
   welcome:"Bienvenido a Money Masteries",
   role:"Tu guía. Él hace el trabajo.",
-  h1:"Soy Genie, tu <span class=\"hl\">súper agente de IA</span>.",
-  intro:"Bienvenido a Money Masteries. Soy Genie, tu súper agente de IA. Aquí vas a tener todas las herramientas y un sistema hecho para ti que va a construir tu máquina de hacer dinero. Desde la comodidad de tu teléfono o tu computadora, ponme a trabajar. Empezar es gratis.",
+  h1:"Soy Genio, tu <span class=\"hl\">súper agente de IA</span>.",
+  intro:"Bienvenido a Money Masteries. Soy Genio, tu súper agente de IA. Aquí vas a tener todas las herramientas y un sistema hecho para ti que va a construir tu máquina de hacer dinero. Desde la comodidad de tu teléfono o tu computadora, ponme a trabajar. Empezar es gratis.",
   continue:"Continuar", buildPlan:"Arma mi plan", begin:"Comenzar",
   micTap:"Toca y di tu respuesta", micOn:"Escuchando…", micOr:"o toca una respuesta abajo", micName:"Toca y di tu nombre",
   askfirst:"¿Preguntas primero? Cuánto cuesta, y respuestas claras.",
@@ -8556,7 +8561,7 @@ var T={
   goal_d:"Dejar mi trabajo algún día", goal_e:"Construir algo mío",
 
   planH:"Tu plan está armado. Solo di la palabra.", planHName:"Tu plan está armado, {name}. Solo di la palabra.",
-  by:"Genie lo hace", firstTag:"Tu único paso de esta noche",
+  by:"Genio lo hace", firstTag:"Tu único paso de esta noche",
   enrollTag:"Último paso",
   joinH:"Vamos a abrir tu cuenta.", joinHName:"Vamos a abrir tu cuenta, {name}.",
   joinSub:"Yo ya tengo todo lo demás. Solo necesito a dónde mandarlo, y una tarjeta guardada para después.",
@@ -8682,41 +8687,20 @@ var PLAN={
 };
 
 var Genie = (function(){
-  var synth = window.speechSynthesis || null;
-  var picked = { en:null, es:null };
   var current = null, tick = null, elAudio = null;
   var wrap = document.getElementById("mmFunnelWrap");
   /* David's ElevenLabs voices (Zoltan EN / Salvatore ES), spoken through a
      small unauthenticated endpoint on the genie-railway backend -- see
      /funnel-speak in genie_voice.py. That endpoint always uses ElevenLabs
      directly (never the private agent's kokoro/openai fallback chain) and
-     is capped + rate-limited since this page is public. If it's ever
-     unreachable (backend asleep, network hiccup, no key configured), Genie
-     falls straight back to the browser's own built-in voice below --
-     nothing here ever just goes silent. */
+     is capped + rate-limited since this page is public. Per David: ONLY
+     the ElevenLabs voice may ever be heard here -- there is deliberately
+     no fallback to the browser's own built-in SpeechSynthesis voice. If
+     ElevenLabs is ever unreachable (backend asleep, network hiccup, no key
+     configured), Genie just falls silent for that line -- the word-by-word
+     text reveal still runs on its own timer either way, so the funnel
+     never gets stuck, it just isn't narrated out loud that once. */
   var FUNNEL_SPEAK_URL = "https://money-masteries-webapp-genie-production.up.railway.app/funnel-speak";
-  var PREFER = {
-    en:["google uk english male","google us english","microsoft guy","microsoft ryan","microsoft davis","microsoft david","daniel","alex","aaron","arthur","tom","fred","nathan","rishi"],
-    es:["google español","microsoft alvaro","microsoft jorge","microsoft pablo","jorge","diego","carlos","juan","enrique"]
-  };
-  function score(v, lang){
-    var n = (v.name||"").toLowerCase(), s = 0;
-    if((v.lang||"").toLowerCase().indexOf(lang) !== 0) return -1;
-    PREFER[lang].forEach(function(p,i){ if(n.indexOf(p) >= 0) s = Math.max(s, 100 - i); });
-    if(/female|zira|samantha|victoria|karen|moira|tessa|monica|paulina|helena|sabina/.test(n)) s -= 60;
-    if(v.localService) s += 4;
-    return s;
-  }
-  function load(){
-    if(!synth) return;
-    var voices = synth.getVoices() || [];
-    ["en","es"].forEach(function(l){
-      var best = null, bs = -1;
-      voices.forEach(function(v){ var s = score(v,l); if(s > bs){ bs = s; best = v; } });
-      picked[l] = bs > 0 ? best : (voices.filter(function(v){ return (v.lang||"").toLowerCase().indexOf(l)===0; })[0] || null);
-    });
-  }
-  if(synth){ load(); synth.addEventListener && synth.addEventListener("voiceschanged", load); }
 
   function paint(el, text){
     var line = el.querySelector(".line");
@@ -8734,7 +8718,6 @@ var Genie = (function(){
   function stop(){
     clearTick();
     if(elAudio){ try{ elAudio.pause(); }catch(e){} elAudio = null; }
-    if(synth){ try{ synth.cancel(); }catch(e){} }
     wrap.classList.remove("speaking");
     if(current){ current.classList.remove("active"); current = null; }
   }
@@ -8826,40 +8809,13 @@ var Genie = (function(){
       tick = setInterval(function(){ i++; upTo(i); if(i >= spans.length) finish(); }, perWord);
     }
 
-    function browserVoice(){
-      if(!sound || !synth || !window.SpeechSynthesisUtterance){ run(); return; }
-
-      var u = new SpeechSynthesisUtterance(text);
-      if(picked[lang]) u.voice = picked[lang];
-      u.lang = picked[lang] ? picked[lang].lang : (lang === "es" ? "es-MX" : "en-US");
-      u.rate = CONFIG.voice.rate; u.pitch = CONFIG.voice.pitch; u.volume = CONFIG.voice.volume;
-
-      var gotBoundary = false, started = false;
-      u.onboundary = function(e){
-        if(e.name && e.name !== "word") return;
-        gotBoundary = true; clearTick(); running = false;
-        var k = 0;
-        for(var j = 0; j < spans.length; j++){ if(+spans[j].dataset.at <= e.charIndex) k = j + 1; }
-        i = k; upTo(i);
-      };
-      u.onstart = function(){
-        started = true; spokeOnce = true;
-        wrap.classList.add("speaking");
-        setTimeout(function(){ if(!gotBoundary) run(); }, 500);
-      };
-      u.onend = finish;
-      u.onerror = function(){ finish(); };
-
-      setTimeout(function(){ if(!started) run(); }, 900);
-
-      try{ synth.speak(u); }catch(e){ run(); }
-    }
-
     upTo(0);
     if(!sound){ run(); return; }
 
+    // ElevenLabs only -- no browser-voice fallback. If the request fails,
+    // onFail is just the silent word-timer (run()), never a different voice.
     spokeOnce = true;
-    speakElevenLabs(spans, text, lang, finish, browserVoice);
+    speakElevenLabs(spans, text, lang, finish, run);
   }
   function render(el, text){
     stop();
@@ -9134,6 +9090,7 @@ function paintSound(){
   b.dataset.on = String(sound);
   b.setAttribute("aria-pressed", String(sound));
   b.querySelector("span").textContent = sound ? txt("sound") : txt("soundOff");
+  b.title = sound ? txt("sound") : txt("soundOff");
 }
 
 document.getElementById("snd").addEventListener("click", function(){
@@ -24280,7 +24237,7 @@ async function mmRenderDailyBrief(){
         '</div>'
       : '';
     card.innerHTML =
-      '<div class="daily-brief-eyebrow">🧞 Good morning from Genie</div>' +
+      '<div class="daily-brief-eyebrow">🧞 ' + (typeof MM_LANG !== 'undefined' && MM_LANG === 'es' ? 'Buenos días de parte de Genio' : 'Good morning from Genie') + '</div>' +
       '<div class="daily-brief-text">' + eeEsc(brief.text) + '</div>' +
       statLine;
     card.style.display = 'block';
@@ -25404,10 +25361,10 @@ var MM_DS_GREETINGS = {
   },
   es: {
     welcome: [
-      '¡Hola§! Soy Genie, tu copiloto de negocios. Vamos a completar tu configuración juntos.',
-      '¡Bienvenido§! Soy Genie, y estoy encantado de ayudarte. Empecemos.',
+      '¡Hola§! Soy Genio, tu copiloto de negocios. Vamos a completar tu configuración juntos.',
+      '¡Bienvenido§! Soy Genio, y estoy encantado de ayudarte. Empecemos.',
       '¡Hola§! Dame unos minutos y dejaremos todo listo.',
-      '¡Un placer conocerte§! Soy Genie. ¿Listo para construir las bases de tu negocio? Vamos.',
+      '¡Un placer conocerte§! Soy Genio. ¿Listo para construir las bases de tu negocio? Vamos.',
     ],
     back: [
       '¡Bienvenido de nuevo§! Sigamos donde lo dejamos.',
