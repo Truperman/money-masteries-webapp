@@ -7466,6 +7466,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="nav-user-dropdown" id="navUserDropdown">
         <div class="nud-item" onclick="closeNavUserDropdown();showScreen('account')">👤 My Account</div>
         <div class="nud-item" onclick="closeNavUserDropdown();showScreen('account');setTimeout(function(){switchAcctTopTab('about')},30)">ℹ️ About</div>
+        <div class="nud-item" id="navThemeMenuItem" onclick="mmToggleTheme()"><span id="navThemeMenuIcon">🌙</span> <span id="navThemeMenuLabel">Dark Mode</span></div>
         <div class="nud-sep"></div>
         <div class="nud-item nud-danger" onclick="doSignOut()">🚪 Sign Out</div>
       </div>
@@ -20610,6 +20611,13 @@ function mmSyncThemeIcons(){
   document.querySelectorAll('.theme-toggle-btn i').forEach(function(i){
     i.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
   });
+  // Account-menu item shows what tapping it will switch TO, not the
+  // current state -- "Dark Mode" while you're in light mode, and vice
+  // versa, same convention as every OS-level theme menu.
+  var menuIcon = document.getElementById('navThemeMenuIcon');
+  var menuLabel = document.getElementById('navThemeMenuLabel');
+  if(menuIcon) menuIcon.textContent = isLight ? '🌙' : '☀️';
+  if(menuLabel) menuLabel.textContent = isLight ? 'Dark Mode' : 'Light Mode';
 }
 function mmToggleTheme(){
   var isLight = document.documentElement.getAttribute('data-theme') === 'light';
