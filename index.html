@@ -15033,6 +15033,15 @@ var _ivIndex = 0;
 function ivList(){ return (window.INTRO_VIDEOS || INTRO_VIDEOS || []).filter(function(v){ return v && v.src; }); }
 function ivIsYT(u){ return /youtu\.be|youtube\.com/.test(u); }
 function renderIntroVideo(){
+  // Disabled per David's request -- the old intro video/YouTube playlist
+  // section (#secIntroVideo) is gone from the page now that the Genie
+  // funnel is the intro. It was already display:none, but a hidden
+  // container doesn't stop an <iframe>/<video> inside it from actually
+  // autoplaying (with audio), which is what David was hearing/seeing.
+  // Returning immediately means no player element is ever created, from
+  // any call site (page load, the Firestore-config loader, or the admin
+  // video manager), so nothing can play.
+  return;
   var w = document.getElementById('introVideoWrap'); if(!w) return;
   var list = ivList();
   if(!list.length){
@@ -15071,7 +15080,12 @@ function ivGo(i){
   if(vid){ vid.muted = false; try{ vid.play().catch(function(){ vid.muted=true; vid.play().catch(function(){}); }); }catch(e){} }
   var wrap = document.getElementById('secIntroVideo'); if(wrap && wrap.scrollIntoView) { /* keep in view on switch */ }
 }
-document.addEventListener('DOMContentLoaded', renderIntroVideo);
+// Disabled per David's request: the old intro video/YouTube playlist was
+// still autoplaying (with audio) even while #secIntroVideo sits
+// display:none, since hiding a container doesn't stop an <iframe>/<video>
+// already inside it. Not calling renderIntroVideo() at all now means no
+// player element is ever created, so nothing can autoplay.
+// document.addEventListener('DOMContentLoaded', renderIntroVideo);
 
 // Handle ?ref= in URL to credit affiliate
 (function() {
