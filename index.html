@@ -743,7 +743,28 @@
       // onAuthStateChanged fires and creates the Firestore profile;
       // displayName may not be in that snapshot yet, so patch it:
       const userRef = doc(db, "users", cred.user.uid);
-      await setDoc(userRef, { name: name }, { merge: true });
+      const patch = { name: name };
+      // Genie funnel (the landing-page onboarding deck) stashes its
+      // collected answers here right before handing off to this form --
+      // fold them onto the new user doc so niche/goal survive past signup
+      // for Master-routing and abandoned-lead follow-up.
+      try {
+        const funnelRaw = localStorage.getItem('mmFunnelAnswers');
+        if (funnelRaw) {
+          const funnel = JSON.parse(funnelRaw);
+          if (funnel && typeof funnel === 'object') {
+            patch.onboarding = {
+              why: funnel.why || null,
+              time: funnel.time || null,
+              niche: funnel.niche || null,
+              goal: funnel.goal || null,
+              lang: funnel.lang || null
+            };
+          }
+        }
+      } catch(e) {}
+      await setDoc(userRef, patch, { merge: true });
+      try { localStorage.removeItem('mmFunnelAnswers'); } catch(e) {}
     } catch(e) { console.error(e); showAuthError(friendlyAuthError(e)); }
   };
 
@@ -8663,8 +8684,17 @@ var PLAN={
 var Genie = (function(){
   var synth = window.speechSynthesis || null;
   var picked = { en:null, es:null };
-  var current = null, tick = null;
+  var current = null, tick = null, elAudio = null;
   var wrap = document.getElementById("mmFunnelWrap");
+  /* David's ElevenLabs voices (Zoltan EN / Salvatore ES), spoken through a
+     small unauthenticated endpoint on the genie-railway backend -- see
+     /funnel-speak in genie_voice.py. That endpoint always uses ElevenLabs
+     directly (never the private agent's kokoro/openai fallback chain) and
+     is capped + rate-limited since this page is public. If it's ever
+     unreachable (backend asleep, network hiccup, no key configured), Genie
+     falls straight back to the browser's own built-in voice below --
+     nothing here ever just goes silent. */
+  var FUNNEL_SPEAK_URL = "https://REPLACE-WITH-YOUR-RAILWAY-URL.up.railway.app/funnel-speak";
   var PREFER = {
     en:["google uk english male","google us english","microsoft guy","microsoft ryan","microsoft davis","microsoft david","daniel","alex","aaron","arthur","tom","fred","nathan","rishi"],
     es:["google español","microsoft alvaro","microsoft jorge","microsoft pablo","jorge","diego","carlos","juan","enrique"]
@@ -8703,9 +8733,65 @@ var Genie = (function(){
   function clearTick(){ if(tick){ clearInterval(tick); tick = null; } }
   function stop(){
     clearTick();
+    if(elAudio){ try{ elAudio.pause(); }catch(e){} elAudio = null; }
     if(synth){ try{ synth.cancel(); }catch(e){} }
     wrap.classList.remove("speaking");
     if(current){ current.classList.remove("active"); current = null; }
+  }
+
+  /* ElevenLabs playback: fetch the mp3 from /funnel-speak and drive the
+     same word-by-word reveal off the audio's own duration (ElevenLabs
+     gives no per-word boundaries the way SpeechSynthesis does, so this
+     paces evenly across however long the clip actually is). onFail calls
+     back into the existing browser-voice path below, unchanged. */
+  function speakElevenLabs(spans, text, lang, onDone, onFail){
+    if(!FUNNEL_SPEAK_URL || FUNNEL_SPEAK_URL.indexOf("REPLACE-WITH") >= 0){ onFail(); return; }
+    var settled = false;
+    function fail(){ if(settled) return; settled = true; onFail(); }
+    fetch(FUNNEL_SPEAK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, lang: lang })
+    }).then(function(r){
+      if(!r.ok) throw new Error("funnel-speak " + r.status);
+      return r.blob();
+    }).then(function(blob){
+      if(settled) return;
+      if(!blob || blob.size < 200) throw new Error("empty audio");
+      var url = URL.createObjectURL(blob);
+      var audio = new Audio(url);
+      elAudio = audio;
+      var i2 = 0, tick2 = null;
+      function upTo2(n){
+        spans.forEach(function(s, j){
+          s.classList.toggle("said", j < n);
+          s.classList.toggle("now", j === n - 1);
+        });
+      }
+      function cleanup(){
+        if(tick2){ clearInterval(tick2); tick2 = null; }
+        URL.revokeObjectURL(url);
+        if(elAudio === audio) elAudio = null;
+      }
+      audio.addEventListener("loadedmetadata", function(){
+        var dur = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : spans.length / 2.6;
+        var perWord2 = Math.max(45, (dur * 1000) / Math.max(spans.length, 1));
+        tick2 = setInterval(function(){
+          i2++; upTo2(i2);
+          if(i2 >= spans.length) clearInterval(tick2);
+        }, perWord2);
+      });
+      audio.addEventListener("play", function(){ settled = true; wrap.classList.add("speaking"); });
+      audio.addEventListener("ended", function(){
+        upTo2(spans.length);
+        wrap.classList.remove("speaking");
+        cleanup();
+        onDone();
+      });
+      audio.addEventListener("error", function(){ cleanup(); fail(); });
+      var p = audio.play();
+      if(p && typeof p.catch === "function") p.catch(function(){ cleanup(); fail(); });
+    }).catch(function(){ fail(); });
   }
 
   var spokeOnce = false;
@@ -8740,33 +8826,40 @@ var Genie = (function(){
       tick = setInterval(function(){ i++; upTo(i); if(i >= spans.length) finish(); }, perWord);
     }
 
+    function browserVoice(){
+      if(!sound || !synth || !window.SpeechSynthesisUtterance){ run(); return; }
+
+      var u = new SpeechSynthesisUtterance(text);
+      if(picked[lang]) u.voice = picked[lang];
+      u.lang = picked[lang] ? picked[lang].lang : (lang === "es" ? "es-MX" : "en-US");
+      u.rate = CONFIG.voice.rate; u.pitch = CONFIG.voice.pitch; u.volume = CONFIG.voice.volume;
+
+      var gotBoundary = false, started = false;
+      u.onboundary = function(e){
+        if(e.name && e.name !== "word") return;
+        gotBoundary = true; clearTick(); running = false;
+        var k = 0;
+        for(var j = 0; j < spans.length; j++){ if(+spans[j].dataset.at <= e.charIndex) k = j + 1; }
+        i = k; upTo(i);
+      };
+      u.onstart = function(){
+        started = true; spokeOnce = true;
+        wrap.classList.add("speaking");
+        setTimeout(function(){ if(!gotBoundary) run(); }, 500);
+      };
+      u.onend = finish;
+      u.onerror = function(){ finish(); };
+
+      setTimeout(function(){ if(!started) run(); }, 900);
+
+      try{ synth.speak(u); }catch(e){ run(); }
+    }
+
     upTo(0);
-    if(!sound || !synth || !window.SpeechSynthesisUtterance){ run(); return; }
+    if(!sound){ run(); return; }
 
-    var u = new SpeechSynthesisUtterance(text);
-    if(picked[lang]) u.voice = picked[lang];
-    u.lang = picked[lang] ? picked[lang].lang : (lang === "es" ? "es-MX" : "en-US");
-    u.rate = CONFIG.voice.rate; u.pitch = CONFIG.voice.pitch; u.volume = CONFIG.voice.volume;
-
-    var gotBoundary = false, started = false;
-    u.onboundary = function(e){
-      if(e.name && e.name !== "word") return;
-      gotBoundary = true; clearTick(); running = false;
-      var k = 0;
-      for(var j = 0; j < spans.length; j++){ if(+spans[j].dataset.at <= e.charIndex) k = j + 1; }
-      i = k; upTo(i);
-    };
-    u.onstart = function(){
-      started = true; spokeOnce = true;
-      wrap.classList.add("speaking");
-      setTimeout(function(){ if(!gotBoundary) run(); }, 500);
-    };
-    u.onend = finish;
-    u.onerror = function(){ finish(); };
-
-    setTimeout(function(){ if(!started) run(); }, 900);
-
-    try{ synth.speak(u); }catch(e){ run(); }
+    spokeOnce = true;
+    speakElevenLabs(spans, text, lang, finish, browserVoice);
   }
   function render(el, text){
     stop();
