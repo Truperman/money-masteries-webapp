@@ -7917,14 +7917,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* ---------- genie ---------- */
 #mmFunnelWrap .genie{display:flex; align-items:center; justify-content:center; gap:.85rem; margin-bottom:1.3rem}
-#mmFunnelWrap .who{text-align:left}
+#mmFunnelWrap .who{text-align:center}
 #mmFunnelWrap .face{display:none}
 #mmFunnelWrap .face::after{content:""; position:absolute; inset:-10px; border-radius:50%; border:1px solid var(--ac); opacity:0}
 #mmFunnelWrap.speaking .face::after{animation:mmfPing 1.5s ease-out infinite}
 @keyframes mmfPing{0%{opacity:.5; transform:scale(.9)} 100%{opacity:0; transform:scale(1.25)}}
 #mmFunnelWrap .who .nm{font-family:var(--display); font-weight:500; font-size:1rem; letter-spacing:-.02em; display:block}
 #mmFunnelWrap .who .rl{font-size:.82rem; color:var(--ink-3)}
-#mmFunnelWrap .eq{display:flex; align-items:flex-end; gap:3px; height:16px; opacity:0; transition:opacity .2s ease}
+#mmFunnelWrap .eq{display:none}
 #mmFunnelWrap.speaking .eq{opacity:1}
 #mmFunnelWrap .eq i{display:block; width:3px; border-radius:2px; background:var(--ac); height:4px}
 #mmFunnelWrap.speaking .eq i{animation:mmfBounce .9s ease-in-out infinite}
