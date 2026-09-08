@@ -2950,6 +2950,8 @@ td .admnt-preview{margin-top:4px}
   .site-lang-btn{padding:5px 6px;font-size:.66rem}
   .sign-out-btn{padding:6px 9px;font-size:0}
   .sign-out-btn::before{content:'🚪';font-size:1rem}
+  #mmHelpMeBtn{padding:6px 8px;font-size:0}
+  #mmHelpMeBtn::before{content:'✨';font-size:.9rem}
   .notif-dropdown{width:min(320px,calc(100vw - 24px));right:-8px}
 }
 
@@ -8327,8 +8329,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <span class="who"><span class="nm" data-i18n="genieName">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
         <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </div>
-      <h1 data-i18n-html="h1">I'm Genie, your <span class="hl">AI super agent</span>.</h1>
-      <p class="hero-sub" data-i18n="heroSub">All the tools, and a done-for-you system that builds your money making machine. From your phone or your computer. Free to start.</p>
+      <h1 data-i18n-html="h1">Make money from home <span class="hl">today</span>.</h1>
+      <p class="hero-sub" data-i18n="heroSub">Genie builds and runs your money-making system with you — right from your phone.</p>
       <button class="begin" id="begin">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
         <span data-i18n="begin">Begin</span>
@@ -8599,13 +8601,13 @@ var T={
   login:"Log in", sound:"Mute", soundOff:"Unmute", genieName:"Genie",
   welcome:"Welcome to Money Masteries",
   role:"Your guide. He does the work.",
-  h1:"I'm Genie, your <span class=\"hl\">AI super agent</span>.",
+  h1:"Make money from home <span class=\"hl\">today</span>.",
   intro:"Welcome to Money Masteries. I'm Genie, your AI super agent. Here you will have all the tools and done-for-you system that will build your money making machine. From the comfort of your phone or computer, put me to work. It's free to start.",
   continue:"Continue", buildPlan:"Build my plan", begin:"Begin",
   micTap:"Tap and say your answer", micOn:"Listening…", micOr:"or tap an answer below", micName:"Tap and say your name",
   askfirst:"Questions first? What it costs, and straight answers.",
   stepOf:"Step {n} of {t}",
-  heroSub:"All the tools, and a done-for-you system that builds your money making machine. From your phone or your computer. Free to start.",
+  heroSub:"Genie builds and runs your money-making system with you — right from your phone.",
   hint:"Free to start. You only pay for what you use.",
   replay:"Hear it again",
   prefilled:"I have already chosen for you. Change it, or just continue.",
@@ -9806,6 +9808,7 @@ paintRail();
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-diagram-project"></i></div><div class="qa-label">My Network</div></div>
         <div class="qa-tile" onclick="showScreen('communitymaster')"><div class="qa-icon"><i class="fa-solid fa-video"></i></div><div class="qa-label">Live Events</div></div>
         <div class="qa-tile" onclick="showScreen('commissions')"><div class="qa-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="qa-label">My Earnings</div></div>
+        <div class="qa-tile" onclick="openTryNewModal()"><div class="qa-icon"><i class="fa-solid fa-shuffle"></i></div><div class="qa-label">Try Something New</div></div>
       </div>
 
       <!-- BUSINESS ESSENTIALS — the service tile grid, driven live from the
@@ -16387,6 +16390,45 @@ function initDashboardDynamics(user, data) {
 
 </script>
 
+<!-- TRY SOMETHING NEW -- lets an existing member relaunch the "make money
+     from home today" pitch and jump into a different income-path course,
+     without duplicating the full voice-driven landing funnel (which is
+     built for anonymous visitors and ends by handing off to signup). -->
+<div id="tryNewModal" onclick="if(event.target===this) closeTryNewModal()" style="position:fixed;inset:0;background:rgba(8,10,18,.72);backdrop-filter:blur(3px);z-index:1600;display:none;align-items:center;justify-content:center;padding:4vh 16px;overflow-y:auto">
+        <div style="background:#111827;border:1px solid #1f2937;border-radius:18px;padding:24px 22px;max-width:640px;width:100%">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-weight:800;font-size:1.02rem">🔄 Try Something New</div>
+            <button onclick="closeTryNewModal()" style="background:none;border:none;color:#8ba0c4;font-size:1.25rem;cursor:pointer">✕</button>
+          </div>
+          <div style="text-align:center;margin:14px 0 20px">
+            <div style="font-size:1.4rem;font-weight:800;background:linear-gradient(90deg,#d4af37,#f4e5a1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Make money from home — today.</div>
+            <div style="color:#9a9aa3;margin-top:6px;font-size:.83rem">Pick a new path below. Free to start, switch back anytime.</div>
+          </div>
+          <div class="course-grid">
+            <div class="course-card" onclick="closeTryNewModal();openCourse('affiliate')">
+              <div class="course-card-icon">💸</div>
+              <div class="course-card-title">Affiliate Fast Track</div>
+              <div class="course-card-sub">Turn your link into $1,000/month</div>
+            </div>
+            <div class="course-card" onclick="closeTryNewModal();openCourse('stocks')">
+              <div class="course-card-icon">📊</div>
+              <div class="course-card-title">Day Trading — Stocks</div>
+              <div class="course-card-sub">Brokers, charts, funding</div>
+            </div>
+            <div class="course-card" onclick="closeTryNewModal();openCourse('wholesale')">
+              <div class="course-card-icon">🔑</div>
+              <div class="course-card-title">Real Estate — Wholesaling</div>
+              <div class="course-card-sub">Find deals, flip contracts</div>
+            </div>
+            <div class="course-card" onclick="closeTryNewModal();openCourse('dropshipping')">
+              <div class="course-card-icon">📦</div>
+              <div class="course-card-title">E-Commerce — Dropshipping</div>
+              <div class="course-card-sub">Shopify, suppliers, ads</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
 <!-- CUSTOM PRODUCT ORDER MODAL -->
 <div class="ame-overlay" id="orderModal">
   <div class="ame-modal">
@@ -16551,6 +16593,14 @@ function courseUnlocked(path) {
 }
 window.courseUnlocked = courseUnlocked;
 
+window.openTryNewModal = function() {
+  var m = document.getElementById('tryNewModal');
+  if (m) m.style.display = 'flex';
+};
+window.closeTryNewModal = function() {
+  var m = document.getElementById('tryNewModal');
+  if (m) m.style.display = 'none';
+};
 function openCourse(path) {
   if (!courseUnlocked(path)) {
     if (typeof openUpgradeModal === 'function') openUpgradeModal();
