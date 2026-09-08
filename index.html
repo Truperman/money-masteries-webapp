@@ -9662,6 +9662,15 @@ paintRail();
             <button type="button" data-lang="ko" onclick="genieFabSetChatLang('ko')">🇰🇷 한국어</button>
           </div>
         </div>
+        <div class="genie-fab-lang-wrap">
+          <button class="genie-fab-icon-btn genie-fab-lang-btn" id="genieFabVoicePickBtn" onclick="genieFabToggleVoiceMenu(event)" title="Change Genie's speaking voice" type="button">🎙️</button>
+          <div class="genie-fab-lang-menu" id="genieFabVoiceMenu">
+            <button type="button" data-voice="default" onclick="genieFabSetVoice('default')">🎧 Default (matches language)</button>
+            <button type="button" data-voice="voice1" onclick="genieFabSetVoice('voice1')">🗣️ Voice 1</button>
+            <button type="button" data-voice="woman_en" onclick="genieFabSetVoice('woman_en')">👩 Woman (English)</button>
+            <button type="button" data-voice="british" onclick="genieFabSetVoice('british')">🇬🇧 British</button>
+          </div>
+        </div>
         <button class="genie-fab-icon-btn" id="genieFabVoiceBtn" onclick="genieFabToggleVoice()" title="Turn Genie's voice on/off" type="button">🔊</button>
         <button class="genie-fab-icon-btn" onclick="if(confirm('Start a new conversation? This clears what Genie remembers about your past chats.'))genieClearMemory()" title="Start a new conversation" type="button">↺</button>
         <button class="genie-fab-icon-btn" onclick="toggleGenieFab(false)" title="Close" type="button">✕</button>
@@ -9706,7 +9715,7 @@ paintRail();
       <div class="sidebar-aff" id="sidebarAff">MM------</div>
     </div>
     <div class="sidebar-section-label">Main</div>
-    <div class="nav-item active" onclick="showScreen('dashboard')" id="nav-dashboard"><span class="nav-item-icon"><i class="fa-solid fa-house"></i></span> Dashboard</div>
+    <div class="nav-item active notranslate" onclick="showScreen('dashboard')" id="nav-dashboard"><span class="nav-item-icon"><i class="fa-solid fa-house"></i></span> Dashboard</div>
     <div class="sidebar-section-label">Plans</div>
     <div class="nav-item" onclick="showScreen('plans')" id="nav-plans"><span class="nav-item-icon"><i class="fa-solid fa-credit-card"></i></span> Plans &amp; Pricing</div>
     <div class="sidebar-section-label">Money</div>
@@ -9755,8 +9764,7 @@ paintRail();
            code while still giving the simplified dashboard this redesign
            calls for. -->
       <div class="dash-tabs" id="dashTopTabs">
-        <div class="dash-tab active" id="dtab-discover" onclick="switchDashTab('discover'); mmOpenDiscoverSetup();" title="Your AI agent walks you through setup — by voice or by typing."><i class="fa-solid fa-compass"></i> Discover</div>
-        <div class="dash-tab" id="dtab-setup" onclick="switchDashTab('setup')"><i class="fa-solid fa-list-check"></i> Setup</div>
+        <div class="dash-tab active" id="dtab-discover" onclick="mmOpenDiscoverSetup()" title="Your AI agent walks you through setup — by voice or by typing."><i class="fa-solid fa-list-check"></i> Setup</div>
       </div>
 
       <div class="dash-panel active" id="dpanel-discover">
@@ -9764,7 +9772,7 @@ paintRail();
       <div id="businessEssentialsSection">Loading…</div>
       </div>
 
-      <div class="dash-panel" id="dpanel-setup">
+      <div class="dash-panel active" id="dpanel-setup">
         <div id="gainPlanBanner" class="gain-banner" style="display:none" onclick="mmScrollToGainPlan()"></div>
       </div>
 
@@ -17212,10 +17220,13 @@ function genieFabSpeak(text){
   _genieFabStopAudio(); // don't stack replies — newest reply always wins
   var langPrefix = (_genieFabSpeechLang ? _genieFabSpeechLang() : 'en-US').split('-')[0].toLowerCase();
   var lang = langPrefix === 'es' ? 'es' : 'en'; // ElevenLabs voice pool is EN/ES only for now
+  var voiceChoice = (GENIE_FAB_VOICE_NAMES[_genieFabVoiceGet()] || {}).id || null;
+  var speakBody = { text: clean.slice(0, 700), lang: lang };
+  if (voiceChoice) speakBody.voice = voiceChoice;
   fetch(GENIE_FAB_SPEAK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: clean.slice(0, 700), lang: lang })
+    body: JSON.stringify(speakBody)
   }).then(function(r){
     if (!r.ok) throw new Error('funnel-speak ' + r.status);
     return r.blob();
@@ -17695,6 +17706,65 @@ document.addEventListener('click', function(e){
   if (btn && (e.target === btn || btn.contains(e.target))) return;
   genieFabCloseLangMenu();
 });
+
+// ── GENIE VOICE PICKER — lets a member choose which ElevenLabs voice
+// Genie speaks replies in inside the Ask Genie chat window. "default"
+// keeps the existing behavior (English/Spanish voice matched to Genie's
+// current chat language); the rest are fixed voice IDs David picked,
+// sent straight through to the /funnel-speak backend (see genie_voice.py
+// on the genie-railway service) which validates them against its own
+// whitelist before calling ElevenLabs.
+var GENIE_FAB_VOICE_NAMES = {
+  default:  { label: 'Default', id: null },
+  voice1:   { label: 'Voice 1', id: 'cCYjmrGZaI86GUJ7F2Nn' },
+  woman_en: { label: 'Woman (EN)', id: 'rCuVrCHOUMY3OwyJBJym' },
+  british:  { label: 'British', id: 'fATgBRI8wg5KkDFg8vBd' }
+};
+function _genieFabVoiceGet(){
+  try {
+    var saved = localStorage.getItem('genieFabVoice');
+    if (saved && GENIE_FAB_VOICE_NAMES[saved]) return saved;
+  } catch(e){}
+  return 'default';
+}
+function _genieFabVoiceSet(code){
+  try { localStorage.setItem('genieFabVoice', code); } catch(e){}
+}
+function genieFabRenderVoiceBtn(){
+  var menu = document.getElementById('genieFabVoiceMenu');
+  if (menu) {
+    var code = _genieFabVoiceGet();
+    Array.prototype.forEach.call(menu.querySelectorAll('button[data-voice]'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-voice') === code);
+    });
+  }
+}
+function genieFabCloseVoiceMenu(){
+  var menu = document.getElementById('genieFabVoiceMenu');
+  if (menu) menu.classList.remove('open');
+}
+function genieFabToggleVoiceMenu(ev){
+  if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  genieFabCloseLangMenu();
+  var menu = document.getElementById('genieFabVoiceMenu');
+  if (!menu) return;
+  menu.classList.toggle('open');
+}
+window.genieFabSetVoice = function(code){
+  if (!GENIE_FAB_VOICE_NAMES[code]) return;
+  _genieFabVoiceSet(code);
+  genieFabRenderVoiceBtn();
+  genieFabCloseVoiceMenu();
+};
+document.addEventListener('click', function(e){
+  var menu = document.getElementById('genieFabVoiceMenu');
+  if (!menu || !menu.classList.contains('open')) return;
+  if (menu.contains(e.target)) return;
+  var btn = document.getElementById('genieFabVoicePickBtn');
+  if (btn && (e.target === btn || btn.contains(e.target))) return;
+  genieFabCloseVoiceMenu();
+});
+try { genieFabRenderVoiceBtn(); } catch(e){}
 try { genieFabRenderLangBtn(); } catch(e){}
 // ── Genie face hotspot — a click on the robot's face opens Ask Genie and
 // has him speak one useful, actionable tip for moving the member's business
@@ -21073,6 +21143,12 @@ function mmSetLang(lang){
   // follow this same EN/ES/PT choice for its spoken/written language --
   // see the #mmFunnelWrap script's mm:langchange listener.
   try{ document.dispatchEvent(new CustomEvent('mm:langchange', { detail:{ lang:lang } })); }catch(e){}
+  // Keep Genie's own chat/voice language (member Ask Genie panel) in sync
+  // with the site-wide switcher -- without this, a saved genieFabChatLang
+  // value silently overrides the site language forever, which is why
+  // clicking ES here looked like it "did nothing" (the page itself DID
+  // translate -- only Genie's replies stayed in English).
+  try{ if(typeof window.genieFabSetChatLang === 'function' && (lang==='en'||lang==='es'||lang==='pt')) window.genieFabSetChatLang(lang); }catch(e){}
 }
 
 // ── Light/dark mode toggle ──────────────────────────────────────────────
