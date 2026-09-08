@@ -67,13 +67,21 @@
   // (see functions/index.js). Never calls Anthropic directly from the browser
   // (that would expose the API key). Returns { reply, inputTokens, outputTokens, billedCost }.
   const AI_FUNCTION_URL = 'https://us-central1-money-masteries-2cc76.cloudfunctions.net/askAI';
-  window.askAI = async (prompt, masterId, model) => {
+  // attachment (optional): { mimeType, dataBase64, name } — a single image
+  // or PDF the member attached (currently only the dashboard's Ask Genie
+  // widget sends this). Forwarded as-is to the Cloud Function, which builds
+  // the actual Claude vision/document content block server-side.
+  window.askAI = async (prompt, masterId, model, attachment) => {
     if (!auth.currentUser) throw new Error('Must be logged in to use AI features.');
     const idToken = await auth.currentUser.getIdToken();
+    const body = { prompt, masterId: masterId || 'unknown', model: model || undefined };
+    if (attachment && attachment.dataBase64 && attachment.mimeType) {
+      body.attachment = { mimeType: attachment.mimeType, dataBase64: attachment.dataBase64, name: attachment.name || undefined };
+    }
     const resp = await fetch(AI_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
-      body: JSON.stringify({ prompt, masterId: masterId || 'unknown', model: model || undefined }),
+      body: JSON.stringify(body),
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'AI request failed');
@@ -3627,6 +3635,19 @@ body{top:0 !important;position:static !important}
 .ai-chat-mic:hover{border-color:#ec4899}
 .ai-chat-mic.listening{background:#ec4899;border-color:#ec4899;animation:fab-pulse-genie 1.1s ease-in-out infinite}
 .ai-chat-mic.unsupported{display:none}
+.ai-chat-attach{background:#1a1f2c;border:1px solid #374151;color:#93c5fd;border-radius:10px;width:38px;flex:0 0 38px;font-size:1.05rem;cursor:pointer}
+.ai-chat-attach:hover{border-color:#60a5fa}
+.ai-chat-attach.has-file{border-color:#60a5fa;color:#60a5fa}
+.genie-fab-attachments{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px;margin-bottom:8px}
+.genie-fab-attachments:empty{display:none;margin:0}
+.genie-fab-attach-chip{display:flex;align-items:center;gap:6px;background:#1a1f2c;border:1px solid #374151;border-radius:8px;padding:4px 6px 4px 4px;font-size:.72rem;color:#e5e7eb;max-width:220px}
+.genie-fab-attach-chip img{width:24px;height:24px;object-fit:cover;border-radius:5px;flex:none;display:block}
+.genie-fab-attach-chip .fico{width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex:none;font-size:1rem}
+.genie-fab-attach-chip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.genie-fab-attach-chip button{background:none;border:none;color:#9ca3af;cursor:pointer;font-size:.9rem;line-height:1;padding:0 2px;flex:none}
+.genie-fab-attach-chip button:hover{color:#f87171}
+.ai-msg-attach-thumb{display:block;max-width:160px;max-height:160px;border-radius:8px;margin-top:6px;object-fit:cover}
+.ai-msg-attach-file{display:inline-flex;align-items:center;gap:6px;margin-top:6px;background:rgba(255,255,255,.06);border-radius:8px;padding:5px 9px;font-size:.76rem}
 @media(max-width:600px){.genie-fab-panel{right:16px;left:16px;width:auto;bottom:140px}}
 .genie-fab.genie-fab-locked{filter:saturate(.55) brightness(.85)}
 .genie-fab-badge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:#ffd700;border-radius:50%;border:2px solid #1a0f14;animation:fab-pulse-genie 1.6s ease-in-out infinite}
@@ -9515,7 +9536,10 @@ paintRail();
     </div>
     <div class="genie-fab-sub" id="genieFabSub">Tell me what you want done — I can click, type, and navigate for you.</div>
     <div class="ai-chat-log" id="genieFabLog"></div>
+    <div class="genie-fab-attachments" id="genieFabAttachments"></div>
     <div class="ai-chat-bar">
+      <input type="file" id="genieFabFileInput" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" style="display:none" onchange="genieFabFilePicked(this.files[0])">
+      <button class="ai-chat-attach" id="genieFabAttachBtn" onclick="document.getElementById('genieFabFileInput').click()" title="Attach an image or file for Genie to look at" type="button">➕</button>
       <input class="ai-chat-input" id="genieFabInput" maxlength="500" placeholder="Ask Genie..." onkeydown="if(event.key==='Enter')sendGenieFab()">
       <button class="ai-chat-mic" id="genieFabMic" onclick="genieFabMicToggle()" title="Speak to Genie" type="button">🎤</button>
       <button class="ai-chat-send" id="genieFabSend" onclick="sendGenieFab()">➤</button>
@@ -17377,18 +17401,132 @@ function genieLangName(){
   var lang = (typeof MM_LANG !== 'undefined' && MM_LANG) ? MM_LANG : (typeof courseLang !== 'undefined' ? courseLang : 'en');
   return lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Brazilian Portuguese' : 'English';
 }
+// ── Ask Genie (member dashboard) — file/image attachments ─────────────────
+// Members can attach ONE image or PDF per message via the + button next to
+// the mic. Images are downscaled client-side (max 1280px longest side, JPEG
+// ~0.82 quality) before base64-encoding so the payload stays small; the
+// backend (askAI Cloud Function) hands the bytes to Claude as a native
+// image/document content block so Genie can actually see it, not just read
+// a filename. This is scoped to the dashboard's Ask Genie widget only — the
+// public pre-signup funnel Genie does not get this (no personalized account
+// yet for it to attach anything to).
+var _genieFabAttachment = null; // { mimeType, dataBase64, name, isImage, previewUrl }
+var GENIE_FAB_MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB raw, before any image downscaling
+
+function genieFabRenderAttachments() {
+  var wrap = document.getElementById('genieFabAttachments');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (!_genieFabAttachment) return;
+  var a = _genieFabAttachment;
+  var chip = document.createElement('div');
+  chip.className = 'genie-fab-attach-chip';
+  chip.innerHTML =
+    (a.isImage
+      ? '<img src="' + a.previewUrl + '" alt="">'
+      : '<span class="fico">📄</span>') +
+    '<span class="nm">' + String(a.name || 'file').replace(/</g, '&lt;') + '</span>' +
+    '<button type="button" title="Remove attachment" onclick="genieFabRemoveAttachment()">✕</button>';
+  wrap.appendChild(chip);
+}
+function genieFabRemoveAttachment() {
+  _genieFabAttachment = null;
+  genieFabRenderAttachments();
+}
+window.genieFabRemoveAttachment = genieFabRemoveAttachment;
+
+function _genieFabDataUrlToBase64(dataUrl) {
+  var i = dataUrl.indexOf(',');
+  return i >= 0 ? dataUrl.slice(i + 1) : dataUrl;
+}
+
+function genieFabFilePicked(file) {
+  var input = document.getElementById('genieFabFileInput');
+  if (!file) return;
+  var isImage = /^image\//.test(file.type);
+  var isPdf = file.type === 'application/pdf';
+  if (!isImage && !isPdf) {
+    genieFabBubble("I can look at images (PNG/JPG/WEBP/GIF) or PDFs — that file type isn't one of those.", 'bot');
+    if (input) input.value = '';
+    return;
+  }
+  if (file.size > GENIE_FAB_MAX_FILE_BYTES) {
+    genieFabBubble("That file's a bit large for me to look at — try something under 8MB.", 'bot');
+    if (input) input.value = '';
+    return;
+  }
+  if (isPdf) {
+    var pdfReader = new FileReader();
+    pdfReader.onload = function () {
+      _genieFabAttachment = {
+        mimeType: 'application/pdf',
+        dataBase64: _genieFabDataUrlToBase64(pdfReader.result),
+        name: file.name,
+        isImage: false,
+        previewUrl: null,
+      };
+      genieFabRenderAttachments();
+    };
+    pdfReader.readAsDataURL(file);
+    if (input) input.value = '';
+    return;
+  }
+  // Image: downscale via canvas so we're not shipping multi-megapixel phone
+  // photos into the prompt — 1280px longest side is plenty for Genie to
+  // read a screenshot, receipt, chart, or product photo.
+  var imgReader = new FileReader();
+  imgReader.onload = function () {
+    var img = new Image();
+    img.onload = function () {
+      var maxDim = 1280;
+      var w = img.width, h = img.height;
+      var scale = Math.min(1, maxDim / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = cw; canvas.height = ch;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch); // flatten any transparency onto white before JPEG encode
+      ctx.drawImage(img, 0, 0, cw, ch);
+      var jpegUrl = canvas.toDataURL('image/jpeg', 0.82);
+      _genieFabAttachment = {
+        mimeType: 'image/jpeg',
+        dataBase64: _genieFabDataUrlToBase64(jpegUrl),
+        name: file.name,
+        isImage: true,
+        previewUrl: jpegUrl,
+      };
+      genieFabRenderAttachments();
+    };
+    img.onerror = function () {
+      genieFabBubble("Couldn't read that image — try a different file.", 'bot');
+    };
+    img.src = imgReader.result;
+  };
+  imgReader.readAsDataURL(file);
+  if (input) input.value = '';
+}
+window.genieFabFilePicked = genieFabFilePicked;
+
 async function sendGenieFab() {
   if (typeof genieAgentEligible === 'function' && !genieAgentEligible()) { toggleGenieFab(false); return; }
   var input = document.getElementById('genieFabInput');
-  if (!input || !input.value.trim()) return;
+  var hasAttachment = !!_genieFabAttachment;
+  if (!input || (!input.value.trim() && !hasAttachment)) return;
   var q = input.value.trim(); input.value = '';
-  genieFabBubble(q.replace(/</g, '&lt;'), 'user');
+  var attachment = _genieFabAttachment; _genieFabAttachment = null; genieFabRenderAttachments();
+  var userBubbleHtml = q.replace(/</g, '&lt;');
+  if (attachment) {
+    userBubbleHtml += attachment.isImage
+      ? '<img class="ai-msg-attach-thumb" src="' + attachment.previewUrl + '" alt="attached image">'
+      : '<span class="ai-msg-attach-file">📄 ' + String(attachment.name || 'file').replace(/</g, '&lt;') + '</span>';
+  }
+  genieFabBubble(userBubbleHtml, 'user');
   var thinking = genieFabBubble('Thinking…', 'bot');
   var btn = document.getElementById('genieFabSend'); if (btn) btn.disabled = true;
   // Snapshot memory BEFORE recording this message, so the prompt's history
   // block shows only what came before it (the new message is sent separately).
   var historyForPrompt = _genieHistory.slice(-10);
-  genieRemember('user', q);
+  genieRemember('user', q || (attachment ? '[attached ' + (attachment.isImage ? 'an image' : 'a PDF: ' + attachment.name) + ']' : ''));
   try {
     if (typeof window.genText !== 'function' && typeof window.askAI !== 'function') throw new Error('demo');
     var screenId = window.mmCurrentScreen || 'dashboard';
@@ -17414,7 +17552,8 @@ async function sendGenieFab() {
       'or, only when you have every required param for one action from what the member said:\n' +
       '{"reply":"<short response>","action":{"name":"<action key>","params":{...matching that action\'s params>}}}\n' +
       'If the member wants an action but you are missing a required param (e.g. no state given for a lead search), set action to null and ask for the missing detail in reply instead. Never invent parameter values. You are not a licensed financial or legal advisor.\n\n' +
-      'MEMBER MESSAGE: ' + q;
+      (attachment ? ('The member also attached ' + (attachment.isImage ? 'an image' : ('a PDF file named "' + attachment.name + '"')) + ' to this message — look at it and use what you see to help answer, and reference it naturally if relevant.\n\n') : '') +
+      'MEMBER MESSAGE: ' + (q || (attachment ? '(no text — see the attached file)' : ''));
     // Route through the real, token-metered askAI Cloud Function first — same
     // pattern as askMasterJarvis — so Genie's usage is logged, billed, and
     // visible in the Master Portal's AI Usage panel like every other paid AI
@@ -17424,7 +17563,7 @@ async function sendGenieFab() {
     var raw;
     if (typeof window.askAI === 'function') {
       try {
-        raw = (await window.askAI(prompt, 'geniefab')).reply;
+        raw = (await window.askAI(prompt, 'geniefab', undefined, attachment)).reply;
       } catch (e) {
         console.log('sendGenieFab: askAI unavailable, falling back to genText:', e.message || e);
       }
