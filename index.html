@@ -122,6 +122,14 @@
     const res = await fn({ uid, billingMode, billingCadence });
     return res.data;
   };
+  // Master Portal: create a real member account by hand (see
+  // functions/index.js adminCreateMember). Server re-checks the caller is
+  // the Master account, so this wrapper is just plumbing.
+  window.callAdminCreateMember = async (data) => {
+    const fn = httpsCallable(functionsClient, 'adminCreateMember');
+    const res = await fn(data);
+    return res.data;
+  };
 
   // Unified Pricing Engine — Pricing & Margins admin panel (see
   // functions/index.js adminListServicePricingConfigs /
@@ -1578,13 +1586,65 @@
     const m = admMembers.find(x => x.id === uid);
     if (m && newCode && m.affiliateCode === newCode) throw new Error("Can't sponsor themselves.");
     if (m && wouldCreateSponsorCycle(m.affiliateCode, newCode)) throw new Error("That would create a loop — the new sponsor is already in this member's own downline.");
+    const prevCode = m ? (m.referredBy || null) : undefined;
     await updateDoc(doc(db, 'users', uid), {
       referredBy: newCode || null,
       sponsorReassignedBy: 'master',
       sponsorReassignedAt: serverTimestamp()
     });
     if (m) m.referredBy = newCode || null;
+    try {
+      await addDoc(collection(db, 'adminAuditLog'), {
+        action: 'move_sponsor',
+        actorEmail: (auth.currentUser && auth.currentUser.email) || null,
+        details: { uid, memberEmail: m ? (m.email || null) : null, from: prevCode === undefined ? null : prevCode, to: newCode || null },
+        at: serverTimestamp()
+      });
+    } catch (e) {
+      console.error('adminAuditLog write failed (non-fatal)', e);
+    }
   }
+
+  // Master Portal "Create Member" button -- see window.callAdminCreateMember
+  // and functions/index.js adminCreateMember. The live users onSnapshot
+  // listener (see admMembers above) picks up the new member automatically,
+  // so there's nothing to manually refresh here beyond clearing the form.
+  window.masterCreateMember = async function() {
+    if (!window.isMaster) return;
+    const btn = document.getElementById('admNewMemberBtn');
+    const statusEl = document.getElementById('admNewMemberStatus');
+    const emailInp = document.getElementById('admNewMemberEmail');
+    const nameInp = document.getElementById('admNewMemberName');
+    const planSel = document.getElementById('admNewMemberPlan');
+    const sponsorInp = document.getElementById('admNewMemberSponsor');
+    const email = (emailInp.value || '').trim();
+    const name = (nameInp.value || '').trim();
+    const plan = planSel.value;
+    const sponsorRaw = (sponsorInp.value || '').trim();
+    if (!email) { if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Email is required.'; } return; }
+    let sponsorCode = null;
+    if (sponsorRaw) {
+      const sponsor = memberByReferralNumber(sponsorRaw);
+      if (!sponsor) { if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'No member with referral # ' + sponsorRaw + '.'; } return; }
+      sponsorCode = sponsor.affiliateCode;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Creating…'; }
+    if (statusEl) { statusEl.style.color = '#8b7bb8'; statusEl.textContent = ''; }
+    try {
+      const res = await window.callAdminCreateMember({ email, name, plan, sponsorCode });
+      if (statusEl) {
+        statusEl.style.color = '#34d399';
+        statusEl.textContent = '✓ Created ' + email + ' (#' + res.referralNumber + ')' + (res.inviteSent ? ' — invite emailed.' : ' — no invite email sent (not configured); share the sign-in link with them yourself.');
+      }
+      emailInp.value = ''; nameInp.value = ''; sponsorInp.value = ''; planSel.value = 'free';
+      if (typeof showNotifToast === 'function') showNotifToast('✓ Member created', email + ' is in.');
+    } catch (e) {
+      console.error('masterCreateMember:', e);
+      if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = '⚠ ' + (e.message || 'Failed to create member.'); }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Create Member'; }
+    }
+  };
 
   // 🌳 Team Tree — ONE unified live view of the whole real structure (built
   // from referredBy), replacing what used to be three separate panels
@@ -11736,6 +11796,25 @@ paintRail();
         </div>
         <div id="admNetworkTreeWrap" class="tt-tree-wrap"><div id="admNetworkTree" class="tt-empty">Loading…</div></div>
       </div>
+      </div>
+
+      <div class="mpm-card">
+        <div class="mpm-title">➕ Create Member</div>
+        <div class="mpm-sub">Add a real member by hand — for comping someone, or migrating them in from outside the system. No Stripe checkout involved; they're placed on whichever plan you pick, comped. If a sponsor referral # is given, they show up in that member's downline right away (movable afterward like anyone else). If email invites are configured, they get a link to set their own password — we never see it.</div>
+        <div class="mpm-grid">
+          <input type="email" id="admNewMemberEmail" placeholder="Email *">
+          <input type="text" id="admNewMemberName" placeholder="Name (optional)">
+          <select id="admNewMemberPlan">
+            <option value="free">Free</option>
+            <option value="pro">Pro</option>
+            <option value="elite">Elite</option>
+          </select>
+          <input type="text" inputmode="numeric" id="admNewMemberSponsor" list="netNumberList" placeholder="Sponsor referral # (optional)">
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="admin-save-btn" id="admNewMemberBtn" onclick="masterCreateMember()">Create Member</button>
+          <span id="admNewMemberStatus" style="font-size:.75rem"></span>
+        </div>
       </div>
 
       <div class="bank-panel" id="admpanel-marketing">
