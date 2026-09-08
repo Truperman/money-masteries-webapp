@@ -7589,7 +7589,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="nav-share-btn" id="navShareBtn" onclick="openShareModal()" title="Sharing keeps you active and earns points every day — $0.05 in redeemable value each, no penalty for sitting out a day.">📢 Share</button>
   </div>
   <div class="nav-right">
-    <button id="mmHelpMeBtn" type="button" onclick="genieFaceSpeak()" aria-label="Get a quick tip from Genie" title="Get a quick tip from Genie">✨ Help Me</button>
+    <button id="mmHelpMeBtn" type="button" onclick="mmOpenDiscoverSetup()" aria-label="Get help finishing your setup" title="Get help finishing your setup">✨ Help Me</button>
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="mmToggleTheme()" title="Switch between dark and light mode" aria-label="Toggle light/dark mode"><i class="fa-solid fa-moon" id="themeToggleIcon"></i></button>
     <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
     <div class="nav-user" id="navUser" onclick="toggleNavUserDropdown(event)">
@@ -25128,7 +25128,7 @@ function mmOpenTileDetail(tileId){
 
   if (t.activationType === 'gain_questionnaire') {
     var q = (mmGainPlanCache && mmGainPlanCache.questionnaire) || null;
-    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenGainQuestionnaire()">' + (gainStatus === 'complete' ? 'Edit answers' : 'Start') + '</button>';
+    actions = '<button class="tile-detail-btn primary" onclick="mmCloseTileDetail();mmOpenDiscoverSetup(\'questionnaire\')">' + (gainStatus === 'complete' ? 'Edit answers' : 'Start') + '</button>';
     if (gainStatus === 'complete' && q && !q.hasEIN) {
       actions += '<button class="tile-detail-btn ghost" onclick="mmCloseTileDetail();mmLaunchGainPrompt(\'ein\')">Get AI Help getting an EIN</button>';
     }
@@ -25607,18 +25607,15 @@ var MM_GAIN_STEP_CHAT = {
 function mmLaunchGainPrompt(tileIdOrKey){
   var t = (mmTileRegistryCache || []).find(function(x){ return x.id === tileIdOrKey; });
   var key = t ? t.gainStep : tileIdOrKey;
-  var cfg = MM_GAIN_STEP_CHAT[key];
-  if (!cfg) return;
   var prompt = (key === 'ein')
     ? 'Help me apply for an EIN (Employer Identification Number) for my business.'
     : ((t && t.prompt) || ('Help me with ' + (t ? t.name : key) + '.'));
 
-  showScreen(cfg.screen);
+  // Always the same Ask Genie chat box, right where the member already
+  // is -- no more detouring to a different AI on a different screen.
+  if (typeof toggleGenieFab === 'function') toggleGenieFab(true);
   setTimeout(function(){
-    if (cfg.tab && typeof cmViewSwitch === 'function') cmViewSwitch(cfg.tab);
-    setTimeout(function(){
-      if (typeof jarvisAskQuick === 'function') jarvisAskQuick(cfg.masterKey, prompt);
-    }, cfg.tab ? 150 : 0);
+    if (typeof genieFabQuickAsk === 'function') genieFabQuickAsk(prompt);
   }, 200);
 }
 window.mmLaunchGainPrompt = mmLaunchGainPrompt;
