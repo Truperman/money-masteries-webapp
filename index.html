@@ -5480,6 +5480,10 @@ body.mm-light .store-tog.on { background: #f0fdf4 !important; border-color: #16a
   border-color:var(--mm-gold-soft);
   box-shadow:0 18px 40px -14px rgba(0,0,0,.7), 0 0 0 1px var(--mm-gold-soft);
 }
+#screen-plans .comp-tier.free{border-color:#10b98180}
+#screen-plans .comp-tier.free::before{background:linear-gradient(90deg,transparent,#10b981,transparent)}
+#screen-plans .comp-tier.free:hover{box-shadow:0 18px 40px -14px rgba(0,0,0,.7), 0 0 0 1px #10b981}
+#screen-plans .comp-tier.free .comp-tier-badge{background:#0f2e22 !important;color:#34d399 !important;border:1px solid #10b98180}
 #screen-plans .comp-tier.pro{border-color:var(--mm-gold-soft)}
 #screen-plans .comp-tier.elite{
   border-color:var(--mm-gold);
@@ -10063,6 +10067,19 @@ paintRail();
       <div class="screen-title">💳 Plans &amp; <span>Pricing</span></div>
       <div class="comp-note" style="margin-bottom:18px"><b>Every plan is shareable.</b> Tap "Share This Plan" on any tier below to copy a link with your affiliate code baked in — send people straight to the plan that fits them, and earn when they join.</div>
       <div class="comp-tier-grid">
+        <div class="comp-tier free">
+          <div class="comp-tier-badge free">FREE</div>
+          <div class="comp-tier-price">$0<sub>/mo</sub></div>
+          <div class="comp-tier-label">Start free, forever &mdash; no credit card required</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> Affiliate Fast Track course &mdash; open right away</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> Your own affiliate link &amp; referral number</div>
+          <div class="comp-feat"><span class="ci ci-y">✓</span> Earn 30% on the referred profit your business builds</div>
+          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Day Trading, Real Estate, E-Commerce courses</span></div>
+          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Master Tools &amp; AI Coach</span></div>
+          <div class="comp-feat"><span class="ci ci-n">✗</span> <span style="color:#4b5563">Team bonus &amp; dividends (Pro/Elite only)</span></div>
+          <div style="width:100%;margin-top:12px;text-align:center;padding:10px;border-radius:10px;background:#0f2e22;color:#34d399;font-weight:700;font-size:.82rem">✓ Included automatically &mdash; nothing to do</div>
+          <button class="mk-share" style="width:100%;margin-top:8px" onclick="sharePlan('free', this)">🔗 Share This Plan</button>
+        </div>
         <div class="comp-tier pro">
           <div class="comp-tier-badge pro">PRO ⚡</div>
           <div class="comp-tier-price">$50<sub>/mo</sub></div>
