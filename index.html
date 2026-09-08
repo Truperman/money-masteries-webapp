@@ -3011,7 +3011,11 @@ td .admnt-preview{margin-top:4px}
 #dashTopTabs .dash-tab i{margin:0;font-size:1.05rem}
 #dashTopTabs .dash-tab:hover{transform:translateX(4px);color:#e5e7eb}
 #dashTopTabs .dash-tab.active{border-color:#2E7BFF;color:#2E7BFF;box-shadow:0 8px 22px rgba(46,123,255,.35)}
-@media (prefers-reduced-motion:reduce){ #dashTopTabs .dash-tab{animation:none} }
+@keyframes mm-discover-red-pulse{0%,100%{box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 0 rgba(239,68,68,.55);border-color:#ef4444}50%{box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 9px rgba(239,68,68,0);border-color:#f87171}}
+#dashTopTabs .dash-tab.gain-pending-glow{border-color:#ef4444;color:#fca5a5;animation:mm-discover-red-pulse 1.4s ease-in-out infinite}
+#dashTopTabs .dash-tab.gain-pending-glow:hover{color:#fecaca}
+#dashTopTabs .dash-tab.gain-pending-glow.active{border-color:#ef4444;color:#fca5a5}
+@media (prefers-reduced-motion:reduce){ #dashTopTabs .dash-tab{animation:none} #dashTopTabs .dash-tab.gain-pending-glow{animation:none} }
 @media (max-width:900px){ #dashTopTabs{right:8px;top:100px;gap:8px} #dashTopTabs .dash-tab{width:52px;padding:10px 5px;font-size:.58rem} }
 
 #mmToolsBanner{
@@ -9604,7 +9608,7 @@ paintRail();
            code while still giving the simplified dashboard this redesign
            calls for. -->
       <div class="dash-tabs" id="dashTopTabs">
-        <div class="dash-tab active" id="dtab-discover" onclick="switchDashTab('discover')"><i class="fa-solid fa-compass"></i> Discover</div>
+        <div class="dash-tab active" id="dtab-discover" onclick="switchDashTab('discover'); mmOpenDiscoverSetup();" title="Your AI agent walks you through setup — by voice or by typing."><i class="fa-solid fa-compass"></i> Discover</div>
         <div class="dash-tab" id="dtab-setup" onclick="switchDashTab('setup')"><i class="fa-solid fa-list-check"></i> Setup</div>
       </div>
 
@@ -14500,6 +14504,17 @@ function switchDashTab(id) {
   if (id === 'sales') buildSalesTable('all');
 }
 
+// Red pulsing glow on the top-right "Discover" tab, standing in for the old
+// "Follow the GAIN$ Plan" dashboard banner (now removed) -- flashes until
+// every one of the 5 GAIN$ setup steps is done, then goes quiet. Driven from
+// mmRenderTileCategory('GAIN$ Plan') every time the tile grid re-renders.
+function mmSetDiscoverTabGlow(pending) {
+  var tab = document.getElementById('dtab-discover');
+  if (!tab) return;
+  tab.classList.toggle('gain-pending-glow', !!pending);
+}
+window.mmSetDiscoverTabGlow = mmSetDiscoverTabGlow;
+
 // ── MLM TREE ──────────────────────────────────────────────────────────────────
 const MOCK_NETWORK = {
   l1: [
@@ -16933,69 +16948,61 @@ function genieFabBubble(text, who, opts) {
   return d;
 }
 
-// ── GENIE VOICE — free, unlimited browser text-to-speech (Web Speech API).
-// No API key, no cost, works offline of any AI provider. Quality depends on
-// the member's OS/browser voices (best on Chrome/Edge — those ship Google's
-// higher-quality network voices; more robotic on some older systems). Genie
-// speaks its replies aloud automatically; the 🔊 button in the panel header
-// lets a member mute it, saved per-browser so it sticks between visits.
+// ── GENIE VOICE — ElevenLabs only, same as the pre-signup funnel Genie.
+// Per David: the ONLY voice that may ever come out of Genie anywhere on the
+// site is the ElevenLabs voice -- no browser SpeechSynthesis fallback. This
+// hits the same public /funnel-speak endpoint on the genie-railway backend
+// (see genie_voice.py) the funnel uses, which always calls ElevenLabs
+// directly. Follows the site-wide language switcher via _genieFabSpeechLang()
+// so a member who picks ES up top hears Genie's Spanish ElevenLabs voice
+// down here too, automatically. If ElevenLabs is ever unreachable, Genie
+// just falls silent for that one reply -- the chat bubble text is already
+// shown either way, so nothing gets stuck. The 🔊 button in the panel
+// header lets a member mute it, saved per-browser so it sticks between visits.
+var GENIE_FAB_SPEAK_URL = "https://money-masteries-webapp-genie-production.up.railway.app/funnel-speak";
+var _genieFabAudio = null;
 function _genieFabVoiceOn(){ try { return localStorage.getItem('genieVoiceOff') !== '1'; } catch(e){ return true; } }
+function _genieFabStopAudio(){
+  if (_genieFabAudio) { try { _genieFabAudio.pause(); } catch(e){} _genieFabAudio = null; }
+}
 function genieFabToggleVoice(){
   var on = !_genieFabVoiceOn();
   try { localStorage.setItem('genieVoiceOff', on ? '0' : '1'); } catch(e){}
   var btn = document.getElementById('genieFabVoiceBtn');
   if (btn) btn.textContent = on ? '🔊' : '🔇';
-  if (!on && window.speechSynthesis) window.speechSynthesis.cancel();
+  if (!on) _genieFabStopAudio();
 }
 window.genieFabToggleVoice = genieFabToggleVoice;
-var _genieFabVoiceList = [];
-function _genieFabLoadVoices(){
-  if (!window.speechSynthesis) return;
-  _genieFabVoiceList = window.speechSynthesis.getVoices() || [];
-}
-if (window.speechSynthesis) {
-  _genieFabLoadVoices();
-  window.speechSynthesis.onvoiceschanged = _genieFabLoadVoices;
-}
-function _genieFabPickVoice(langPrefix){
-  var voices = _genieFabVoiceList.length ? _genieFabVoiceList : (window.speechSynthesis ? window.speechSynthesis.getVoices() : []);
-  var pool = voices.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(langPrefix) === 0; });
-  if (!pool.length) pool = voices;
-  if (!pool.length) return null;
-  // Prefer the higher-quality network voices (Google/Microsoft "Natural"/"Online" voices
-  // sound far more realistic than the default offline OS voice) that most browsers expose.
-  var ranked = pool.slice().sort(function(a, b){
-    function score(v){
-      var n = (v.name || '').toLowerCase();
-      var s = 0;
-      if (!v.localService) s += 3; // network voices are almost always the natural-sounding ones
-      if (/natural|neural|online|premium|enhanced/.test(n)) s += 3;
-      if (/google/.test(n)) s += 1;
-      return s;
-    }
-    return score(b) - score(a);
-  });
-  return ranked[0];
-}
 function genieFabSpeak(text){
-  if (!window.speechSynthesis || !_genieFabVoiceOn()) return;
+  if (!_genieFabVoiceOn()) return;
   var clean = String(text || '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
     .replace(/\s+/g, ' ').trim();
   if (!clean) return;
-  try {
-    window.speechSynthesis.cancel(); // don't stack replies — newest reply always wins
-    var utter = new SpeechSynthesisUtterance(clean);
-    var lang = _genieFabSpeechLang ? _genieFabSpeechLang() : 'en-US';
-    utter.lang = lang;
-    var voice = _genieFabPickVoice(lang.split('-')[0].toLowerCase());
-    if (voice) utter.voice = voice;
-    utter.rate = 1.0;
-    utter.pitch = 1.0;
-    window.speechSynthesis.speak(utter);
-  } catch(e) {}
+  _genieFabStopAudio(); // don't stack replies — newest reply always wins
+  var langPrefix = (_genieFabSpeechLang ? _genieFabSpeechLang() : 'en-US').split('-')[0].toLowerCase();
+  var lang = langPrefix === 'es' ? 'es' : 'en'; // ElevenLabs voice pool is EN/ES only for now
+  fetch(GENIE_FAB_SPEAK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: clean.slice(0, 700), lang: lang })
+  }).then(function(r){
+    if (!r.ok) throw new Error('funnel-speak ' + r.status);
+    return r.blob();
+  }).then(function(blob){
+    if (!blob || blob.size < 200) throw new Error('empty audio');
+    if (!_genieFabVoiceOn()) return; // got muted while the request was in flight
+    var url = URL.createObjectURL(blob);
+    var audio = new Audio(url);
+    _genieFabAudio = audio;
+    function cleanup(){ URL.revokeObjectURL(url); if (_genieFabAudio === audio) _genieFabAudio = null; }
+    audio.addEventListener('ended', cleanup);
+    audio.addEventListener('error', cleanup);
+    var p = audio.play();
+    if (p && typeof p.catch === 'function') p.catch(cleanup);
+  }).catch(function(e){ console.log('genieFabSpeak: ElevenLabs unavailable —', e.message || e); });
 }
 window.genieFabSpeak = genieFabSpeak;
 // ── GENIE ON-SCREEN AUTOMATION — generic click/type/select engine ──────────
@@ -24196,25 +24203,19 @@ async function renderBusinessEssentialsTiles(){
     function mmRenderTileCategory(cat){
       var tilesHtml;
       if (cat === 'GAIN$ Plan') {
-        // The 5 individual GAIN$ steps are consolidated into one
-        // "Discover & Setup" tile — an AI agent (voice + form) walks the
-        // member through all 5 steps inside a single guided popup instead
-        // of 5 separate tiles/detail-modals. See mmOpenDiscoverSetup().
+        // The old "Follow the GAIN$ Plan" banner (kicker + headline + the
+        // "Discover & Setup X of 5 complete" tile) has been removed from
+        // the dashboard body per David's request -- its one job (opening
+        // the guided setup walkthrough) now lives on the top-right
+        // "Discover" tab instead (see the dtab-discover onclick and
+        // mmSetDiscoverTabGlow below), which also flashes red until every
+        // step is done. Still compute completion here so that glow stays
+        // in sync every time the tile grid re-renders.
         var dsDone = MM_GAIN_STEP_ORDER.filter(function(s){ return gainPlan[s] && gainPlan[s].status && gainPlan[s].status !== 'pending'; }).length;
         var dsTotal = MM_GAIN_STEP_ORDER.length;
         var dsAllDone = dsDone === dsTotal;
-        var dsBadge = dsAllDone
-          ? '<span class="tile-status-badge live">✓ ALL SET</span>'
-          : '<span class="tile-status-badge soon">' + dsDone + '/' + dsTotal + '</span>';
-        var dsBody =
-          '<div class="qa-icon">' + (dsAllDone ? '✅' : '🧭') + '</div>' +
-          '<div class="qa-label">Discover &amp; Setup</div>' +
-          '<div class="gain-next-flag">' + (dsAllDone ? 'All done — tap to review' : '↓ ' + dsDone + ' of ' + dsTotal + ' complete — tap to continue') + '</div>';
-        tilesHtml = '<div class="service-tile is-live gain-tile' + (dsAllDone ? ' is-complete' : ' is-pending-glow') + '" onclick="mmOpenDiscoverSetup()" title="Your AI agent walks you through setup — by voice or by typing.">' + dsBadge + dsBody + '</div>';
-        return '<div class="tile-category"><div class="gain-plan-kicker">✅ Essential for Set Up</div>' +
-          '<div class="gain-plan-headline">Follow the GAIN$ Plan</div>' +
-          '<div class="gain-plan-sub">Your AI agent will walk you through it — just talk or type, and it fills things out for you.</div>' +
-          '<div class="tile-grid" data-tile-category="' + eeEsc(cat) + '">' + tilesHtml + '</div></div>';
+        if (typeof mmSetDiscoverTabGlow === 'function') mmSetDiscoverTabGlow(!dsAllDone);
+        return '';
       }
       tilesHtml = byCat[cat].map(function(t){
         var isLive = t.status === 'live';
@@ -25571,7 +25572,7 @@ function mmDsClose(){
   var ov = document.getElementById('mmDsOverlay');
   if (ov) ov.remove();
   if (window.mmDs && window.mmDs.recognition) { try { window.mmDs.recognition.stop(); } catch(e){} }
-  if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch(e){} }
+  if (typeof _genieFabStopAudio === 'function') _genieFabStopAudio(); // stop Genie's ElevenLabs voice, not browser speechSynthesis (no longer used)
   if (window.mmDs) window.mmDs.open = false;
 }
 window.mmDsClose = mmDsClose;
