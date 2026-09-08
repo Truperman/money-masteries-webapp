@@ -392,6 +392,16 @@
     const res = await fn(data);
     return res.data;
   };
+  window.callCreateBillingSetupIntent = async (data) => {
+    const fn = httpsCallable(functionsClient, 'createBillingSetupIntent');
+    const res = await fn(data);
+    return res.data;
+  };
+  window.callConfirmPlatformBillingSetup = async (data) => {
+    const fn = httpsCallable(functionsClient, 'confirmPlatformBillingSetup');
+    const res = await fn(data);
+    return res.data;
+  };
 
   // Genie Blueprint Section F/G/H/J — generalized tile status, Setup
   // Planner, merchant payment links, and the Daily Cockpit.
@@ -24827,22 +24837,46 @@ function mmBillingSetupModalHtml(cancelled){
   return (
     '<div id="mmBillingSetupOverlay" style="position:fixed;inset:0;z-index:99999;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;">' +
       '<div style="width:100%;max-width:480px;background:#0f1a2e;border:1px solid #24365c;border-radius:16px;padding:28px 26px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);">' +
-        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:10px;">Start free</div>' +
-        '<h2 style="margin:0 0 12px;font-size:1.4rem;line-height:1.25;">Add your payment method</h2>' +
-        (cancelled ? '<div style="background:rgba(240,184,70,.12);border:1px solid rgba(240,184,70,.4);color:#f0b846;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-bottom:14px;">Payment method setup was cancelled — you\'ll need to complete this step to continue.</div>' : '') +
-        '<p style="margin:0 0 16px;font-size:.92rem;line-height:1.55;color:#a9bdda;">No upfront charge just to begin. ' + MM_BILLING_AGREEMENT_TEXT + '</p>' +
+        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6fa8ff;font-weight:700;margin-bottom:10px;">Genie</div>' +
+        '<h2 style="margin:0 0 12px;font-size:1.4rem;line-height:1.25;">Let\'s get your card on file</h2>' +
+        (cancelled ? '<div style="background:rgba(240,184,70,.12);border:1px solid rgba(240,184,70,.4);color:#f0b846;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-bottom:14px;">That didn\'t go through — let\'s try again.</div>' : '') +
+        '<p style="margin:0 0 16px;font-size:.92rem;line-height:1.55;color:#a9bdda;">I\'ll never charge this without showing you the price first — I just need it on file so nothing stops you once we get moving. ' + MM_BILLING_AGREEMENT_TEXT + '</p>' +
+        '<div id="mmBillingCardElement" style="border:1px solid #24365c;border-radius:10px;background:rgba(255,255,255,.03);padding:13px 14px;margin-bottom:14px;min-height:44px;"></div>' +
         '<label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 18px;font-size:.85rem;line-height:1.4;color:#eaf1ff;cursor:pointer;">' +
           '<input type="checkbox" id="mmBillingAgreeCheck" style="margin-top:3px;width:16px;height:16px;flex:0 0 auto;">' +
           '<span>I agree to MoneyMasteries\' usage-based billing terms above.</span>' +
         '</label>' +
-        '<button id="mmBillingContinueBtn" disabled onclick="mmStartPaymentMethodSetup()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2457c9;color:#fff;font-weight:700;font-size:.95rem;cursor:not-allowed;opacity:.5;transition:opacity .15s;">Add payment method — $0 charged today</button>' +
+        '<button id="mmBillingContinueBtn" disabled onclick="mmStartPaymentMethodSetup()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2457c9;color:#fff;font-weight:700;font-size:.95rem;cursor:not-allowed;opacity:.5;transition:opacity .15s;">Save my card — $0 charged today</button>' +
         '<div id="mmBillingSetupError" style="display:none;margin-top:10px;font-size:.82rem;color:#ff8a80;"></div>' +
         '<div style="text-align:center;margin-top:16px;">' +
-          '<a href="#" onclick="mmBillingSignOut();return false;" style="font-size:.78rem;color:#7f97c2;text-decoration:underline;">Not right now — sign out</a>' +
+          '<a href="#" onclick="mmBillingSignOut();return false;" style="font-size:.78rem;color:#7f97c2;text-decoration:underline;">Not ready yet — sign out for now</a>' +
         '</div>' +
       '</div>' +
     '</div>'
   );
+}
+
+// Stripe Elements card field for the modal above -- collected right in this
+// modal via confirmCardSetup() instead of a full-page redirect to Stripe's
+// hosted Checkout, so adding a card feels like one continuous step instead
+// of a hop away from the app and back.
+var mmBillingStripeInstance = null;
+var mmBillingStripeElements = null;
+var mmBillingStripeCard = null;
+
+function mmMountBillingCardElement(){
+  try {
+    if (!window.Stripe) { console.warn('mmMountBillingCardElement: Stripe.js not loaded yet'); return; }
+    if (!mmBillingStripeInstance) mmBillingStripeInstance = window.Stripe(MM_STRIPE_PUBLISHABLE_KEY);
+    mmBillingStripeElements = mmBillingStripeInstance.elements();
+    mmBillingStripeCard = mmBillingStripeElements.create('card', {
+      style: {
+        base: { color: '#eaf1ff', fontSize: '15px', '::placeholder': { color: '#7f97c2' } },
+        invalid: { color: '#ff8a80' }
+      }
+    });
+    mmBillingStripeCard.mount('#mmBillingCardElement');
+  } catch (e) { console.warn('mmMountBillingCardElement failed', e); }
 }
 
 function mmShowBillingSetupModal(cancelled){
@@ -24857,6 +24891,7 @@ function mmShowBillingSetupModal(cancelled){
     btn.style.opacity = check.checked ? '1' : '.5';
     btn.style.cursor = check.checked ? 'pointer' : 'not-allowed';
   });
+  mmMountBillingCardElement();
 }
 
 window.mmBillingSignOut = function(){
@@ -24868,21 +24903,30 @@ window.mmStartPaymentMethodSetup = async function(){
   var btn = document.getElementById('mmBillingContinueBtn');
   var errEl = document.getElementById('mmBillingSetupError');
   if (errEl) errEl.style.display = 'none';
-  if (btn) { btn.disabled = true; btn.textContent = 'Setting up…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
   try {
+    if (!window.Stripe) throw new Error('Payments script did not load — check your connection and try again.');
+    if (!mmBillingStripeCard) throw new Error('Card field did not load — please refresh and try again.');
     var prov = await window.callEnsureBusinessProvisioned();
     var businessId = prov && prov.businessId;
     if (!businessId) throw new Error('Could not set up your business profile.');
     await window.callRecordActiveBusinessAgreement({ businessId: businessId, agreementText: MM_BILLING_AGREEMENT_TEXT, version: 'v1' });
-    var session = await window.callCreatePaymentMethodSetupSession({ businessId: businessId });
-    if (session && session.url) {
-      window.location.href = session.url; // Stripe-hosted setup — returns to ?payment_method_setup=1
-    } else {
-      throw new Error('Could not start payment setup.');
-    }
+    var setup = await window.callCreateBillingSetupIntent({ businessId: businessId });
+    if (!setup || !setup.clientSecret) throw new Error('Could not start card setup.');
+    if (!mmBillingStripeInstance) mmBillingStripeInstance = window.Stripe(MM_STRIPE_PUBLISHABLE_KEY);
+    var result = await mmBillingStripeInstance.confirmCardSetup(setup.clientSecret, {
+      payment_method: { card: mmBillingStripeCard }
+    });
+    if (result.error) throw new Error(result.error.message || 'Card could not be saved.');
+    await window.callConfirmPlatformBillingSetup({ businessId: businessId, setupIntentId: result.setupIntent.id });
+    window.mmHasPaymentMethod = true;
+    if (typeof mmRefreshBillingCardStatus === 'function') mmRefreshBillingCardStatus();
+    if (typeof showNotifToast === 'function') showNotifToast('✅ Card saved', 'You\'re all set — I\'ll only ever bill for what you actually use.');
+    var overlay = document.getElementById('mmBillingSetupOverlay');
+    if (overlay) overlay.remove();
   } catch (e) {
     if (errEl) { errEl.textContent = (e && e.message) || 'Something went wrong — please try again.'; errEl.style.display = 'block'; }
-    if (btn) { btn.disabled = false; btn.textContent = 'Add payment method — $0 charged today'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save my card — $0 charged today'; }
   }
 };
 
