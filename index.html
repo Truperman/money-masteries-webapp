@@ -26021,7 +26021,22 @@ function mmOpenDiscoverSetup(startStep){
   var name = (window.userData && window.userData.name) || (window.currentUser && window.currentUser.displayName) || '';
   var firstName = name ? String(name).split(' ')[0] : '';
   if (typeof toggleGenieFab === 'function') toggleGenieFab(true);
-  var greet = mmDsGreeting(hasAnyProgress, firstName);
+  // The first-meeting greeting ("nice to meet you" etc.) should only ever
+  // fire ONCE per member, the very first time Genie greets them here -- not
+  // every time they open this before finishing a GAIN$ step (that used to
+  // repeat it on every single visit for anyone still mid-setup).
+  // genieGreetedOnce is a flag persisted on their own user doc; cached
+  // in-memory too so it doesn't need a re-read on every open this session.
+  var everGreeted = hasAnyProgress || !!(window.userData && window.userData.genieGreetedOnce);
+  var greet = mmDsGreeting(everGreeted, firstName);
+  if (!everGreeted) {
+    if (window.userData) window.userData.genieGreetedOnce = true;
+    try {
+      if (window.FB && window.FB.db && window.FB.doc && window.FB.updateDoc && window.currentUser) {
+        window.FB.updateDoc(window.FB.doc(window.FB.db, 'users', window.currentUser.uid), { genieGreetedOnce: true });
+      }
+    } catch (e) { console.warn('mmOpenDiscoverSetup: could not persist genieGreetedOnce', e); }
+  }
   setTimeout(function(){
     mmDsSetCaption(greet);
     if (typeof genieFabSpeak === 'function') genieFabSpeak(greet);
