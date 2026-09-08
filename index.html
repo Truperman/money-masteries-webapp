@@ -613,10 +613,16 @@
     if (user) {
       // Upsert user profile in Firestore — but NEVER let a database problem block login
       let data = null;
+      // Set only when this auth event is a brand-new account (no existing
+      // Firestore profile) -- used below to ask new enrollees for a card
+      // once, without ever re-blocking a returning login (that was the
+      // exact bug that got the old always-on billing wall disabled).
+      var mmIsNewSignup = false;
       try {
       const userRef = doc(db, "users", user.uid);
       const snap = await getDoc(userRef);
       if (!snap.exists()) {
+        mmIsNewSignup = true;
         var refCode = (typeof mmGetRef === 'function') ? mmGetRef() : null;
         var myCode  = makeAffCode(user.uid);
         // Don't let someone refer themselves
@@ -670,15 +676,21 @@
       window.userData     = data;
       window.affCode      = data.affiliateCode || makeAffCode(user.uid);
       showLoggedIn(user, data);
-      // Start Free: card is no longer required up front. This used to call
-      // mmEnsureBillingSetup(), which threw up a blocking "add a payment
-      // method" wall on every single login with no way to skip it — that
-      // directly contradicted "people are able to login for free." Instead,
-      // we just quietly check (in the background, no UI) whether a card is
-      // already on file, and cache the answer for the global paywall gate
-      // (mmGlobalActionGate, defined near mmShowStartFreePaywall below) to
-      // use on the member's first real action click.
-      if (typeof mmRefreshBillingCardStatus === 'function') mmRefreshBillingCardStatus();
+      // Card-on-file policy (updated 2026-09-08): a RETURNING login is
+      // never blocked -- that was the exact bug that got the old always-on
+      // mmEnsureBillingSetup() wall disabled (it blocked every single
+      // login with no way to skip). A BRAND NEW signup is a different
+      // moment though: this is the one time every new enrollee is asked
+      // to put a card on file, so the free trial is backed by a real
+      // paying member from the start. The modal still offers "Not right
+      // now -- sign out" so nobody is truly trapped, and the $0-today
+      // framing / usage-billing disclosure (MM_BILLING_AGREEMENT_TEXT)
+      // is unchanged from the flow this reuses.
+      if (mmIsNewSignup && typeof mmEnsureBillingSetup === 'function') {
+        mmEnsureBillingSetup();
+      } else if (typeof mmRefreshBillingCardStatus === 'function') {
+        mmRefreshBillingCardStatus();
+      }
       // Site-visit engagement: real "earned while away" celebration + cosmetic
       // per-visit banner. Fires once per app load — see mmCheckSiteVisitEngagement.
       if (typeof mmCheckSiteVisitEngagement === 'function') mmCheckSiteVisitEngagement(user, data);
