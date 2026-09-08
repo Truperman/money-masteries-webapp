@@ -3621,6 +3621,13 @@ body{top:0 !important;position:static !important}
 @keyframes fab-pulse{0%,100%{box-shadow:0 8px 24px #2E7BFF45}50%{box-shadow:0 8px 34px #2E7BFF70,0 0 0 9px #2E7BFF14}}
 .share-fab:hover{transform:translateY(-2px)}
 @media(max-width:600px){.share-fab{bottom:16px;right:16px;padding:13px 18px;font-size:.84rem}}
+/* ── GENIE FACE HOTSPOT — invisible click target over the Spline robot's
+   face; tap it for a quick business tip from Genie (genieFaceSpeak()).
+   Adjust these custom properties to re-center/resize the hotspot without
+   touching the button markup. ── */
+:root{--mm-genie-face-x:51%;--mm-genie-face-y:27%;--mm-genie-face-w:clamp(130px,13vw,190px);--mm-genie-face-h:clamp(160px,17vh,230px)}
+#mmGenieFaceBtn{position:fixed;left:var(--mm-genie-face-x);top:var(--mm-genie-face-y);transform:translate(-50%,-50%);width:var(--mm-genie-face-w);height:var(--mm-genie-face-h);border-radius:50%;background:transparent;border:0;padding:0;margin:0;cursor:pointer;z-index:2;-webkit-tap-highlight-color:transparent}
+#mmGenieFaceBtn:focus-visible{outline:2px solid rgba(236,72,153,.6);outline-offset:4px}
 /* ── GENIE FAB — persistent site-wide chat widget, all screens, all members ── */
 .genie-fab{position:fixed;bottom:88px;right:22px;z-index:1401;background:linear-gradient(110deg,#831843 0%,#ffd700 25%,#ec4899 50%,#ffd700 75%,#831843 100%);background-size:250% 100%;animation:mm-icon-glimmer-genie 3.4s ease-in-out infinite,fab-pulse-genie 2.8s ease-in-out infinite;color:#fff;border:none;border-radius:30px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(236,72,153,.35)}
 @keyframes fab-pulse-genie{0%,100%{box-shadow:0 8px 24px rgba(236,72,153,.35)}50%{box-shadow:0 8px 30px rgba(255,215,0,.5),0 0 0 8px rgba(236,72,153,.12)}}
@@ -7476,6 +7483,11 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
      display:none so this is the ONLY background showing, on every page.
      pointer-events:none so clicks pass through to the UI. -->
 <spline-viewer id="mmSiteSplineBg" url="https://prod.spline.design/7N1ewBrGyCl9vOuF/scene.splinecode" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;border:0" aria-hidden="true"></spline-viewer>
+<!-- Invisible hotspot over the Spline robot's face -- click it and Genie speaks a
+     quick, useful tip for moving your business/goals forward. Position is an
+     estimate (the 3D scene has no DOM box for the head to query precisely);
+     nudge --mm-genie-face-x/-y/-w/-h below if it's not quite on the face. -->
+<button id="mmGenieFaceBtn" type="button" onclick="genieFaceSpeak()" aria-label="Ask Genie for a quick tip" title="Click for a quick tip from Genie"></button>
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <filter id="lg-distort-side" x="-20%" y="-20%" width="140%" height="140%">
     <feTurbulence type="fractalNoise" baseFrequency="0.009 0.009" numOctaves="2" seed="7" result="turb"/>
@@ -17535,6 +17547,37 @@ document.addEventListener('click', function(e){
   genieFabCloseLangMenu();
 });
 try { genieFabRenderLangBtn(); } catch(e){}
+// ── Genie face hotspot — a click on the robot's face opens Ask Genie and
+// has him speak one useful, actionable tip for moving the member's business
+// and current goals forward. Picked at random (never repeating the last
+// one back-to-back) from a curated pool rather than an AI call, so it's
+// instant and free -- these aren't meant to be personalized advice, just a
+// nudge in a useful direction.
+var MM_GENIE_FACE_TIPS = [
+  "Have you finished your GAIN$ Plan setup yet? Click Discover up top — members who finish it see momentum a lot faster.",
+  "Your fastest lever right now is your referral link. Every person who joins through you compounds your commissions — share it today.",
+  "Check your Payouts/Bank page and make sure it's connected. Nothing kills momentum like a payout that's stuck waiting on you.",
+  "Pick one specific number to hit this week — shares, leads, or dollars — and tell me. I'll help you track it and stay on it.",
+  "The members who grow fastest here show up daily, even for 10 minutes. Consistency beats intensity almost every time.",
+  "Don't just collect tools — apply one. Open Business Essentials and put a single tool to work today.",
+  "Your network is your net worth. Who's one person you could share Money Masteries with right now?",
+  "If your goals in Setup are more than 30 days old, it might be time to raise the bar. Go take a look.",
+  "Progress you can see keeps you going. Check your Dashboard stats — even a small gain this week is worth noticing.",
+  "Ask me to explain any screen you're on and I'll walk you through exactly what to do next, step by step.",
+  "Momentum is built in public. Post about your progress, tag a friend, invite someone — growth loves company.",
+  "Not sure what to do next? Click 'Setup' in my quick actions and I'll get you moving in the right direction."
+];
+var _mmGenieFaceLastIdx = -1;
+function genieFaceSpeak(){
+  if (typeof genieAgentEligible === 'function' && !genieAgentEligible()) { toggleGenieFab(false); return; }
+  var idx;
+  do { idx = Math.floor(Math.random() * MM_GENIE_FACE_TIPS.length); } while (MM_GENIE_FACE_TIPS.length > 1 && idx === _mmGenieFaceLastIdx);
+  _mmGenieFaceLastIdx = idx;
+  var tip = MM_GENIE_FACE_TIPS[idx];
+  toggleGenieFab(true);
+  setTimeout(function(){ genieFabBubble(tip, 'bot', { speak: true }); }, 220);
+}
+window.genieFaceSpeak = genieFaceSpeak;
 function genieFabQuickAsk(text){
   if (typeof genieAgentEligible === 'function' && !genieAgentEligible()) { toggleGenieFab(false); return; }
   var input = document.getElementById('genieFabInput');
