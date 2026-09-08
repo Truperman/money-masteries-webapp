@@ -25966,10 +25966,12 @@ function mmOpenDiscoverSetup(startStep){
   mmDsRenderStep();
   var name = (window.userData && window.userData.name) || (window.currentUser && window.currentUser.displayName) || '';
   var firstName = name ? String(name).split(' ')[0] : '';
+  if (typeof toggleGenieFab === 'function') toggleGenieFab(true);
   var greet = mmDsGreeting(hasAnyProgress, firstName);
   setTimeout(function(){
     mmDsSetCaption(greet);
     if (typeof genieFabSpeak === 'function') genieFabSpeak(greet);
+    if (typeof genieFabBubble === 'function') genieFabBubble(greet, 'bot', { speak: false });
   }, 250);
 }
 window.mmOpenDiscoverSetup = mmOpenDiscoverSetup;
@@ -26099,6 +26101,7 @@ function mmDsAskCurrentQField(){
   var question = mmDsT('qAsk')[f.key] || f.key;
   mmDsSetCaption(question);
   if (typeof genieFabSpeak === 'function') genieFabSpeak(question);
+  if (typeof genieFabBubble === 'function') genieFabBubble(question, 'bot', { speak: false });
 }
 window.mmDsAskCurrentQField = mmDsAskCurrentQField;
 
@@ -26153,6 +26156,7 @@ function mmDsRenderAllDone(){
   var line = mmDsT('allDoneTitle') + ' ' + mmDsT('allDoneBody');
   mmDsSetCaption(mmDsT('allDoneTitle'));
   if (typeof genieFabSpeak === 'function') genieFabSpeak(line);
+  if (typeof genieFabBubble === 'function') genieFabBubble(line, 'bot', { speak: false });
   body.innerHTML = '<div style="text-align:center;padding:20px 10px;">' +
     '<div style="font-size:2rem;margin-bottom:8px;">🎉</div>' +
     '<div style="font-weight:700;margin-bottom:6px;">' + eeEsc(mmDsT('allDoneTitle')) + '</div>' +
@@ -26168,6 +26172,7 @@ function mmDsRenderMerchant(status){
   var explain = mmDsT('merchantExplain');
   mmDsSetCaption(explain);
   if (typeof genieFabSpeak === 'function') genieFabSpeak(explain);
+  if (typeof genieFabBubble === 'function') genieFabBubble(explain, 'bot', { speak: false });
   var btnLabel = status === 'complete' ? 'Manage merchant account' : mmDsT('btnConnect');
   body.innerHTML =
     '<div style="font-size:.85rem;color:#c9d7f0;margin-bottom:14px;">' + eeEsc(explain) + '</div>' +
@@ -26190,6 +26195,7 @@ function mmDsRenderContextStep(step, status){
   var ask = mmDsT('contextAsk')[step] || '';
   mmDsSetCaption(ask);
   if (typeof genieFabSpeak === 'function') genieFabSpeak(ask);
+  if (typeof genieFabBubble === 'function') genieFabBubble(ask, 'bot', { speak: false });
   var savedCtx = (window.mmDs.ctxAnswers && window.mmDs.ctxAnswers[step]) || '';
   body.innerHTML =
     '<div style="font-size:.85rem;color:#c9d7f0;margin-bottom:12px;">' + eeEsc(ask) + '</div>' +
@@ -26248,6 +26254,7 @@ function mmDsHandleAnswer(text){
   if (!window.mmDs) return;
   var step = window.mmDs.step;
   mmDsSetCaption('"' + text + '"');
+  if (typeof genieFabBubble === 'function') genieFabBubble(text, 'user');
   if (step === 'questionnaire') { mmDsHandleQAnswer(text); return; }
   if (step === 'merchant') { return; }
   if (!window.mmDs.ctxAnswers) window.mmDs.ctxAnswers = {};
