@@ -8329,8 +8329,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <span class="who"><span class="nm" data-i18n="genieName">Genie</span><span class="rl" data-i18n="role">Your guide. He does the work.</span></span>
         <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </div>
-      <h1 data-i18n-html="h1">Make money from home <span class="hl">today</span>.</h1>
-      <p class="hero-sub" data-i18n="heroSub">Genie builds and runs your money-making system with you — right from your phone.</p>
+      <h1 data-i18n-html="h1">Genie does the work. <span class="hl">You keep the income.</span></h1>
+      <p class="hero-sub" data-i18n="heroSub">Genie researches, drafts, and runs the day-to-day of your business — you review and approve. Free to start.</p>
       <button class="begin" id="begin">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
         <span data-i18n="begin">Begin</span>
@@ -8601,13 +8601,13 @@ var T={
   login:"Log in", sound:"Mute", soundOff:"Unmute", genieName:"Genie",
   welcome:"Welcome to Money Masteries",
   role:"Your guide. He does the work.",
-  h1:"Make money from home <span class=\"hl\">today</span>.",
+  h1:"Genie does the work. <span class=\"hl\">You keep the income.</span>",
   intro:"Welcome to Money Masteries. I'm Genie, your AI super agent. Here you will have all the tools and done-for-you system that will build your money making machine. From the comfort of your phone or computer, put me to work. It's free to start.",
   continue:"Continue", buildPlan:"Build my plan", begin:"Begin",
   micTap:"Tap and say your answer", micOn:"Listening…", micOr:"or tap an answer below", micName:"Tap and say your name",
   askfirst:"Questions first? What it costs, and straight answers.",
   stepOf:"Step {n} of {t}",
-  heroSub:"Genie builds and runs your money-making system with you — right from your phone.",
+  heroSub:"Genie researches, drafts, and runs the day-to-day of your business — you review and approve. Free to start.",
   hint:"Free to start. You only pay for what you use.",
   replay:"Hear it again",
   prefilled:"I have already chosen for you. Change it, or just continue.",
@@ -16409,7 +16409,7 @@ function initDashboardDynamics(user, data) {
             <button onclick="closeTryNewModal()" style="background:none;border:none;color:#8ba0c4;font-size:1.25rem;cursor:pointer">✕</button>
           </div>
           <div style="text-align:center;margin:14px 0 20px">
-            <div style="font-size:1.4rem;font-weight:800;background:linear-gradient(90deg,#d4af37,#f4e5a1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Make money from home — today.</div>
+            <div style="font-size:1.4rem;font-weight:800;background:linear-gradient(90deg,#d4af37,#f4e5a1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Genie does the work — you keep the income.</div>
             <div style="color:#9a9aa3;margin-top:6px;font-size:.83rem">Pick a new path below. Free to start, switch back anytime.</div>
           </div>
           <div class="course-grid">
@@ -25089,7 +25089,7 @@ function renderGainPlanBanner(){
 
   el.innerHTML =
     '<div class="gain-banner-top">' +
-      '<div class="gain-banner-title">' + (isDone ? '✅ GAIN$ Plan complete' : '💰 Your GAIN$ Plan') + '</div>' +
+      '<div class="gain-banner-title">' + (isDone ? "✅ Genie's finished setting up your business" : '🤖 Genie is building your business') + '</div>' +
       nextLine +
     '</div>' +
     '<div class="gain-banner-track"><div class="gain-banner-fill" style="width:' + pct + '%"></div></div>';
@@ -25806,7 +25806,7 @@ window.MM_DS_Q_FIELDS = MM_DS_Q_FIELDS;
 
 var MM_DS_STR = {
   en: {
-    title: 'Discover & Setup', subtitle: "Let's get your business fully set up.",
+    title: 'Your AI Operator', subtitle: "Tell Genie what it needs to know, and it gets to work — you review and approve.",
     stepLabels: { questionnaire: 'Business Discovery', merchant: 'Payments', website: 'Website', social: 'Social Media', marketing: 'Marketing' },
     qAsk: {
       businessName: "What's your business name?",
@@ -25822,14 +25822,15 @@ var MM_DS_STR = {
     },
     merchantExplain: "This connects a real Stripe merchant account so you can accept card payments. It opens in a new tab — come back here when you're done.",
     contextAsk: {
-      website: "Tell me a bit about what you want your website to do, and whether you already have a domain or hosting.",
-      social: "Which platforms do you want to focus on — Instagram, Facebook, TikTok, something else?",
-      marketing: "What's the main goal right now — more leads, more repeat customers, or brand awareness?",
+      website: "Tell me a bit about what you want your website to do, and whether you already have a domain or hosting — I'll draft the page copy and structure for you to review.",
+      social: "Which platforms do you want to focus on — Instagram, Facebook, TikTok, something else? I'll draft your first week of posts once I know.",
+      marketing: "What's the main goal right now — more leads, more repeat customers, or brand awareness? I'll put together a plan and draft the copy you can use.",
     },
     btnListen: '🎙️ Talk to your agent', btnListening: '🎙️ Listening…', btnSaveContinue: 'Save & continue',
     btnConnect: 'Connect Stripe', btnHandoff: 'Continue with your AI agent →', btnSkip: 'Skip for now',
     btnMarkComplete: 'Mark complete', btnReopen: 'Undo / redo', btnClose: 'Close',
-    allDoneTitle: "You're all set! 🎉", allDoneBody: 'Every step of your GAIN$ Plan is complete. You can still revisit any step above.',
+    allDoneTitle: "You're all set! 🎉", allDoneBody: "Genie has what it needs. Ask it any time in the chat box to draft your next post, email, or listing — you review and publish whenever you're ready.",
+    btnDraftFirst: '✨ Ask Genie to draft your first post',
     typePlaceholder: 'Or type your answer…',
   },
   es: {
@@ -26158,10 +26159,27 @@ function mmDsRenderAllDone(){
     '<div style="font-size:2rem;margin-bottom:8px;">🎉</div>' +
     '<div style="font-weight:700;margin-bottom:6px;">' + eeEsc(mmDsT('allDoneTitle')) + '</div>' +
     '<div style="font-size:.85rem;color:#a9bdda;">' + eeEsc(mmDsT('allDoneBody')) + '</div>' +
-    '<button class="tile-detail-btn ghost" style="margin-top:16px;" onclick="mmDsClose()">' + eeEsc(mmDsT('btnClose')) + '</button>' +
+    '<button class="tile-detail-btn primary" style="margin-top:16px;" onclick="mmDsClose();mmDsDraftFirstPiece()">' + eeEsc(mmDsT('btnDraftFirst')) + '</button>' +
+    '<button class="tile-detail-btn ghost" style="margin-top:8px;" onclick="mmDsClose()">' + eeEsc(mmDsT('btnClose')) + '</button>' +
   '</div>';
 }
 window.mmDsRenderAllDone = mmDsRenderAllDone;
+
+// Genie's first real piece of work after setup: draft an actual social
+// post/email using whatever business info it already collected, right
+// in the Ask Genie chat -- the concrete version of "Genie does the work,
+// you review and approve" instead of ending the flow on a checklist tick.
+function mmDsDraftFirstPiece(){
+  var q = (mmGainPlanCache && mmGainPlanCache.questionnaire) || {};
+  var biz = q.businessName ? ('for ' + q.businessName) : 'for my business';
+  var industry = q.industry ? (' (' + q.industry + ')') : '';
+  var prompt = 'Draft a short social media post and a one-paragraph intro email ' + biz + industry + ', based on everything I just told you during setup. Write them ready to copy and post -- I will review before publishing anything.';
+  if (typeof toggleGenieFab === 'function') toggleGenieFab(true);
+  setTimeout(function(){
+    if (typeof genieFabQuickAsk === 'function') genieFabQuickAsk(prompt);
+  }, 200);
+}
+window.mmDsDraftFirstPiece = mmDsDraftFirstPiece;
 
 function mmDsRenderMerchant(status){
   var body = document.getElementById('mmDsBody');
