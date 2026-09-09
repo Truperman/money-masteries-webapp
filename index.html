@@ -7093,6 +7093,9 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .nav-install-btn{background:#2E7BFF;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
 .nav-share-btn{background:linear-gradient(135deg,#2E7BFF,#8A2BE2);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.74rem;cursor:pointer;white-space:nowrap}
 .nav-share-btn:hover{filter:brightness(1.1)}
+#mmTryNewBtn{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
+#mmTryNewBtn:hover{filter:brightness(1.08)}
+@media (max-width:760px){ #mmTryNewBtn{padding:8px 10px;font-size:0} #mmTryNewBtn::before{content:'🔄';font-size:.9rem} }
 @media (max-width:760px){ .nav-share-btn{padding:8px 10px;font-size:0} .nav-share-btn::before{content:"📢";font-size:.9rem} }
 .nav-install-btn:hover{filter:brightness(1.1)}
 .nav-user{position:relative;cursor:pointer}
@@ -7611,6 +7614,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="nav-share-btn" id="navShareBtn" onclick="openShareModal()" title="Sharing keeps you active and earns points every day — $0.05 in redeemable value each, no penalty for sitting out a day.">📢 Share</button>
   </div>
   <div class="nav-right">
+    <button id="mmTryNewBtn" type="button" onclick="mmOpenTryNew()" aria-label="Try something new" title="Switch what Genie is focused on, or start something new">🔄 Try Something New</button>
     <button id="mmHelpMeBtn" type="button" onclick="mmOpenDiscoverSetup()" aria-label="Get help finishing your setup" title="Get help finishing your setup">✨ Help Me</button>
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="mmToggleTheme()" title="Switch between dark and light mode" aria-label="Toggle light/dark mode"><i class="fa-solid fa-moon" id="themeToggleIcon"></i></button>
     <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
@@ -24929,6 +24933,108 @@ window.mmStartPaymentMethodSetup = async function(){
     if (btn) { btn.disabled = false; btn.textContent = 'Save my card — $0 charged today'; }
   }
 };
+
+// ── TRY SOMETHING NEW — lets a member switch what Genie is focused on any
+// time from the nav (green button next to Help Me), not just during initial
+// signup. This updates their EXISTING business's niche (businesses/{id}.
+// gainQuestionnaire.industry + memory.industry) rather than creating a
+// second business alongside it -- true multi-business support would need an
+// "active business" concept threaded through the whole app (billing,
+// GAIN$ Plan, every Master), which is a much bigger change than this
+// button. Nothing already saved is erased; switching again later just
+// updates the same fields again. "Not sure" and free-text both hand off to
+// Genie chat, where he can save_business_fact himself mid-conversation --
+// same tool he already uses to remember this stuff everywhere else.
+var MM_TRY_NEW_NICHES = [
+  { v: 'houses', label: 'Houses', industry: 'Real estate (wholesaling/flipping houses)' },
+  { v: 'store', label: 'Selling online', industry: 'Selling products online / e-commerce' },
+  { v: 'trading', label: 'Trading', industry: 'Trading' },
+  { v: 'link', label: 'Sharing a link', industry: 'Affiliate marketing / sharing a link' },
+];
+
+function mmTryNewOverlayHtml(){
+  var chips = MM_TRY_NEW_NICHES.map(function(n){
+    return '<button type="button" onclick="mmTryNewPick(\'' + n.v + '\')" style="padding:10px 14px;border-radius:10px;border:1px solid #2E7BFF3d;background:#1a2333;color:#eaf1ff;font-weight:600;font-size:.85rem;cursor:pointer;">' + n.label + '</button>';
+  }).join('');
+  return (
+    '<div id="mmTryNewOverlay" style="position:fixed;inset:0;z-index:99998;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;">' +
+      '<div style="width:100%;max-width:480px;background:#111827;border:1px solid #2E7BFF3d;border-radius:16px;padding:24px 22px 20px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative;">' +
+        '<button onclick="mmTryNewClose()" style="position:absolute;top:12px;right:14px;width:30px;height:30px;border-radius:8px;background:none;border:none;color:#7f97c2;font-size:1.05rem;cursor:pointer;">✕</button>' +
+        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#22c55e;font-weight:700;margin-bottom:8px;">Genie</div>' +
+        '<h2 style="margin:0 0 8px;font-size:1.3rem;line-height:1.25;">Want to try something new?</h2>' +
+        '<p style="margin:0 0 16px;font-size:.88rem;line-height:1.5;color:#a9bdda;">Pick what you\'d rather work on and I\'ll shift my focus to it. Nothing you\'ve already built gets erased — you can always come back to it later.</p>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">' + chips + '</div>' +
+        '<button type="button" onclick="mmTryNewAskGenie()" style="width:100%;padding:11px;border-radius:10px;border:1px dashed #2E7BFF60;background:transparent;color:#eaf1ff;font-weight:600;font-size:.85rem;cursor:pointer;margin-bottom:14px;">🧞 Not sure — let Genie pick for me</button>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<input id="mmTryNewText" type="text" placeholder="Or tell me in your own words…" style="flex:1;padding:11px 12px;border-radius:10px;border:1px solid #2E7BFF3d;background:#0c1220;color:#eaf1ff;font-size:.85rem;" onkeydown="if(event.key===\'Enter\'){mmTryNewSubmitText();}">' +
+          '<button type="button" onclick="mmTryNewSubmitText()" style="flex:0 0 auto;padding:11px 14px;border-radius:10px;border:none;background:#22c55e;color:#08170e;font-weight:800;font-size:.85rem;cursor:pointer;">➤</button>' +
+        '</div>' +
+        '<div id="mmTryNewStatus" style="display:none;margin-top:12px;font-size:.82rem;color:#a9bdda;"></div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function mmOpenTryNew(){
+  if (document.getElementById('mmTryNewOverlay')) return;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = mmTryNewOverlayHtml();
+  document.body.appendChild(wrap.firstChild);
+}
+window.mmOpenTryNew = mmOpenTryNew;
+
+function mmTryNewClose(){
+  var ov = document.getElementById('mmTryNewOverlay');
+  if (ov) ov.remove();
+}
+window.mmTryNewClose = mmTryNewClose;
+
+async function mmTryNewSave(industryLabel){
+  var statusEl = document.getElementById('mmTryNewStatus');
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Saving…'; }
+  try {
+    if (!window.callEnsureBusinessProvisioned) throw new Error('Not ready yet — please try again in a moment.');
+    var prov = await window.callEnsureBusinessProvisioned();
+    var businessId = prov && prov.businessId;
+    if (!businessId) throw new Error('Could not find your business profile.');
+    await window.FB.setDoc(window.FB.doc(window.FB.db, 'businesses', businessId), {
+      gainQuestionnaire: { industry: industryLabel },
+      memory: { industry: industryLabel, note: 'Switched focus via "Try Something New" on ' + new Date().toISOString().slice(0, 10) },
+      updatedAt: window.FB.serverTimestamp(),
+    }, { merge: true });
+    mmTryNewClose();
+    if (typeof showNotifToast === 'function') showNotifToast('🔄 Got it', "I've shifted focus to " + industryLabel + ". Come find me any time you want to switch again.");
+  } catch (e) {
+    if (statusEl) { statusEl.textContent = (e && e.message) || 'Something went wrong — please try again.'; }
+    console.warn('mmTryNewSave failed', e);
+  }
+}
+
+function mmTryNewPick(v){
+  var n = MM_TRY_NEW_NICHES.find(function(x){ return x.v === v; });
+  if (!n) return;
+  mmTryNewSave(n.industry);
+}
+window.mmTryNewPick = mmTryNewPick;
+
+function mmTryNewSubmitText(){
+  var input = document.getElementById('mmTryNewText');
+  var text = input ? input.value.trim() : '';
+  if (!text) return;
+  mmTryNewSave(text);
+}
+window.mmTryNewSubmitText = mmTryNewSubmitText;
+
+function mmTryNewAskGenie(){
+  mmTryNewClose();
+  if (typeof toggleGenieFab === 'function') toggleGenieFab(true);
+  setTimeout(function(){
+    var input = document.getElementById('genieFabInput');
+    if (input) input.value = "I want to try something new — can you help me figure out a new niche or business to focus on?";
+    if (typeof sendGenieFab === 'function') sendGenieFab();
+  }, 300);
+}
+window.mmTryNewAskGenie = mmTryNewAskGenie;
 
 // Called once from onAuthStateChanged, right after showLoggedIn. Checks the
 // account's real billing status (not a cached local flag) so this never
