@@ -3051,87 +3051,84 @@ td .admnt-preview{margin-top:4px}
 .mm-tools-banner:hover .mm-tools-banner-arrow{transform:translateX(3px)}
 @media (prefers-reduced-motion: reduce){ .mm-tools-banner,.mm-tools-banner-arrow{transition:none} }
 
-/* Discover/Setup + Necessary Tools -- floating side rail instead of a
-   stacked column of full-width cards. Those cards used to sit right in
-   the main content column at the top of the dashboard, which is exactly
-   where the sitewide Spline robot's face renders behind everything --
-   so they blocked it out completely. Pulled out of document flow with
-   position:fixed onto a slim rail on the left edge instead, restyled as
-   compact icon+label pills, and given the same gold/pink glimmer sweep
-   already used on the Genie FAB (see mm-icon-glimmer-genie) so they still
-   read as "tap me", just off to the side instead of center-stage. */
-#dashTopTabs{
+/* ── Cockpit redesign ─────────────────────────────────────────────────
+   Setup, Necessary Tools, Ask Genie and Share & Earn used to be four
+   differently-sized, differently-colored floating elements (a rail
+   pill, a square icon tile, a wide pink/gold gradient chat button, a
+   wide blue button) scattered around the screen at random heights.
+   They're now one family of identical glass chips -- same size, same
+   neutral glass color, same rounded-square shape, same hover behavior
+   -- parked at the four corners of the viewport so they read as a
+   console framing the sitewide Spline robot instead of clutter
+   competing with it. Only the icon + label content tells them apart.
+   `.mm-cockpit-btn` on genie-fab/share-fab (see their button markup)
+   plus the selector list below (for the two elements whose markup is
+   built dynamically in JS -- #dashTopTabs .dash-tab and #mmToolsBanner
+   -- restyling by selector avoids having to touch the JS templates)
+   is the single shared look; everything past this rule is just
+   per-element position. */
+#dashTopTabs .dash-tab,
+#mmToolsBanner,
+.mm-cockpit-btn{
   position:fixed;
-  top:112px;
-  right:16px;
-  z-index:420;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+  z-index:1401;
+  width:76px;
+  height:76px;
   margin:0;
-  border:none;
-  padding:0;
-}
-#dashTopTabs .dash-tab{
-  position:relative;
-  overflow:hidden;
+  padding:8px 6px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:5px;
-  width:68px;
-  padding:14px 8px;
-  margin:0;
-  border-radius:16px;
-  border:1px solid rgba(46,123,255,.35);
-  background:linear-gradient(110deg,#0d1420 0%,#152037 25%,#0d1420 50%,#152037 75%,#0d1420 100%);
-  background-size:250% 100%;
-  animation:mm-icon-glimmer-genie 3.6s ease-in-out infinite;
-  color:#9ca3af;
-  font-size:.66rem;
+  gap:4px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(20,24,34,.46);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 8px 26px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.04) inset;
+  color:#e7ecf5;
+  font-size:.62rem;
   font-weight:700;
+  letter-spacing:.01em;
   text-align:center;
   white-space:normal;
-  line-height:1.15;
-  box-shadow:0 8px 22px rgba(0,0,0,.45);
-  transition:transform .2s ease,border-color .2s ease,color .2s ease;
+  line-height:1.2;
+  cursor:pointer;
+  animation:none;
+  transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease;
 }
-#dashTopTabs .dash-tab i{margin:0;font-size:1.05rem}
-#dashTopTabs .dash-tab:hover{transform:translateX(4px);color:#e5e7eb}
-#dashTopTabs .dash-tab.active{border-color:#2E7BFF;color:#2E7BFF;box-shadow:0 8px 22px rgba(46,123,255,.35)}
+#dashTopTabs .dash-tab i,
+#mmToolsBanner .mm-tools-banner-icon,
+.mm-cockpit-btn .mm-cockpit-emoji{font-size:1.3rem;line-height:1;margin:0}
+#dashTopTabs .dash-tab:hover,
+#mmToolsBanner:hover,
+.mm-cockpit-btn:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.34);background:rgba(30,36,50,.6);box-shadow:0 12px 32px rgba(0,0,0,.5)}
+#dashTopTabs .dash-tab:active,
+#mmToolsBanner:active,
+.mm-cockpit-btn:active{transform:translateY(-1px)}
+#dashTopTabs .dash-tab.active{border-color:rgba(46,123,255,.6);box-shadow:0 8px 26px rgba(0,0,0,.4),0 0 0 2px rgba(46,123,255,.28) inset}
 @keyframes mm-discover-red-pulse{0%,100%{box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 0 rgba(239,68,68,.55);border-color:#ef4444}50%{box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 9px rgba(239,68,68,0);border-color:#f87171}}
 #dashTopTabs .dash-tab.gain-pending-glow{border-color:#ef4444;color:#fca5a5;animation:mm-discover-red-pulse 1.4s ease-in-out infinite}
 #dashTopTabs .dash-tab.gain-pending-glow:hover{color:#fecaca}
 #dashTopTabs .dash-tab.gain-pending-glow.active{border-color:#ef4444;color:#fca5a5}
-@media (prefers-reduced-motion:reduce){ #dashTopTabs .dash-tab{animation:none} #dashTopTabs .dash-tab.gain-pending-glow{animation:none} }
-@media (max-width:900px){ #dashTopTabs{right:8px;top:100px;gap:8px} #dashTopTabs .dash-tab{width:52px;padding:10px 5px;font-size:.58rem} }
+@media (prefers-reduced-motion:reduce){ #dashTopTabs .dash-tab.gain-pending-glow{animation:none} }
 
-#mmToolsBanner{
-  position:fixed;
-  top:340px;
-  right:16px;
-  z-index:420;
-  width:68px;
-  margin:0;
-  padding:14px 8px;
-  flex-direction:column;
-  align-items:center;
-  gap:5px;
-  border-radius:16px;
-  background:linear-gradient(110deg,#0d1420 0%,#152037 25%,#0d1420 50%,#152037 75%,#0d1420 100%);
-  background-size:250% 100%;
-  animation:mm-icon-glimmer-genie 3.6s ease-in-out infinite;
-  box-shadow:0 8px 22px rgba(0,0,0,.45);
-}
-#mmToolsBanner:hover{transform:translateX(4px)}
-#mmToolsBanner .mm-tools-banner-icon{font-size:1.05rem}
+/* Corners: Setup top-right, Necessary Tools top-left, Ask Genie
+   bottom-right, Share & Earn bottom-left -- an even frame around the
+   robot instead of everything stacked on one edge. */
+#dashTopTabs{position:fixed;top:110px;right:18px;z-index:1401;display:flex;flex-direction:column;gap:14px;margin:0;border:none;padding:0}
+#mmToolsBanner{top:110px;left:18px}
 #mmToolsBanner .mm-tools-banner-text{align-items:center;text-align:center;gap:0}
-#mmToolsBanner .mm-tools-banner-title{font-size:.66rem;font-weight:700;color:#9ca3af;white-space:normal;line-height:1.15}
+#mmToolsBanner .mm-tools-banner-title{font-size:.62rem;font-weight:700;color:#e7ecf5;white-space:normal;line-height:1.2}
 #mmToolsBanner .mm-tools-banner-sub,
 #mmToolsBanner .mm-tools-banner-arrow{display:none}
-@media (prefers-reduced-motion:reduce){ #mmToolsBanner{animation:none} }
-@media (max-width:900px){ #mmToolsBanner{right:8px;width:52px;padding:10px 5px;top:296px} #mmToolsBanner .mm-tools-banner-title{font-size:.58rem} }
+@media (max-width:900px){
+  #dashTopTabs .dash-tab,#mmToolsBanner,.mm-cockpit-btn{width:60px;height:60px;border-radius:16px;font-size:.54rem;gap:3px;padding:6px 4px}
+  #dashTopTabs .dash-tab i,#mmToolsBanner .mm-tools-banner-icon,.mm-cockpit-btn .mm-cockpit-emoji{font-size:1.05rem}
+  #dashTopTabs{top:96px;right:10px;gap:10px}
+  #mmToolsBanner{top:96px;left:10px}
+}
 
 
 /* Necessary Tools modal — wide, scrollable, holds every non-GAIN$ category. */
@@ -3705,11 +3702,10 @@ body{top:0 !important;position:static !important}
 .ios-step{display:flex;align-items:flex-start;gap:11px;font-size:.85rem;color:#d1d5db;line-height:1.5;margin-bottom:12px}
 .ios-step-n{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#2E7BFF;color:#ffffff;font-weight:800;font-size:.78rem;display:flex;align-items:center;justify-content:center}
 
-/* ── VIRAL SHARE ── */
-.share-fab{position:fixed;bottom:22px;right:22px;z-index:1400;background:linear-gradient(135deg,#2E7BFF,#2E63F5);color:#ffffff;border:none;border-radius:30px;padding:14px 22px;font-size:.92rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;animation:fab-pulse 2.6s ease-in-out infinite}
-@keyframes fab-pulse{0%,100%{box-shadow:0 8px 24px #2E7BFF45}50%{box-shadow:0 8px 34px #2E7BFF70,0 0 0 9px #2E7BFF14}}
-.share-fab:hover{transform:translateY(-2px)}
-@media(max-width:600px){.share-fab{bottom:16px;right:16px;padding:13px 18px;font-size:.84rem}}
+/* ── VIRAL SHARE — cockpit chip, bottom-left corner. Sizing/glass look
+   comes from the shared .mm-cockpit-btn rule; only position lives here. ── */
+.share-fab{bottom:26px;left:18px}
+@media(max-width:900px){.share-fab{bottom:16px;left:10px}}
 /* ── HELP ME — glimmering-gold nav-bar button, sits between the Share
    button and the day/night toggle; tap it for a quick business tip from
    Genie (genieFaceSpeak()). ── */
@@ -3724,12 +3720,13 @@ body{top:0 !important;position:static !important}
 #mmHelpMeBtn:focus-visible{outline:2px solid rgba(236,72,153,.6);outline-offset:3px}
 @keyframes mm-help-glimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media (prefers-reduced-motion: reduce){#mmHelpMeBtn{animation:none}}
-/* ── GENIE FAB — persistent site-wide chat widget, all screens, all members ── */
-.genie-fab{position:fixed;bottom:88px;right:22px;z-index:1401;background:linear-gradient(110deg,#831843 0%,#ffd700 25%,#ec4899 50%,#ffd700 75%,#831843 100%);background-size:250% 100%;animation:mm-icon-glimmer-genie 3.4s ease-in-out infinite,fab-pulse-genie 2.8s ease-in-out infinite;color:#fff;border:none;border-radius:30px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(236,72,153,.35)}
-@keyframes fab-pulse-genie{0%,100%{box-shadow:0 8px 24px rgba(236,72,153,.35)}50%{box-shadow:0 8px 30px rgba(255,215,0,.5),0 0 0 8px rgba(236,72,153,.12)}}
-.genie-fab:hover{transform:translateY(-2px)}
+/* ── GENIE FAB — persistent site-wide chat widget, all screens, all
+   members. Cockpit chip, bottom-right corner (see .mm-cockpit-btn for
+   the shared glass sizing/look; only position + the badge dot live
+   here). ── */
+.genie-fab{bottom:26px;right:18px}
 .genie-fab.hidden{display:none}
-@media(max-width:600px){.genie-fab{bottom:78px;right:16px;padding:12px 16px;font-size:.82rem}}
+@media(max-width:900px){.genie-fab{bottom:16px;right:10px}}
 .genie-fab-panel{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:1402;width:600px;max-width:calc(100vw - 20px);background:linear-gradient(165deg,rgba(30,18,36,.72),rgba(12,10,20,.8));backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border:1px solid rgba(236,72,153,.28);border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.04) inset;display:none;flex-direction:column;overflow:visible}
 .genie-fab-panel.open{display:flex}
 .genie-fab-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:280px;height:100px;background:radial-gradient(ellipse at center,rgba(236,72,153,.35),rgba(255,215,0,.16) 45%,transparent 72%);filter:blur(20px);pointer-events:none;z-index:0;border-radius:22px 22px 0 0;overflow:hidden}
@@ -9670,8 +9667,8 @@ paintRail();
 </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
-  <button class="share-fab" id="shareFab" onclick="openShareModal()">🚀 Share &amp; Earn</button>
-  <button class="genie-fab" id="genieFab" onclick="toggleGenieFab()">🧞 <span>Ask Genie</span><span class="genie-fab-badge" id="genieFabBadge" style="display:none" title="Genie noticed something"></span></button>
+  <button class="share-fab mm-cockpit-btn" id="shareFab" onclick="openShareModal()"><span class="mm-cockpit-emoji">🚀</span><span>Share &amp; Earn</span></button>
+  <button class="genie-fab mm-cockpit-btn" id="genieFab" onclick="toggleGenieFab()"><span class="mm-cockpit-emoji">🧞</span><span>Ask Genie</span><span class="genie-fab-badge" id="genieFabBadge" style="display:none" title="Genie noticed something"></span></button>
   <div class="genie-cursor" id="genieCursor" aria-hidden="true">🧞</div>
   <div class="genie-fab-panel" id="genieFabPanel">
     <div class="genie-fab-glow" aria-hidden="true"></div>
