@@ -8854,7 +8854,7 @@ var PLAN={
 var Genie = (function(){
   var current = null, tick = null, elAudio = null;
   var wrap = document.getElementById("mmFunnelWrap");
-  /* David's ElevenLabs voices (Zoltan EN / Salvatore ES), spoken through a
+  /* David's ElevenLabs voices (British EN / Salvatore ES), spoken through a
      small unauthenticated endpoint on the genie-railway backend -- see
      /funnel-speak in genie_voice.py. That endpoint always uses ElevenLabs
      directly (never the private agent's kokoro/openai fallback chain) and
@@ -9000,7 +9000,7 @@ var Genie = (function(){
    no Portuguese translation exists yet (flag this to David if he wants
    one written). resolveContentLang() is the single place that decision
    lives: any site language that isn't "es" falls back to "en" content
-   *and* the English ElevenLabs voice (Zoltan) -- correct, since the
+   *and* the English ElevenLabs voice (British) -- correct, since the
    voice should match whatever text is actually being read aloud. */
 function resolveContentLang(siteLang){
   return siteLang === "es" ? "es" : "en";
@@ -17639,7 +17639,7 @@ function genieFabConfirmBubble(actionName, params, promptText){
   d.className = 'ai-msg bot';
   d.innerHTML = '<span class="ai-msg-tag">🧞 Genie</span><div>' + promptText +
     '<div style="margin-top:8px;display:flex;gap:8px">' +
-    '<button onclick="genieFabRunAction(\'' + id + '\')" style="background:#ec4899;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.74rem;font-weight:700;cursor:pointer">Yes, do it</button>' +
+    '<button onclick="genieFabRunAction(\'' + id + '\')" style="background:#ec4899;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.74rem;font-weight:700;cursor:pointer">🧞 Let Genie do it</button>' +
     '<button onclick="genieFabCancelAction(\'' + id + '\')" style="background:transparent;color:#9ca3af;border:1px solid #374151;border-radius:8px;padding:6px 12px;font-size:.74rem;cursor:pointer">Not now</button>' +
     '</div></div>';
   log.appendChild(d); log.scrollTop = log.scrollHeight;
@@ -17989,12 +17989,13 @@ async function sendGenieFab() {
       'RECENT CONVERSATION WITH THIS MEMBER (oldest first; the newest message from them is given separately below as MEMBER MESSAGE):\n' + (historyLines || '(no prior messages — this is a fresh conversation)') + '\n\n' +
       'The member is currently on: ' + screenId + ' — ' + screenHelp + '\n\n' +
       (deepKnowledge ? (deepKnowledge + '\n\n') : '') +
-      'CURATED ACTIONS (only use one if the member is clearly asking you to DO something, not just asking how something works):\n' + actionSpecs + '\n\n' +
+      'CURATED ACTIONS — BE PROACTIVE: don\'t wait for the member to explicitly ask you to do something. Whenever you can tell from the conversation that an action would genuinely help — even if they only described a problem or asked a question — go ahead and propose it. Prefer DOING over just explaining how they\'d do it themselves:\n' + actionSpecs + '\n\n' +
       'ELEMENTS CURRENTLY VISIBLE ON THIS SCREEN (numbered — use ui_click / ui_type / ui_select / ui_scroll_to with these exact IDs when the member wants something done that isn\'t covered by a curated action above; NEVER invent an ID, and if what they want truly isn\'t listed, say so instead of guessing):\n' + (elementList || '(nothing detected)') + '\n\n' +
       'Respond with STRICT JSON ONLY (no markdown fences, no extra text before or after) in exactly this shape:\n' +
       '{"reply":"<short, friendly response to show the member, under 80 words>","action":null}\n' +
       'or, only when you have every required param for one action from what the member said:\n' +
       '{"reply":"<short response>","action":{"name":"<action key>","params":{...matching that action\'s params>}}}\n' +
+      'When you set an action, "reply" is what the member sees BEFORE deciding whether to let you run it — for anything that isn\'t instant/free, "reply" MUST clearly state (1) what you\'d do and (2) why it helps them right now, in plain language, since a "Let Genie do it" button appears right under your reply for them to click — don\'t make them guess what clicking it does. Instant/free actions (see each action\'s own description) run immediately with no button, so keep "reply" for those short and natural instead.\n' +
       'If the member wants an action but you are missing a required param (e.g. no state given for a lead search), set action to null and ask for the missing detail in reply instead. Never invent parameter values. You are not a licensed financial or legal advisor.\n\n' +
       (attachment ? ('The member also attached ' + (attachment.isImage ? 'an image' : ('a PDF file named "' + attachment.name + '"')) + ' to this message — look at it and use what you see to help answer, and reference it naturally if relevant.\n\n') : '') +
       'MEMBER MESSAGE: ' + (q || (attachment ? '(no text — see the attached file)' : ''));
