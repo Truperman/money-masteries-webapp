@@ -1934,7 +1934,7 @@ body{background:#0A0E1A;color:#e5e7eb;font-family:Inter,Segoe UI,sans-serif;min-
 .nav-brand{display:flex;align-items:center;gap:10px;cursor:pointer}
 .nav-logo{height:38px}
 .nav-brand-name{color:#2E7BFF;font-weight:800;font-size:1.05rem;letter-spacing:.01em}
-.nav-right{display:flex;align-items:center;gap:12px}
+.nav-right{display:flex;align-items:center;gap:10px}
 .nav-user{display:flex;align-items:center;gap:8px}
 .nav-avatar{width:34px;height:34px;border-radius:50%;border:2px solid #2E7BFF;object-fit:cover}
 .nav-user-name{font-size:.85rem;color:#e5e7eb;font-weight:600}
@@ -7098,12 +7098,14 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .nav-install-btn{background:#2E7BFF;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
 .nav-share-btn{background:linear-gradient(135deg,#2E7BFF,#8A2BE2);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.74rem;cursor:pointer;white-space:nowrap}
 .nav-share-btn:hover{filter:brightness(1.1)}
-#mmTryNewBtn{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
-#mmTryNewBtn:hover{filter:brightness(1.08)}
-@media (max-width:760px){ #mmTryNewBtn{padding:8px 10px;font-size:0} #mmTryNewBtn::before{content:'🔄';font-size:.9rem} }
-#mmSiteCloneBtn{background:linear-gradient(135deg,#2E7BFF,#8A2BE2);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
-#mmSiteCloneBtn:hover{filter:brightness(1.08)}
-@media (max-width:760px){ #mmSiteCloneBtn{padding:8px 10px;font-size:0} #mmSiteCloneBtn::before{content:'🧩';font-size:.9rem} }
+#mmTryNewBtn{
+  background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;
+  padding:8px 14px;font-weight:800;font-size:.74rem;letter-spacing:.01em;cursor:pointer;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;
+  box-shadow:0 2px 10px rgba(34,197,94,.35),inset 0 0 0 1px rgba(255,255,255,.08);
+  transition:transform .15s ease,filter .15s ease;-webkit-tap-highlight-color:transparent}
+#mmTryNewBtn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+@media (max-width:900px){ #mmTryNewBtn{padding:8px 10px;font-size:0} #mmTryNewBtn::before{content:'🔄';font-size:.9rem} }
 @media (max-width:760px){ .nav-share-btn{padding:8px 10px;font-size:0} .nav-share-btn::before{content:"📢";font-size:.9rem} }
 .nav-install-btn:hover{filter:brightness(1.1)}
 .nav-user{position:relative;cursor:pointer}
@@ -7623,7 +7625,6 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   <div class="nav-right">
     <button id="mmTryNewBtn" type="button" onclick="mmOpenTryNew()" aria-label="Try something new" title="Switch what Genie is focused on, or start something new">🔄 Try Something New</button>
-    <button id="mmSiteCloneBtn" type="button" onclick="mmOpenSiteClone()" aria-label="Website Builder" title="Clone a reference website as a starting point to rebuild and host yourself">🧩 Website Builder</button>
     <button id="mmHelpMeBtn" type="button" onclick="mmOpenDiscoverSetup()" aria-label="Get help finishing your setup" title="Get help finishing your setup">✨ Help Me</button>
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="mmToggleTheme()" title="Switch between dark and light mode" aria-label="Toggle light/dark mode"><i class="fa-solid fa-moon" id="themeToggleIcon"></i></button>
     <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
