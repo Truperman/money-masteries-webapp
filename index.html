@@ -402,6 +402,11 @@
     const res = await fn(data);
     return res.data;
   };
+  window.callCloneWebsiteForMember = async (data) => {
+    const fn = httpsCallable(functionsClient, 'cloneWebsiteForMember');
+    const res = await fn(data);
+    return res.data;
+  };
 
   // Genie Blueprint Section F/G/H/J — generalized tile status, Setup
   // Planner, merchant payment links, and the Daily Cockpit.
@@ -7096,6 +7101,9 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 #mmTryNewBtn{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
 #mmTryNewBtn:hover{filter:brightness(1.08)}
 @media (max-width:760px){ #mmTryNewBtn{padding:8px 10px;font-size:0} #mmTryNewBtn::before{content:'🔄';font-size:.9rem} }
+#mmSiteCloneBtn{background:linear-gradient(135deg,#2E7BFF,#8A2BE2);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap}
+#mmSiteCloneBtn:hover{filter:brightness(1.08)}
+@media (max-width:760px){ #mmSiteCloneBtn{padding:8px 10px;font-size:0} #mmSiteCloneBtn::before{content:'🧩';font-size:.9rem} }
 @media (max-width:760px){ .nav-share-btn{padding:8px 10px;font-size:0} .nav-share-btn::before{content:"📢";font-size:.9rem} }
 .nav-install-btn:hover{filter:brightness(1.1)}
 .nav-user{position:relative;cursor:pointer}
@@ -7615,6 +7623,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   <div class="nav-right">
     <button id="mmTryNewBtn" type="button" onclick="mmOpenTryNew()" aria-label="Try something new" title="Switch what Genie is focused on, or start something new">🔄 Try Something New</button>
+    <button id="mmSiteCloneBtn" type="button" onclick="mmOpenSiteClone()" aria-label="Website Builder" title="Clone a reference website as a starting point to rebuild and host yourself">🧩 Website Builder</button>
     <button id="mmHelpMeBtn" type="button" onclick="mmOpenDiscoverSetup()" aria-label="Get help finishing your setup" title="Get help finishing your setup">✨ Help Me</button>
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="mmToggleTheme()" title="Switch between dark and light mode" aria-label="Toggle light/dark mode"><i class="fa-solid fa-moon" id="themeToggleIcon"></i></button>
     <div class="site-lang"><span class="site-lang-globe">🌐</span><span class="site-lang-btn" data-l="en" onclick="mmSetLang('en')">EN</span><span class="site-lang-btn" data-l="es" onclick="mmSetLang('es')">ES</span><span class="site-lang-btn" data-l="pt" onclick="mmSetLang('pt')">PT</span></div>
@@ -24950,6 +24959,7 @@ var MM_TRY_NEW_NICHES = [
   { v: 'store', label: 'Selling online', industry: 'Selling products online / e-commerce' },
   { v: 'trading', label: 'Trading', industry: 'Trading' },
   { v: 'link', label: 'Sharing a link', industry: 'Affiliate marketing / sharing a link' },
+  { v: 'websites', label: 'Building websites', industry: 'Website building services (clone-and-rebuild for clients)' },
 ];
 
 function mmTryNewOverlayHtml(){
@@ -25035,6 +25045,92 @@ function mmTryNewAskGenie(){
   }, 300);
 }
 window.mmTryNewAskGenie = mmTryNewAskGenie;
+
+// ── Website Builder ("SaaS Master") ────────────────────────────────────
+// Lets a member clone a reference site into a downloadable zip they rebuild
+// from and host themselves -- we never host anyone else's site content.
+// The ownership/permission checkbox below is deliberately NOT pre-checked
+// and the clone button stays disabled until it's ticked -- that's the
+// non-skippable warning called for by the "any site, as a rough reference"
+// legal framing this feature was scoped under; don't remove or default it.
+function mmSiteCloneOverlayHtml(){
+  return (
+    '<div id="mmSiteCloneOverlay" style="position:fixed;inset:0;z-index:99998;background:rgba(6,10,20,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;">' +
+      '<div style="width:100%;max-width:480px;background:#111827;border:1px solid #2E7BFF3d;border-radius:16px;padding:24px 22px 20px;color:#eaf1ff;font-family:inherit;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative;">' +
+        '<button onclick="mmSiteCloneClose()" style="position:absolute;top:12px;right:14px;width:30px;height:30px;border-radius:8px;background:none;border:none;color:#7f97c2;font-size:1.05rem;cursor:pointer;">✕</button>' +
+        '<div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#8A2BE2;font-weight:700;margin-bottom:8px;">Website Builder</div>' +
+        '<h2 style="margin:0 0 8px;font-size:1.3rem;line-height:1.25;">Clone a reference site</h2>' +
+        '<p style="margin:0 0 16px;font-size:.88rem;line-height:1.5;color:#a9bdda;">Give me a web address and I\'ll pull down its HTML, CSS, JS, and images into a zip you can rebuild from and host yourself — a fast starting point for a client site.</p>' +
+        '<input id="mmSiteCloneUrl" type="text" placeholder="example.com" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:10px;border:1px solid #2E7BFF3d;background:#0c1220;color:#eaf1ff;font-size:.85rem;margin-bottom:14px;">' +
+        '<label style="display:flex;align-items:flex-start;gap:9px;margin-bottom:16px;cursor:pointer;font-size:.8rem;line-height:1.4;color:#c7d5ee;">' +
+          '<input id="mmSiteCloneAck" type="checkbox" style="margin-top:3px;flex:0 0 auto;">' +
+          '<span>I own this site, or I have permission to clone and rebuild it. I understand copying a site I don\'t have rights to could infringe someone else\'s copyright.</span>' +
+        '</label>' +
+        '<button id="mmSiteCloneGoBtn" type="button" onclick="mmSiteCloneRun()" disabled style="width:100%;padding:12px;border-radius:10px;border:none;background:#374151;color:#9ca3af;font-weight:800;font-size:.9rem;cursor:not-allowed;">Clone website</button>' +
+        '<div id="mmSiteCloneStatus" style="display:none;margin-top:14px;font-size:.82rem;color:#a9bdda;line-height:1.5;"></div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function mmSiteCloneSyncBtn(){
+  var ack = document.getElementById('mmSiteCloneAck');
+  var btn = document.getElementById('mmSiteCloneGoBtn');
+  if (!ack || !btn) return;
+  if (ack.checked) {
+    btn.disabled = false;
+    btn.style.cursor = 'pointer';
+    btn.style.background = 'linear-gradient(135deg,#2E7BFF,#8A2BE2)';
+    btn.style.color = '#fff';
+  } else {
+    btn.disabled = true;
+    btn.style.cursor = 'not-allowed';
+    btn.style.background = '#374151';
+    btn.style.color = '#9ca3af';
+  }
+}
+
+function mmOpenSiteClone(){
+  if (document.getElementById('mmSiteCloneOverlay')) return;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = mmSiteCloneOverlayHtml();
+  document.body.appendChild(wrap.firstChild);
+  var ack = document.getElementById('mmSiteCloneAck');
+  if (ack) ack.addEventListener('change', mmSiteCloneSyncBtn);
+}
+window.mmOpenSiteClone = mmOpenSiteClone;
+
+function mmSiteCloneClose(){
+  var ov = document.getElementById('mmSiteCloneOverlay');
+  if (ov) ov.remove();
+}
+window.mmSiteCloneClose = mmSiteCloneClose;
+
+async function mmSiteCloneRun(){
+  var urlInput = document.getElementById('mmSiteCloneUrl');
+  var ack = document.getElementById('mmSiteCloneAck');
+  var btn = document.getElementById('mmSiteCloneGoBtn');
+  var statusEl = document.getElementById('mmSiteCloneStatus');
+  var url = urlInput ? urlInput.value.trim() : '';
+  if (!url) { if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Enter a website address first.'; } return; }
+  if (!ack || !ack.checked) return; // belt-and-suspenders -- button should already be disabled
+  if (btn) { btn.disabled = true; btn.textContent = 'Cloning… this can take a minute'; }
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Pulling down the site — hang tight, this runs in the background of my mind for a bit.'; }
+  try {
+    if (!window.callCloneWebsiteForMember) throw new Error('Not ready yet — please try again in a moment.');
+    var result = await window.callCloneWebsiteForMember({ url: url, acknowledgeOwnership: true });
+    if (!result || !result.downloadUrl) throw new Error('Clone finished but no file came back — please try again.');
+    if (statusEl) {
+      statusEl.innerHTML = '✅ Done! <a href="' + result.downloadUrl + '" target="_blank" rel="noopener" style="color:#7fb2ff;font-weight:700;">Download your zip</a> (link works for 7 days). Unzip it, open index.html, and rebuild from there.';
+    }
+    if (btn) { btn.textContent = 'Clone another'; btn.disabled = false; if (urlInput) urlInput.value = ''; }
+  } catch (e) {
+    if (statusEl) statusEl.textContent = (e && e.message) || 'That clone failed — double check the address and try again.';
+    if (btn) { btn.disabled = false; btn.textContent = 'Clone website'; }
+    console.warn('mmSiteCloneRun failed', e);
+  }
+}
+window.mmSiteCloneRun = mmSiteCloneRun;
 
 // Called once from onAuthStateChanged, right after showLoggedIn. Checks the
 // account's real billing status (not a cached local flag) so this never
