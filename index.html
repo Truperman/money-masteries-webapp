@@ -25192,7 +25192,6 @@ function mmStartFreePaywallHtml(){
           '<span>I agree to MoneyMasteries\' usage-based billing terms above.</span>' +
         '</label>' +
         '<button id="mmPaywallAddCardBtn" disabled onclick="mmPaywallAddCard()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2457c9;color:#fff;font-weight:700;font-size:.95rem;cursor:not-allowed;opacity:.5;transition:opacity .15s;">Add payment method — $0 charged today</button>' +
-        '<button id="mmPaywallSkipBtn" onclick="mmPaywallSkip()" style="width:100%;margin-top:10px;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:none;color:#a9bdda;font-weight:600;font-size:.88rem;cursor:pointer;">Skip — continue free</button>' +
         '<div id="mmPaywallError" style="display:none;margin-top:10px;font-size:.82rem;color:#ff8a80;"></div>' +
       '</div>' +
     '</div>'
@@ -25295,10 +25294,10 @@ function mmOnclickLooksLikeNav(onclickAttr){
 }
 
 document.addEventListener('click', function(e){
-  return; // Payment-method paywall gate disabled per owner request (2026-09-03) —
-          // buttons now work for everyone with no "add a card" interstitial.
-          // The rest of this listener (and mmShowStartFreePaywall) is left in
-          // place, unreachable, in case the gate needs to come back later.
+  // Re-enabled per owner request (2026-09-10) — was disabled 2026-09-03.
+  // Start Free members must have a card on file before taking any real
+  // action; free browsing/navigation stays ungated. See the block comment
+  // above (MM_NAV_VERB_RE) for how "action" vs. "navigation" is decided.
   if (mmGateBypassOnce) { mmGateBypassOnce = false; return; } // Skip's own replay
   if (!window.currentUser) return; // not logged in — nothing to gate yet
   if (window.mmHasPaymentMethod !== false) return; // true = has a card, null = unknown yet — fail open either way
