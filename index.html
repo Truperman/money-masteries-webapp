@@ -25198,6 +25198,7 @@ window.mmSiteCloneRun = mmSiteCloneRun;
 // account's real billing status (not a cached local flag) so this never
 // falsely blocks a returning member due to stale local state.
 async function mmEnsureBillingSetup(){
+  if (mmIsComplimentaryMember()) return;
   if (mmBillingModalShown) return;
   var params = new URLSearchParams(location.search);
   var cancelled = params.get('payment_method_setup_cancelled') === '1';
@@ -25230,6 +25231,12 @@ window.mmEnsureBillingSetup = mmEnsureBillingSetup;
 // silently on login by mmRefreshBillingCardStatus() (called from
 // onAuthStateChanged above) and again the moment they add a card.
 window.mmHasPaymentMethod = null;
+// This suppresses membership/card prompts only; server-side usage and add-on
+// authorization still apply. Never claim a complimentary member has a card.
+function mmIsComplimentaryMember(){
+  var profile = window.userData;
+  return !!(window.currentUser && profile && profile.adminCreated === true && profile.subscriptionStatus === 'comp');
+}
 async function mmRefreshBillingCardStatus(){
   try {
     var status = await window.callGetMyBillingStatus();
@@ -25264,6 +25271,7 @@ function mmStartFreePaywallHtml(){
 var mmPaywallPendingAction = null;
 
 function mmShowStartFreePaywall(onSkip){
+  if (mmIsComplimentaryMember()) return;
   mmPaywallPendingAction = typeof onSkip === 'function' ? onSkip : null;
   if (document.getElementById('mmPaywallOverlay')) return;
   var wrap = document.createElement('div');
@@ -25361,6 +25369,7 @@ document.addEventListener('click', function(e){
   // above (MM_NAV_VERB_RE) for how "action" vs. "navigation" is decided.
   if (mmGateBypassOnce) { mmGateBypassOnce = false; return; } // Skip's own replay
   if (!window.currentUser) return; // not logged in — nothing to gate yet
+  if (mmIsComplimentaryMember()) return;
   if (window.mmHasPaymentMethod !== false) return; // true = has a card, null = unknown yet — fail open either way
   // Any member with an existing membership Stripe customer (Pro/Elite, or a
   // grandfathered legacy Basic subscriber) is ALREADY metered for AI/leads/
