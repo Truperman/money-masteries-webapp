@@ -92,13 +92,13 @@
     },
     {
       id: "marketsmaster",
-      name: "Markets Master",
+      name: "Trading Master",
       category: "ANALYZE",
       icon: "⌁",
       color: "#9ebee9",
-      tag: "Trading & research",
-      text: "Study markets and practice your process. Trading involves risk; returns are never guaranteed.",
-      outcome: "Research before decisions",
+      tag: "Copy trading & research",
+      text: "Explore our planned copy-trading system, research markets, and keep a trading journal. Shared-system enrollment is not open yet.",
+      outcome: "A process you can follow",
     },
     {
       id: "saasmaster",

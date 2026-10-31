@@ -1,0 +1,134 @@
+/* Trading Master: shared-system introduction. Existing route IDs remain stable. */
+#screen-marketsmaster > .screen-title,
+#screen-marketsmaster > .screen-title-niche,
+#screen-marketsmaster > .mm-trading-tabs,
+#screen-marketsmaster > #mmCopyTradingTab {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+#screen-marketsmaster > .screen-title::before,
+#screen-marketsmaster > .screen-title-niche::before,
+#screen-marketsmaster > .mm-trading-tabs::before,
+#screen-marketsmaster > #mmCopyTradingTab::before { display: none; }
+#screen-marketsmaster > .screen-title span { color: #f4e7c9; }
+#screen-marketsmaster > .screen-title-niche { color: #bdb5a6; }
+#screen-marketsmaster .mm-trading-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0;
+}
+#screen-marketsmaster .mm-trading-tabs .rei-view {
+  min-height: 44px;
+  padding: 10px 15px;
+  white-space: normal;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid #c8ae7e40;
+  border-radius: 12px;
+  color: #d1c9ba;
+  background: #17191fd9;
+}
+#screen-marketsmaster .mm-trading-tabs .rei-view.active {
+  color: #211b12;
+  background: #e7c784;
+  border-color: #e7c784;
+}
+#screen-marketsmaster [role="tabpanel"]:focus-visible,
+#screen-marketsmaster button:focus-visible,
+#screen-marketsmaster summary:focus-visible,
+#screen-marketsmaster a:focus-visible {
+  outline: 2px solid #f4d79c;
+  outline-offset: 4px;
+}
+.tm-copy-hero {
+  display: grid;
+  grid-template-columns: minmax(0,1.3fr) minmax(260px,1fr);
+  align-items: center;
+  gap: clamp(24px,4vw,52px);
+  padding: clamp(24px,4vw,48px);
+  border: 1px solid #c9aa6c4d;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 80% 0%,#c2933520,transparent 65%),linear-gradient(135deg,#1d1e23ed,#101218f5);
+  box-shadow: inset 0 1px 0 #fff1,0 20px 50px #0003;
+}
+.tm-eyebrow {
+  display: block;
+  color: #dfc28b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+#screen-marketsmaster .tm-copy-intro h2 {
+  margin: 18px 0;
+  color: #f7f3ea;
+  font-size: clamp(30px,3.2vw,46px);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  font-weight: 650;
+}
+.tm-copy-intro h2 em { color: #e7bf70; font-style: normal; }
+.tm-copy-hero p,.tm-copy-steps p,.tm-copy-details p {
+  margin: 0;
+  color: #bdb7ad;
+  font-size: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.tm-copy-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.tm-copy-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 46px;
+  padding: 12px 16px;
+  border: 1px solid #bca57466;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s,border-color .2s;
+}
+.tm-copy-actions .tm-primary { color: #241e14; background: linear-gradient(120deg,#ecd39e,#d9af62); }
+.tm-copy-actions .tm-secondary { color: #e6d6b6; background: #24242a; }
+.tm-copy-actions button:hover { border-color: #f4d79c; }
+.tm-system-card { min-width: 0; padding: 24px; border: 1px solid #c4ab7845; border-radius: 18px; background: #111318b8; box-shadow: 0 12px 30px #0002; }
+.tm-system-status { display: inline-block; padding: 6px 10px; color: #e2c588; background: #c6a05b14; border: 1px solid #c6a05b40; border-radius: 7px; font-size: 11px; font-weight: 650; }
+.tm-system-card h3 { margin: 20px 0 8px; color: #f5eddd; font-size: 20px; letter-spacing: -.025em; }
+.tm-system-card dl { margin: 20px 0; }
+.tm-system-card dl div { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between; border-top: 1px solid #c3b28e22; padding: 12px 0; font-size: 12px; line-height: 1.5; }
+.tm-system-card dt { color: #b9b3a7; }
+.tm-system-card dd { margin: 0; color: #f0dfbb; font-weight: 600; }
+.tm-system-card .tm-status-note { font-size: 11px; color: #a29d93; }
+.tm-copy-path { margin: 32px 0 24px; }
+.tm-section-heading { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+.tm-section-heading h3 { margin: 0; color: #f2e9d7; font-size: 19px; font-weight: 600; }
+.tm-section-heading > span { color: #a7a298; font-size: 12px; }
+.tm-copy-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.tm-copy-steps li { min-width: 0; padding: 24px; border: 1px solid #b7a37d33; border-radius: 16px; background: #17191ee6; }
+.tm-step-number { color: #cfaf70; font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+.tm-copy-steps h4 { margin: 18px 0 10px; color: #ede5d5; font-size: 16px; }
+.tm-copy-steps p { font-size: 13px; }
+.tm-copy-details { border: 1px solid #b7a37d33; border-radius: 16px; background: #14161be6; padding: 0 22px; }
+.tm-copy-details details + details { border-top: 1px solid #b7a37d26; }
+.tm-copy-details summary { cursor: pointer; padding: 18px 0; color: #e2d9c6; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.tm-copy-details details p { padding-bottom: 20px; }
+.tm-copy-details a { color: #edcc8d; text-decoration: underline; text-underline-offset: 3px; }
+.tm-risk-note { margin: 20px 0 0; color: #a9a498; font-size: 12px; line-height: 1.7; }
+@media (max-width:1100px) {
+  .tm-copy-hero { grid-template-columns: minmax(0,1fr); }
+  .tm-copy-steps { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width:600px) {
+  #screen-marketsmaster .mm-trading-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #screen-marketsmaster .mm-trading-tabs .rei-view { width: 100%; min-width: 0; padding: 10px; font-size: 12px; }
+  .tm-copy-hero { border-radius: 18px; padding: 22px 18px; }
+  .tm-system-card { padding: 18px; }
+  .tm-copy-actions { flex-direction: column; }
+  .tm-copy-actions button { width: 100%; }
+}
