@@ -1,0 +1,11 @@
+{
+  "social": { "discord": null, "telegram": null, "whatsapp": null },
+  "feed": [
+    {
+      "category": "platform",
+      "date": "November 3, 2026",
+      "title": "Welcome to your Trading Master workspace",
+      "body": "Your journal, indicators, payment setup, copy-trading requests and community preferences now have their own spaces. Flow Compass, our first multi-timeframe volume indicator, is in owner testing. Official community invitations and the shared trading system will be announced here when ready."
+    }
+  ]
+}

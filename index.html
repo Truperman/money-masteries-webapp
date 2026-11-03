@@ -7583,7 +7583,7 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
 </script>
 <link rel="stylesheet" href="assets/masters.css?v=20261015-gold-city">
 <link rel="stylesheet" href="assets/cinematic.css?v=20261015-gold-city">
-<link rel="stylesheet" href="assets/trading.css?v=20261030-trading">
+<link rel="stylesheet" href="assets/trading.css?v=20261103">
 </head>
 <body>
 <!-- Sitewide ambient 3D background (Spline robot) -- fixed, full-viewport, behind
@@ -10757,15 +10757,18 @@ paintRail();
 
 
       <div class="rei-views mm-trading-tabs" role="tablist" aria-label="Trading Master tools" onkeydown="mmTabKeydown(event)">
-        <button class="rei-view active" id="mmVCopyTrading" role="tab" aria-controls="mmCopyTradingTab" aria-selected="true" onclick="mmViewSwitch('copytrading')">Copy Trading</button>
-        <button class="rei-view" id="mmVOverview" role="tab" aria-controls="mmOverviewTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('overview')">📊 Market Research</button>
-        <button class="rei-view" id="mmVTradingBots" role="tab" aria-controls="mmTradingBotsTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('tradingbots')">🤖 Trading Bots</button>
-        <button class="rei-view" id="mmVIndicators" role="tab" aria-controls="mmIndicatorsTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('indicators')">📐 Indicators</button>
-        <button class="rei-view" id="mmVJournal" role="tab" aria-controls="mmJournalTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('journal')">📓 Trading Journal</button>
-        <button class="rei-view" id="mmVAiTool" role="tab" aria-controls="mmAiToolTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('aitool')">🧠 AI Trade Analyzer</button>
+        <button class="rei-view active" id="mmVFeed" role="tab" aria-controls="mmFeedTab" aria-selected="true" tabindex="0" onclick="mmViewSwitch('feed')">Trading feed</button>
+        <button class="rei-view" id="mmVIndicators" role="tab" aria-controls="mmIndicatorsTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('indicators')">Indicators</button>
+        <button class="rei-view" id="mmVJournal" role="tab" aria-controls="mmJournalTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('journal')">Trading journal</button>
+        <button class="rei-view" id="mmVFunds" role="tab" aria-controls="mmFundsTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('funds')">Funds & Stripe</button>
+        <button class="rei-view" id="mmVCopyTrading" role="tab" aria-controls="mmCopyTradingTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('copytrading')">Copy trading</button>
+        <button class="rei-view" id="mmVSocial" role="tab" aria-controls="mmSocialTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('social')">Community</button>
+        <button class="rei-view" id="mmVOverview" role="tab" aria-controls="mmOverviewTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('overview')">Research</button>
+        <button class="rei-view" id="mmVTradingBots" role="tab" aria-controls="mmTradingBotsTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('tradingbots')">Trading bots</button>
+        <button class="rei-view" id="mmVAiTool" role="tab" aria-controls="mmAiToolTab" aria-selected="false" tabindex="-1" onclick="mmViewSwitch('aitool')">AI analyzer</button>
       </div>
 
-      <div id="mmCopyTradingTab" role="tabpanel" aria-labelledby="mmVCopyTrading" tabindex="0">
+      <div id="mmCopyTradingTab" role="tabpanel" aria-labelledby="mmVCopyTrading" tabindex="0" style="display:none">
         <section class="tm-copy-hero" aria-labelledby="tmCopyTitle">
           <div class="tm-copy-intro">
             <span class="tm-eyebrow">A system. Your account. Your control.</span>
@@ -10844,59 +10847,15 @@ paintRail();
       </div>
 
       <div id="mmIndicatorsTab" role="tabpanel" aria-labelledby="mmVIndicators" tabindex="0" style="display:none">
-        <div class="mm-ind-hero">
-          <div class="mm-ind-hero-badge">⚡ MEMBERS-ONLY</div>
-          <h2 class="mm-ind-hero-title">Specialized Trading Indicators</h2>
-          <p class="mm-ind-hero-sub">Custom-built indicator suite for TradingView &amp; your charting platform of choice — trend, momentum, and volatility signals tuned for real conditions, not textbook backtests.</p>
-          <div id="mmIndicatorsStatus" style="margin-top:14px"></div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:20px">
-          <div class="mm-ind-card">
-            <div class="mm-ind-icon">📈</div>
-            <div class="mk-card-title">Trend Compass</div>
-            <div class="mpm-sub">Multi-timeframe trend direction &amp; strength in one glance — filters out chop before it costs you.</div>
-          </div>
-          <div class="mm-ind-card">
-            <div class="mm-ind-icon">⚡</div>
-            <div class="mk-card-title">Momentum Pulse</div>
-            <div class="mpm-sub">Early momentum shifts with a built-in exhaustion warning, so you're not the last one in.</div>
-          </div>
-          <div class="mm-ind-card">
-            <div class="mm-ind-icon">🌊</div>
-            <div class="mk-card-title">Volatility Bands</div>
-            <div class="mpm-sub">Dynamic support/resistance bands that adapt to current volatility, not a fixed lookback.</div>
-          </div>
-          <div class="mm-ind-card">
-            <div class="mm-ind-icon">🎯</div>
-            <div class="mk-card-title">Entry/Exit Zones</div>
-            <div class="mpm-sub">Highlights high-probability entry and exit zones based on confluence across all three indicators above.</div>
-          </div>
-        </div>
-
-        <div class="mm-ind-plans">
-          <div class="mm-ind-plan">
-            <div class="mm-ind-plan-name">Monthly</div>
-            <div class="mm-ind-plan-price">$47<span>/mo</span></div>
-            <div class="mpm-sub" style="margin:10px 0 16px">Full indicator suite, cancel anytime.</div>
-            <button class="admin-save-btn mm-ind-buy" onclick="mmBuyIndicators('monthly')">Get Access</button>
-          </div>
-          <div class="mm-ind-plan featured">
-            <div class="mm-ind-plan-badge">BEST VALUE</div>
-            <div class="mm-ind-plan-name">Annual</div>
-            <div class="mm-ind-plan-price">$397<span>/yr</span></div>
-            <div class="mpm-sub" style="margin:10px 0 16px">Save ~30% vs monthly — full suite, priority updates.</div>
-            <button class="admin-save-btn mm-ind-buy" onclick="mmBuyIndicators('annual')">Get Access</button>
-          </div>
-        </div>
-        <div class="mpm-sub" style="text-align:center;margin-top:10px;font-size:.72rem">Included free with Elite. Educational tools only — not a signal to buy or sell anything.</div>
+        <section class="tw-card tw-indicator"><span class="tm-eyebrow">THE INDICATOR LAB</span><h2>Flow Compass.<br>Context before action.</h2><p>Purpose-built tools for TradingView. Understand what a signal means, when it appears, and how to use it in your process.</p><span class="tw-status">Flow Compass · Owner testing</span></section>
+        <div class="tw-grid"><article class="tw-card"><span class="tm-eyebrow">01 / UNDERSTAND</span><h3>What it measures</h3><p>Flow Compass combines a configurable timeframe board, volume analysis, VWAP, previous-day levels, confirmed pivots and optional setup hypotheses.</p></article><article class="tw-card"><span class="tm-eyebrow">02 / INSTALL</span><h3>A guided TradingView setup</h3><p>The Lite edition is running in owner testing. The Footprint edition requires TradingView Premium or Ultimate. Member access will be announced in the feed.</p></article><article class="tw-card"><span class="tm-eyebrow">03 / PRACTICE</span><h3>Review signals in context</h3><p>Document a setup in your journal and compare it with the indicator’s stated rules.</p><button type="button" onclick="mmViewSwitch('journal',true)">Open journal →</button></article></div>
       </div>
 
       <div id="mmJournalTab" role="tabpanel" aria-labelledby="mmVJournal" tabindex="0" style="display:none">
         <div class="payout-card">
           <div class="po-title">📓 Log a Trade</div>
           <div class="bm-form-row" style="margin-top:10px">
-            <input id="mmJSymbol" placeholder="Symbol (e.g. AAPL)">
+            <input id="mmJSymbol" placeholder="e.g. MESZ26">
             <select id="mmJSide"><option value="long">Long</option><option value="short">Short</option></select>
             <input id="mmJEntry" placeholder="Entry price" type="number" step="any">
             <input id="mmJExit" placeholder="Exit price (optional)" type="number" step="any">
@@ -10904,7 +10863,7 @@ paintRail();
             <input id="mmJDate" type="date">
           </div>
           <textarea id="mmJNotes" class="ai-chat-input" rows="2" style="width:100%;resize:vertical;margin-top:8px" placeholder="Notes — setup, why you took it, what you'd do differently..."></textarea>
-          <button class="admin-save-btn" style="margin-top:10px" onclick="mmAddJournalEntry()">+ Add Trade</button>
+          <button class="admin-save-btn" style="margin-top:10px" data-mm-nav="1" onclick="mmAddJournalEntry()">+ Add Trade</button>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0" id="mmJournalStats"></div>
@@ -10912,7 +10871,7 @@ paintRail();
         <div class="fm-card">
           <div class="admin-table-wrap">
             <div style="overflow-x:auto"><table class="admin-table">
-              <thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th>Qty</th><th>P&amp;L</th><th>Notes</th><th></th></tr></thead>
+              <thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th>Qty</th><th>Move × size</th><th>Notes</th><th></th></tr></thead>
               <tbody id="mmJournalBody"><tr><td colspan="9" class="mpm-sub">No trades logged yet.</td></tr></tbody>
             </table></div>
           </div>
@@ -17165,7 +17124,7 @@ var MM_GENIE_SCREEN_HELP = {
   universitymaster:  "University Master — video courses (day trading, real estate, e-commerce), the Revalidation service tab, and the Impact webapp tab.",
   mystoremaster:     "My Store Master — the member's print-on-demand store: design/upload products, manage orders, export a Shopify CSV.",
   reimaster:         "Real Estate Master — search distressed-property leads by state/county/city, run the Deal Analyzer, view saved leads and public property/market data.",
-  marketsmaster:     "Trading Master — its Copy Trading tab explains a planned shared trading system. Enrollment is not open, no provider is connected, and this page does not place trades. Never claim a member is copying trades or promise returns. The owner still needs to supply the system and broker. Market Research offers live crypto/forex/stock/futures data plus AI market Q&A. Also has a 🤖 Trading Bots tab with TWO free downloadable Python bots (EVAL_PASS_BOT_v1.1.zip and TEST_BOT_v0.1.zip) for running your OWN Topstep $50K Combine evaluation locally, using your own Topstep API key — neither is run by us, both start in safe/dry-run mode, and neither has a proven trading edge yet (only their risk engines are tested). If asked about them, describe them honestly and point to that tab rather than claiming either is a guaranteed-profit tool. You (Genie) can walk them through downloading, installing, and troubleshooting either one step by step — see the detailed support knowledge included below when relevant.",
+  marketsmaster:     "Trading Master — dedicated Feed, Indicators, Trading Journal, Funds & Stripe, Copy Trading and Community tabs. Flow Compass is in owner testing; do not claim member access or invite-only publication is active. Members can save copy-trading enrollment requests for owner review, not activate trades. Stripe and brokerage balances are separate; neither live balance feed is integrated here. Social invitations are pending. No copy provider is connected, and this page does not place trades. Never claim a member is copying trades or promise returns. The owner still needs to supply the system and broker. Market Research offers live crypto/forex/stock/futures data plus AI market Q&A. Also has a 🤖 Trading Bots tab with TWO free downloadable Python bots (EVAL_PASS_BOT_v1.1.zip and TEST_BOT_v0.1.zip) for running your OWN Topstep $50K Combine evaluation locally, using your own Topstep API key — neither is run by us, both start in safe/dry-run mode, and neither has a proven trading edge yet (only their risk engines are tested). If asked about them, describe them honestly and point to that tab rather than claiming either is a guaranteed-profit tool. You (Genie) can walk them through downloading, installing, and troubleshooting either one step by step — see the detailed support knowledge included below when relevant.",
   creativemaster:    "Creative Master — AI video generation (describe a clip, get a video back), a video library, and the Production Master tab (website/domain/software requests).",
   proshubmaster:     "ProsHub Master — the member's CRM (clients/projects/invoices/leads pipeline), a Conversations tab logging every AI-handled call/text, real social posting (Facebook, Instagram, TikTok, X, LinkedIn, YouTube) once they connect an account, and the Administrative Master tab. Social posting is open to every member regardless of plan but IS a separately billed usage fee (roughly $6/mo per connected account after the first 2 platform-wide, which are free) — mention that honestly if asked. Use the social_publish_post action to actually post for them — always confirm first since it's public and immediate.",
   communitymaster:   "Community Master — the live member feed, plus a link out to BizBuzz.",
@@ -18446,6 +18405,9 @@ function renderMarketsMaster(){
 /* ── Trading Master: tab switching (Overview / Copy Bot / Indicators / Journal / AI Tool) ── */
 function mmViewSwitch(which, focusPanel){
   var map = {
+    feed: { panel:'mmFeedTab', btn:'mmVFeed' },
+    funds: { panel:'mmFundsTab', btn:'mmVFunds' },
+    social: { panel:'mmSocialTab', btn:'mmVSocial' },
     copytrading: { panel:'mmCopyTradingTab', btn:'mmVCopyTrading' },
     overview:    { panel:'mmOverviewTab',    btn:'mmVOverview' },
     tradingbots: { panel:'mmTradingBotsTab', btn:'mmVTradingBots' },
@@ -18465,7 +18427,7 @@ function mmViewSwitch(which, focusPanel){
     }
   });
   if (focusPanel) document.getElementById(map[which].panel)?.focus({preventScroll:true});
-  if (which === 'indicators' && typeof mmLoadIndicatorsStatus === 'function') mmLoadIndicatorsStatus();
+  if (window.tmWorkspaceTab) window.tmWorkspaceTab(which);
   if (which === 'journal' && typeof mmLoadJournal === 'function') mmLoadJournal();
 }
 window.mmViewSwitch = mmViewSwitch;
@@ -18488,6 +18450,7 @@ async function mmLoadJournal(){
   try {
     const res = await window.callJournalList();
     const trades = (res && res.trades) || [];
+    if(document.getElementById('twJournalStatus')) document.getElementById('twJournalStatus').textContent='Journal loaded from your account.';
     const esc = s => String(s == null ? '' : s).replace(/</g, '&lt;');
     if (!trades.length) {
       if (body) body.innerHTML = '<tr><td colspan="9" class="mpm-sub">No trades logged yet.</td></tr>';
@@ -18507,12 +18470,12 @@ async function mmLoadJournal(){
         ['Total Trades', trades.length],
         ['Closed', closed],
         ['Win Rate', closed ? winRate + '%' : '—'],
-        ['Total P&L', '$' + totalPnl.toLocaleString(undefined, { maximumFractionDigits: 2 })],
+        ['Price move × size', totalPnl.toLocaleString(undefined, { maximumFractionDigits: 2 })],
       ].map(([label, val]) => '<div class="mk-card" style="padding:14px;text-align:center"><div style="font-size:.7rem;color:#8b93a7;text-transform:uppercase">' + label + '</div><div style="font-size:1.3rem;font-weight:800;margin-top:4px">' + val + '</div></div>').join('');
     }
     if (body) {
       body.innerHTML = trades.map(t => {
-        const pnlStr = t._pnl != null ? ('$' + t._pnl.toLocaleString(undefined, { maximumFractionDigits: 2 })) : '—';
+        const pnlStr = t._pnl != null ? t._pnl.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—';
         const pnlColor = t._pnl > 0 ? '#22c55e' : t._pnl < 0 ? '#ef4444' : '#8b93a7';
         return '<tr><td>' + esc(t.date || '') + '</td><td>' + esc(t.symbol || '') + '</td><td>' + esc(t.side || '') + '</td>' +
           '<td>' + (t.entry != null ? t.entry : '—') + '</td><td>' + (t.exit != null ? t.exit : '—') + '</td><td>' + (t.qty != null ? t.qty : '—') + '</td>' +
@@ -18520,7 +18483,7 @@ async function mmLoadJournal(){
           '<td><button class="rei-btn ghost" style="padding:4px 10px;font-size:.72rem" onclick="mmDeleteJournalEntry(\'' + t.id + '\')">Remove</button></td></tr>';
       }).join('');
     }
-  } catch (e) { console.log('mmLoadJournal:', e); }
+  } catch (e) { if(document.getElementById('twJournalStatus')) document.getElementById('twJournalStatus').textContent='Your journal could not load. '+(e.message||'Try again.'); }
 }
 window.mmLoadJournal = mmLoadJournal;
 
@@ -18529,12 +18492,13 @@ async function mmAddJournalEntry(){
   if (!symbol) { if (typeof showNotifToast === 'function') showNotifToast('Symbol required', 'Enter a ticker or symbol before adding the trade.'); return; }
   const entry = {
     symbol, side: document.getElementById('mmJSide').value,
-    entry: parseFloat(document.getElementById('mmJEntry').value) || null,
-    exit: parseFloat(document.getElementById('mmJExit').value) || null,
-    qty: parseFloat(document.getElementById('mmJQty').value) || null,
+    entry: (document.getElementById('mmJEntry').value.trim() === '' ? null : Number(document.getElementById('mmJEntry').value)),
+    exit: (document.getElementById('mmJExit').value.trim() === '' ? null : Number(document.getElementById('mmJExit').value)),
+    qty: (document.getElementById('mmJQty').value.trim() === '' ? null : Number(document.getElementById('mmJQty').value)),
     date: document.getElementById('mmJDate').value || new Date().toISOString().slice(0, 10),
     notes: document.getElementById('mmJNotes').value || '',
   };
+  if (!Number.isFinite(entry.entry) || entry.entry <= 0 || !Number.isFinite(entry.qty) || entry.qty <= 0 || (entry.exit !== null && (!Number.isFinite(entry.exit) || entry.exit < 0))) { if(typeof showNotifToast==='function') showNotifToast('Check trade details','Enter a positive entry price and quantity, and a valid exit price.'); return; }
   try {
     await window.callJournalAdd(entry);
     ['mmJSymbol', 'mmJEntry', 'mmJExit', 'mmJQty', 'mmJNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -27898,5 +27862,6 @@ function reiCalc(){
 </script>
 <script src="assets/masters.js?v=20261030-trading"></script>
 <script src="assets/cinematic.js?v=20261015-gold-city"></script>
+<script src="assets/trading-workspace.js?v=20261103"></script>
 </body>
 </html>
