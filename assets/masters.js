@@ -32,7 +32,7 @@
     },
     {
       id: "universitymaster",
-      name: "University Master",
+      name: "University Tools",
       category: "LEARN",
       icon: "↗",
       color: "#b4cbff",
@@ -42,7 +42,7 @@
     },
     {
       id: "mystoremaster",
-      name: "My Store Master",
+      name: "Ecommerce Master",
       category: "SELL",
       icon: "▣",
       color: "#f5cb8f",
@@ -52,7 +52,7 @@
     },
     {
       id: "creativemaster",
-      name: "Creative Master",
+      name: "Creative Tools",
       category: "CREATE",
       icon: "✳",
       color: "#cbb2ef",
@@ -62,7 +62,7 @@
     },
     {
       id: "proshubmaster",
-      name: "ProsHub Master",
+      name: "ProsHub Tools",
       category: "GROW",
       icon: "⌘",
       color: "#e5c67e",
@@ -72,7 +72,7 @@
     },
     {
       id: "communitymaster",
-      name: "Community Master",
+      name: "Community Tools",
       category: "CONNECT",
       icon: "◎",
       color: "#e5b3c3",
@@ -102,7 +102,7 @@
     },
     {
       id: "saasmaster",
-      name: "SaaS Master",
+      name: "Website Tools",
       category: "BUILD",
       icon: "⟨/⟩",
       color: "#d4b3e9",
@@ -112,7 +112,7 @@
     },
     {
       id: "geniemaster",
-      name: "Genie Agent Master",
+      name: "Genie Agent Tools",
       category: "ASSIST",
       icon: "✦",
       color: "#f3bb8d",
@@ -183,6 +183,14 @@
     }
     window.showScreen?.(route);
   }
+  function focusNavigation() {
+    const main = $("#appLayout > .main");
+    const nav = document.createElement("nav");
+    nav.className = "mm-focus-nav";
+    nav.setAttribute("aria-label", "Featured Masters");
+    nav.innerHTML = [["reimaster","▥","Real Estate Master","Find your next opportunity"],["marketsmaster","⌁","Trading Master","Study your setup"],["mystoremaster","▣","Ecommerce Master","Build your storefront"]].map(([route,icon,name,sub])=>'<button type="button" data-mm-action="navigate" data-route="'+route+'"><span class="mm-focus-icon" aria-hidden="true">'+icon+'</span><span><strong>'+name+'</strong><small>'+sub+'</small></span><span class="mm-focus-arrow" aria-hidden="true">↗</span></button>').join("");
+    main.prepend(nav);
+  }
   function enhanceControls(root = document) {
     root
       .querySelectorAll(".nav-item,.bank-tab,.dash-tab,.auth-tab,.qa-tile,.genie-fab-quick-btn,.nud-item,.nav-brand,.site-lang-btn")
@@ -212,14 +220,23 @@
     section.id = "mmHome";
     section.className = "mm-home";
     section.innerHTML = `<div class="mm-page-head"><div><div class="mm-eyebrow">YOUR BUSINESS WORKSPACE</div><p id="mmWelcome">Good to see you. Let’s make your next move count.</p></div><span class="mm-tag">Learn · Build · Grow</span></div>
-      <section class="mm-hero"><div><div class="mm-eyebrow">SMALL STEPS. REAL PROGRESS.</div><h1>Build something<br>that <span>earns.</span></h1><p>Your ideas deserve a working plan. Use your Masters to learn a skill, create an offer, and build a business—one useful step at a time.</p><div class="mm-actions"><button class="mm-btn primary" data-mm-action="navigate" data-route="businessautomation">Meet your agent team <span>↗</span></button><button class="mm-btn" data-mm-action="explore">Explore the Masters ↓</button></div></div><div class="mm-scene" aria-hidden="true"><div class="mm-scene-stack"><div class="mm-slab">M<span style="font-size:25px;align-self:center">↗</span></div><div class="mm-slab"></div><div class="mm-slab"></div></div><div class="mm-orbit-label a"><i></i>Ideas → action</div><div class="mm-orbit-label b">A team behind your next move</div></div></section>
+      <section class="mm-hero"><div><div class="mm-eyebrow">SMALL STEPS. REAL PROGRESS.</div><h1>Build something<br>that <span>earns.</span></h1><p>Your ideas deserve a working plan. Choose a Master, then use your tools to learn a skill, create an offer, and build a business—one useful step at a time.</p><div class="mm-actions"><button class="mm-btn primary" data-mm-action="navigate" data-route="businessautomation">Meet your agent team <span>↗</span></button><button class="mm-btn" data-mm-action="explore">Explore Masters & Tools ↓</button></div></div><div class="mm-scene" aria-hidden="true"><div class="mm-scene-stack"><div class="mm-slab">M<span style="font-size:25px;align-self:center">↗</span></div><div class="mm-slab"></div><div class="mm-slab"></div></div><div class="mm-orbit-label a"><i></i>Ideas → action</div><div class="mm-orbit-label b">A team behind your next move</div></div></section>
       <div class="mm-overview"><article><small>Your membership</small><strong id="mmPlan">—</strong><span>Tools for your next stage</span></article><article><small>Recorded earnings</small><strong id="mmEarned">$0.00</strong><span>From your account history</span></article><article><small>Your next move</small><strong>One clear goal</strong><span>Start small. Measure the result.</span></article></div>
-      <div class="mm-section-head"><div><h2>From idea to your first offer</h2><p>A practical path through the tools.</p></div></div><div class="mm-path"><button data-mm-action="navigate" data-route="universitymaster"><span class="step">01 / LEARN</span><strong>Choose a useful skill</strong><small>Start with University Master →</small></button><button data-mm-action="navigate" data-route="creativemaster"><span class="step">02 / CREATE</span><strong>Make your offer tangible</strong><small>Build with Creative Master →</small></button><button data-mm-action="navigate" data-route="mystoremaster"><span class="step">03 / LAUNCH</span><strong>Give customers a next step</strong><small>Open My Store Master →</small></button><button data-mm-action="navigate" data-route="businessautomation"><span class="step">04 / GROW</span><strong>Build a repeatable process</strong><small>Plan with Business Automation →</small></button></div>
-      <div class="mm-section-head" id="mmMastersHeading"><div><h2>Your Masters</h2><p>The right tool for what you’re building.</p></div><label><span class="sr-only" style="position:absolute;clip:rect(0,0,0,0)">Find a Master</span><input class="mm-search" id="mmMasterSearch" placeholder="Find a Master…" type="search"></label></div><div class="mm-master-grid">${MASTERS.map((m) => `<button class="mm-master-card" data-mm-action="navigate" data-route="${m.id}" data-search="${esc((m.name + " " + m.text).toLowerCase())}" style="--icon-color:${m.color}"><span class="mm-card-top"><span class="mm-master-icon" aria-hidden="true">${m.icon}</span><span class="mm-tag ${m.id === "businessautomation" ? "featured" : ""}">${m.tag}</span></span><h3>${m.name}</h3><p>${m.text}</p><span class="mm-card-bottom"><span>${m.category}</span><span aria-hidden="true">↗</span></span></button>`).join("")}</div><p id="mmNoMasters" class="mm-muted" hidden>No Masters match your search.</p>`;
+      <div class="mm-section-head"><div><h2>From idea to your first offer</h2><p>A practical path through the tools.</p></div></div><div class="mm-path"><button data-mm-action="navigate" data-route="universitymaster"><span class="step">01 / LEARN</span><strong>Choose a useful skill</strong><small>Start with University Tools →</small></button><button data-mm-action="navigate" data-route="creativemaster"><span class="step">02 / CREATE</span><strong>Make your offer tangible</strong><small>Build with Creative Tools →</small></button><button data-mm-action="navigate" data-route="mystoremaster"><span class="step">03 / LAUNCH</span><strong>Give customers a next step</strong><small>Open Ecommerce Master →</small></button><button data-mm-action="navigate" data-route="businessautomation"><span class="step">04 / GROW</span><strong>Build a repeatable process</strong><small>Plan with Business Automation →</small></button></div>
+      <div class="mm-section-head" id="mmMastersHeading"><div><h2>Your Tools</h2><p>The right tool for what you’re building.</p></div><label><span class="sr-only" style="position:absolute;clip:rect(0,0,0,0)">Find a tool</span><input class="mm-search" id="mmMasterSearch" placeholder="Find a tool…" type="search"></label></div><div class="mm-master-grid">${MASTERS.map((m) => `<button class="mm-master-card" data-mm-action="navigate" data-route="${m.id}" data-search="${esc((m.name + " " + m.text).toLowerCase())}" style="--icon-color:${m.color}"><span class="mm-card-top"><span class="mm-master-icon" aria-hidden="true">${m.icon}</span><span class="mm-tag ${m.id === "businessautomation" ? "featured" : ""}">${m.tag}</span></span><h3>${m.name}</h3><p>${m.text}</p><span class="mm-card-bottom"><span>${m.category}</span><span aria-hidden="true">↗</span></span></button>`).join("")}</div><p id="mmNoMasters" class="mm-muted" hidden>No tools match your search.</p>`;
     area.prepend(section);
+    const featured = document.createElement("section");
+    featured.className = "mm-featured-masters";
+    featured.innerHTML = '<div class="mm-section-head"><div><h2>Three Masters. Choose your focus.</h2><p>Real estate, trading, and ecommerce — with supporting tools when you need them.</p></div></div><div class="mm-master-grid mm-featured-grid"></div>';
+    ["reimaster","marketsmaster","mystoremaster"].forEach(route => {
+      const card = section.querySelector('.mm-master-card[data-route="'+route+'"]');
+      card.classList.add("mm-primary-card");
+      featured.querySelector(".mm-featured-grid").append(card);
+    });
+    section.querySelector(".mm-overview").before(featured);
     $("#mmMasterSearch").addEventListener("input", (e) => {
       let visible = 0;
-      section.querySelectorAll(".mm-master-card").forEach((card) => {
+      section.querySelectorAll(".mm-master-card:not(.mm-primary-card)").forEach((card) => {
         card.hidden = !card.dataset.search.includes(
           e.target.value.toLowerCase().trim(),
         );
@@ -658,7 +675,7 @@
     bar.setAttribute("aria-label", "Quick navigation");
     bar.hidden = true;
     bar.innerHTML =
-      '<button data-mm-action="navigate" data-route="dashboard"><span>⌂</span>Home</button><button data-mm-action="menu"><span>▦</span>Masters</button><button data-mm-action="navigate" data-route="businessautomation"><span>◈</span>Automate</button><button data-mm-action="genie" aria-label="Ask Genie" aria-controls="genieFabPanel" aria-expanded="false"><span>✧</span>Genie</button><button data-mm-action="navigate" data-route="account"><span>◎</span>Account</button>';
+      '<button data-mm-action="navigate" data-route="dashboard"><span>⌂</span>Home</button><button data-mm-action="menu"><span>▦</span>Menu</button><button data-mm-action="navigate" data-route="businessautomation"><span>◈</span>Automate</button><button data-mm-action="genie" aria-label="Ask Genie" aria-controls="genieFabPanel" aria-expanded="false"><span>✧</span>Genie</button><button data-mm-action="navigate" data-route="account"><span>◎</span>Account</button>';
     document.body.append(bar);
     const original = window.toggleSidebar;
     let previousFocus = null;
@@ -691,9 +708,13 @@
       window.scrollTo({ top: 0, behavior: "instant" });
       window.toggleSidebar(false);
       document
-        .querySelectorAll(".mm-mobile-bar button[data-route]")
+        .querySelectorAll(".mm-mobile-bar button[data-route],.mm-focus-nav button[data-route]")
         .forEach((b) =>
-          b.classList.toggle("active", b.dataset.route === route),
+          {
+            b.classList.toggle("active", b.dataset.route === route);
+            if (b.dataset.route === route) b.setAttribute("aria-current","page");
+            else b.removeAttribute("aria-current");
+          },
         );
       enhanceControls();
       if (route === "businessautomation") showAutomation();
@@ -879,6 +900,7 @@
   }
   function init() {
     if (!$("#appLayout")) return;
+    focusNavigation();
     home();
     automationScreen();
     adminPanels();

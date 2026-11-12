@@ -1,4 +1,29 @@
 /* Money Masteries workspace, October 2026. Scoped overrides preserve existing tools. */
+/* The three primary Masters stay visible above every workspace, outside Tools. */
+.mm-focus-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0 0 26px; }
+.mm-focus-nav button { display:flex; align-items:center; gap:12px; min-width:0; min-height:86px; padding:16px 18px; text-align:left; cursor:pointer; color:#fff3d7; border:1px solid #efc979a6; border-radius:15px; background:linear-gradient(125deg,#795726ed,#42351fe8 60%,#2d2821ed); box-shadow:inset 0 1px 0 #ffedc342,0 8px 22px #0003; transition:background .2s,box-shadow .2s; }
+.mm-focus-nav button:nth-child(2) { background:linear-gradient(125deg,#535277f2,#363346ed 65%,#29252bed); border-color:#c7b1f3b3; }
+.mm-focus-nav button:nth-child(3) { background:linear-gradient(125deg,#7b493aef,#483228ed 65%,#2e2721ef); border-color:#edb17cb3; }
+.mm-focus-nav button:hover,.mm-focus-nav button.active { box-shadow:inset 0 0 0 1px #ffe6a6,0 8px 26px #d2a24922; }
+.mm-focus-nav button:focus-visible { outline:3px solid #ffe8aa; outline-offset:4px; }
+.mm-focus-nav strong { display:block; color:#fff2d7; font-size:15px; line-height:1.4; }
+.mm-focus-nav small { display:block; color:#e4d7bc; font-size:11px; line-height:1.5; margin-top:3px; }
+.mm-focus-icon { flex-shrink:0; color:#ffe6a3; font-size:27px; }
+.mm-focus-arrow { margin-left:auto; color:#f5dca5; font-size:19px; }
+#appLayout .sidebar .mm-primary-heading { color:#e9c57c; }
+#appLayout .sidebar .mm-primary-nav-item { margin:8px 0; padding:13px 10px; border:1px solid #b8975b88; border-radius:12px; color:#f7e6be; background:linear-gradient(110deg,#674f2bd9,#29251fd9); box-shadow:inset 0 1px 0 #ffebbd1c; }
+#appLayout .sidebar .mm-primary-nav-item::before,#appLayout .sidebar .mm-primary-nav-item::after { display:none; }
+#appLayout .sidebar .mm-primary-nav-item .nav-item-label { color:#ffe6ab; font-weight:750; }
+#appLayout .sidebar .mm-primary-nav-item .nav-item-niche { color:#d5c7aa; }
+#appLayout .sidebar .mm-primary-nav-item.active { background:#765b2d; border-color:#f2cc7d; }
+.mm-featured-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.mm-primary-card { background:linear-gradient(140deg,#56452ce8,#252321f2)!important; border:1px solid #d7b46d99!important; box-shadow:inset 0 1px 0 #fff1,0 18px 35px #0002; }
+.mm-primary-card[data-route="marketsmaster"] { background:linear-gradient(140deg,#454059ec,#25232af2)!important; border-color:#b8a3dd99!important; }
+.mm-primary-card[data-route="mystoremaster"] { background:linear-gradient(140deg,#644335ec,#2d2521f2)!important; border-color:#dcaa7c99!important; }
+.mm-primary-card h3 { color:#ffe8b4!important; }
+.mm-primary-card p { color:#ded7c9!important; }
+@media(max-width:1100px){.mm-focus-nav{gap:8px}.mm-focus-nav button{padding:13px 10px;gap:8px}.mm-focus-nav strong{font-size:13px}.mm-focus-arrow{display:none}}
+@media(max-width:600px){.mm-focus-nav{gap:6px;margin-bottom:22px}.mm-focus-nav button{flex-direction:column;text-align:center;justify-content:center;gap:6px;padding:12px 5px;min-height:104px}.mm-focus-nav strong{font-size:12px}.mm-focus-nav small{display:none}.mm-focus-icon{font-size:22px}.mm-featured-grid{grid-template-columns:minmax(0,1fr)}}
 #screen-admin:not(:has(#admtab-members.active)) .mpm-card:has(#admNewMemberBtn){display:none!important}
 #screen-admin .admin-banner{background:#262522!important;border:1px solid #574f3c!important;padding:20px;border-radius:16px}
 #screen-admin .admin-banner-title{color:#f4e7c9!important}#screen-admin .admin-banner-sub{color:#beb7a8!important}#screen-admin .crown{display:none}#screen-admin .screen-title span{color:#ece9e2!important}
