@@ -1831,3 +1831,22 @@ body.mm-workspace :is(#notifToast, #mmNotice) {
     gap: 4px;
   }
 }
+
+/* Colored shimmer and a compact commerce motion mark. */
+.mm-focus-nav button,.mm-primary-card,.mm-primary-nav-item { --master-glow:#ffda72; position:relative; isolation:isolate; overflow:hidden; }
+.mm-focus-nav [data-route="marketsmaster"],.mm-primary-card[data-route="marketsmaster"],#nav-marketsmaster { --master-glow:#b3a0ff; }
+.mm-focus-nav [data-route="mystoremaster"],.mm-primary-card[data-route="mystoremaster"],#nav-mystoremaster { --master-glow:#ffab86; }
+.mm-focus-nav button::after,.mm-primary-card::after,#appLayout .sidebar .mm-primary-nav-item::after { content:""; display:block; position:absolute; inset:-60% -100%; pointer-events:none; z-index:-1; background:linear-gradient(110deg,transparent 38%,color-mix(in srgb,var(--master-glow) 55%,transparent) 49%,transparent 60%); animation:mm-master-glimmer 7s ease-in-out infinite; }
+.mm-focus-nav button:nth-child(2)::after,.mm-primary-card[data-route="marketsmaster"]::after,#nav-marketsmaster::after { animation-delay:-2.3s!important; }
+.mm-focus-nav button:nth-child(3)::after,.mm-primary-card[data-route="mystoremaster"]::after,#nav-mystoremaster::after { animation-delay:-4.6s!important; }
+.mm-commerce-icon { display:block; width:34px; height:34px; overflow:visible; color:#ffc598; }
+.mm-commerce-bag { transform-origin:20px 25px; animation:mm-commerce-lift 3.8s ease-in-out infinite; }
+.mm-commerce-spark { transform-box:fill-box; transform-origin:center; animation:mm-commerce-spark 3.8s ease-in-out infinite; }
+.mm-commerce-spark.b { animation-delay:-1.9s; }
+#nav-mystoremaster .mm-commerce-icon { width:25px; height:25px; }
+#mainNav .mm-menu-button { display:inline-flex!important; align-items:center; justify-content:center; min-width:42px; min-height:42px; }
+@media(min-width:921px){body.mm-sidebar-collapsed #appLayout>.sidebar{display:none!important}}
+@keyframes mm-master-glimmer { 0%,15%{transform:translateX(-45%)} 55%,100%{transform:translateX(45%)} }
+@keyframes mm-commerce-lift { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-3px) rotate(3deg)} }
+@keyframes mm-commerce-spark { 0%,100%{opacity:.3;transform:scale(.6)} 50%{opacity:1;transform:scale(1.3)} }
+@media(prefers-reduced-motion:reduce){.mm-focus-nav button::after,.mm-primary-card::after,#appLayout .sidebar .mm-primary-nav-item::after,.mm-commerce-bag,.mm-commerce-spark{animation:none!important}.mm-focus-nav button::after,.mm-primary-card::after,#appLayout .sidebar .mm-primary-nav-item::after{opacity:.2;transform:translateX(0)}}

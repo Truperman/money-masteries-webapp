@@ -19,6 +19,7 @@
       style: "currency",
       currency: "USD",
     }).format((Number(cents) || 0) / 100);
+  const ecommerceIcon = `<svg class="mm-commerce-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true"><g class="mm-commerce-bag"><path d="M9 14h22l2 20H7l2-20Z" fill="currentColor" fill-opacity=".2" stroke="currentColor" stroke-width="2"/><path d="M14 15v-4a6 6 0 0 1 12 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m14 25 4 4 8-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></g><circle class="mm-commerce-spark a" cx="33" cy="8" r="2" fill="currentColor"/><circle class="mm-commerce-spark b" cx="6" cy="8" r="1.5" fill="currentColor"/></svg>`;
   const MASTERS = [
     {
       id: "businessautomation",
@@ -188,8 +189,9 @@
     const nav = document.createElement("nav");
     nav.className = "mm-focus-nav";
     nav.setAttribute("aria-label", "Featured Masters");
-    nav.innerHTML = [["reimaster","▥","Real Estate Master","Find your next opportunity"],["marketsmaster","⌁","Trading Master","Study your setup"],["mystoremaster","▣","Ecommerce Master","Build your storefront"]].map(([route,icon,name,sub])=>'<button type="button" data-mm-action="navigate" data-route="'+route+'"><span class="mm-focus-icon" aria-hidden="true">'+icon+'</span><span><strong>'+name+'</strong><small>'+sub+'</small></span><span class="mm-focus-arrow" aria-hidden="true">↗</span></button>').join("");
+    nav.innerHTML = [["reimaster","▥","Real Estate Master","Find your next opportunity"],["marketsmaster","⌁","Trading Master","Study your setup"],["mystoremaster","▣","Ecommerce Master","Build your storefront"]].map(([route,icon,name,sub])=>'<button type="button" data-mm-action="navigate" data-route="'+route+'"><span class="mm-focus-icon" aria-hidden="true">'+(route === 'mystoremaster' ? ecommerceIcon : icon)+'</span><span><strong>'+name+'</strong><small>'+sub+'</small></span><span class="mm-focus-arrow" aria-hidden="true">↗</span></button>').join("");
     main.prepend(nav);
+    $("#nav-mystoremaster .nav-item-icon").innerHTML = ecommerceIcon;
   }
   function enhanceControls(root = document) {
     root
@@ -231,6 +233,7 @@
     ["reimaster","marketsmaster","mystoremaster"].forEach(route => {
       const card = section.querySelector('.mm-master-card[data-route="'+route+'"]');
       card.classList.add("mm-primary-card");
+      if(route === "mystoremaster") card.querySelector(".mm-master-icon").innerHTML = ecommerceIcon;
       featured.querySelector(".mm-featured-grid").append(card);
     });
     section.querySelector(".mm-overview").before(featured);
@@ -661,7 +664,8 @@
     close.setAttribute("aria-label", "Close navigation");
     close.dataset.mmAction = "close-menu";
     sb.prepend(close);
-    sb.setAttribute("aria-label", "Master tools");
+    sb.setAttribute("aria-label", "Masters and Tools");
+    sb.id = "mmSidebar";
     const open = document.createElement("button");
     open.className = "mm-btn mm-menu-button";
     open.type = "button";
@@ -669,6 +673,7 @@
     open.setAttribute("aria-label", "Open navigation");
     open.setAttribute("aria-expanded", "false");
     open.dataset.mmAction = "menu";
+    open.setAttribute("aria-controls","mmSidebar");
     $("#mainNav").prepend(open);
     const bar = document.createElement("nav");
     bar.className = "mm-mobile-bar";
@@ -679,18 +684,35 @@
     document.body.append(bar);
     const original = window.toggleSidebar;
     let previousFocus = null;
+    let desktopCollapsed = false;
+    try { desktopCollapsed = localStorage.getItem("mm-sidebar-collapsed") === "true"; } catch (_) {}
+    function syncMenu() {
+      const desktop = innerWidth > 920;
+      document.body.classList.toggle("mm-sidebar-collapsed", desktop && desktopCollapsed);
+      const expanded = desktop ? !desktopCollapsed : sb.classList.contains("open");
+      document.body.classList.toggle("mm-menu-open", !desktop && expanded);
+      open.setAttribute("aria-expanded",String(expanded));
+      open.setAttribute("aria-label",expanded ? "Collapse navigation" : "Open navigation");
+      open.textContent = desktop && expanded ? "«" : "☰";
+    }
     window.toggleSidebar = function (force) {
-      const was = sb.classList.contains("open");
-      original?.(force);
-      const expanded = sb.classList.contains("open");
-      document.body.classList.toggle("mm-menu-open", expanded);
-      open.setAttribute("aria-expanded", String(expanded));
-      if (expanded && !was) {
-        previousFocus = document.activeElement;
-        close.focus();
+      if (innerWidth > 920) {
+        const expanded = typeof force === "boolean" ? force : desktopCollapsed;
+        desktopCollapsed = !expanded;
+        try { localStorage.setItem("mm-sidebar-collapsed",String(desktopCollapsed)); } catch (_) {}
+        sb.classList.remove("open");
+        $("#sidebarOverlay")?.classList.remove("show");
+        if (!expanded && sb.contains(document.activeElement)) open.focus();
+      } else {
+        const was = sb.classList.contains("open");
+        original?.(force);
+        const expanded = sb.classList.contains("open");
+        if(expanded && !was) { previousFocus=document.activeElement; close.focus(); }
+        if(!expanded && was) previousFocus?.focus?.();
       }
-      if (!expanded && was) previousFocus?.focus?.();
+      syncMenu();
     };
+    syncMenu();
     const show = window.showScreen;
     window.showScreen = function (route) {
       if (
@@ -706,7 +728,7 @@
       }
       show?.(route);
       window.scrollTo({ top: 0, behavior: "instant" });
-      window.toggleSidebar(false);
+      if (innerWidth <= 920) window.toggleSidebar(false);
       document
         .querySelectorAll(".mm-mobile-bar button[data-route],.mm-focus-nav button[data-route]")
         .forEach((b) =>
@@ -760,7 +782,8 @@
       attributeFilter: ["style"],
     });
     window.addEventListener("resize", () => {
-      if (innerWidth > 920) window.toggleSidebar(false);
+      if (innerWidth > 920) { sb.classList.remove("open"); $("#sidebarOverlay")?.classList.remove("show"); }
+      syncMenu();
     });
   }
   function floatingControls() {
