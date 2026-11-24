@@ -1,0 +1,5 @@
+'use strict';
+const {defineSecret}=require('firebase-functions/params');
+const dataSecret=defineSecret('MM_SURPLUS_TRACERFY_KEY');
+function runtime(){const v=require('./runtime').runtime(),{getFirestore}=require('firebase-admin/firestore'),{getAuth}=require('firebase-admin/auth'),{createTracePayments}=require('./trace-payments'),{createSurplusData}=require('./surplus-data');const provider=createSurplusData({db:v.db,billing:v.billing,key:dataSecret.value(),priceCredits:async()=>{throw Error('Use the approved immediate price.');}});const stripe=new(require('stripe-immediate'))(v.config.stripeKey,{apiVersion:'2026-11-18.endive',maxNetworkRetries:2,timeout:20000});return createTracePayments({db:v.db,stripe,pricing:async()=>(await getFirestore().doc('config/pricingEngine/services/surplus-skip-trace').get()).data(),provider:provider.provider,getUser:uid=>getAuth().getUser(uid),eligible:async uid=>{const m=await v.membership.getForUid(uid);if(!require('../membership-access').rights(m).niches.includes('realestate')){const e=Error('Your membership does not include Real Estate.');e.code='permission-denied';throw e;}}});}
+module.exports={runtime,dataSecret};
