@@ -2,6 +2,7 @@
 !Dockerfile
 !nginx.conf
 !index.html
+!compensation.html
 !assets/
 !assets/**
 !downloads/
