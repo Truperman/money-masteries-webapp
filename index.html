@@ -8898,7 +8898,7 @@ var Genie = (function(){
     fetch(FUNNEL_SPEAK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text, lang: lang })
+      body: JSON.stringify({ text: text, lang: lang, voice: window.mmGenieVoiceId ? window.mmGenieVoiceId() : 'cCYjmrGZaI86GUJ7F2Nn' })
     }).then(function(r){
       if(!r.ok) throw new Error("funnel-speak " + r.status);
       return r.blob();
@@ -17691,6 +17691,7 @@ var GENIE_FAB_VOICE_NAMES = {
   woman_en: { label: 'Woman (EN)', id: 'rCuVrCHOUMY3OwyJBJym' },
   british:  { label: 'British', id: 'fATgBRI8wg5KkDFg8vBd' }
 };
+window.mmGenieVoiceId = function(){ return (GENIE_FAB_VOICE_NAMES[_genieFabVoiceGet()] || GENIE_FAB_VOICE_NAMES.default).id; };
 function _genieFabVoiceGet(){
   try {
     var saved = localStorage.getItem(_genieFabPreferenceKey('voice'));
