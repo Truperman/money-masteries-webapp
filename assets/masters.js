@@ -819,7 +819,7 @@
     const menus = [
       ["genieFabLangMenu", "genieFabLangBtn"],
       ["genieFabVoiceMenu", "genieFabVoicePickBtn"],
-    ];
+    ].filter(([menuId, buttonId]) => $("#" + menuId) && $("#" + buttonId));
     const closePickers = () => menus.forEach(([id]) => $("#" + id).classList.remove("open"));
     window.toggleGenieFab = function (force) {
       const wasOpen = panel.classList.contains("open");
@@ -852,7 +852,7 @@
     ]) {
       const original = window[functionName];
       window[functionName] = function (event) {
-        $("#" + otherId).classList.remove("open");
+        $("#" + otherId)?.classList.remove("open");
         original?.(event);
       };
     }
