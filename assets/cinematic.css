@@ -258,3 +258,12 @@ body.mm-motion-paused .screen.active { animation: none !important; opacity: 1; }
   .mm-master-card:hover { transform: none; }
   #appLayout .screen.active { animation: none !important; }
 }
+
+/* Member voice preferences remain visible outside the compact header actions. */
+#genieFabPanel .genie-voice-preferences{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;background:#1b1a20;border-bottom:1px solid #b0935f3b}
+#genieFabPanel .genie-voice-preferences label{font-weight:650;color:#f3ddaf;font-size:13px}
+#genieMemberVoice{min-height:40px;max-width:100%;flex:1 1 170px;background:#28252c;color:#fff;border:1px solid #92794f;border-radius:8px;padding:8px;font:inherit;font-size:13px}
+#genieVoiceSaved{flex-basis:100%;font-size:11px;color:#b7b3be}
+#genieFabPanel .genie-fab-head{gap:10px;flex-wrap:wrap}
+#genieFabPanel .genie-fab-head-actions{flex-wrap:wrap}
+#genieFabLangMenu{top:calc(100% + 8px);bottom:auto;max-height:min(330px,50dvh);overflow:auto}

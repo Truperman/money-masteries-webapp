@@ -7574,11 +7574,11 @@ div[style*="grid-template-columns:repeat(auto-fit,minmax(240px"]{ grid-template-
   }catch(e){}
 })();
 </script>
-<link rel="stylesheet" href="assets/courses/surplus/course.css?v=20261124">
+<link rel="stylesheet" href="assets/courses/surplus/course.css?v=20261124-ugc-badge">
 <link rel="stylesheet" href="assets/surplus-finder/finder.css?v=20261124">
 <link rel="stylesheet" href="assets/compensation-share.css?v=20261124">
 <link rel="stylesheet" href="assets/masters.css?v=20261111-niches">
-<link rel="stylesheet" href="assets/cinematic.css?v=20261015-gold-city">
+<link rel="stylesheet" href="assets/cinematic.css?v=20261124-genie-voice">
 <link rel="stylesheet" href="assets/trading.css?v=20261103">
 </head>
 <body>
@@ -9697,19 +9697,20 @@ paintRail();
             <button type="button" data-lang="ko" onclick="genieFabSetChatLang('ko')">🇰🇷 한국어</button>
           </div>
         </div>
-        <div class="genie-fab-lang-wrap">
-          <button class="genie-fab-icon-btn genie-fab-lang-btn" id="genieFabVoicePickBtn" onclick="genieFabToggleVoiceMenu(event)" title="Change Genie's speaking voice" type="button">🎙️</button>
-          <div class="genie-fab-lang-menu" id="genieFabVoiceMenu">
-            <button type="button" data-voice="default" onclick="genieFabSetVoice('default')">🎧 Default (matches language)</button>
-            <button type="button" data-voice="voice1" onclick="genieFabSetVoice('voice1')">🗣️ Voice 1</button>
-            <button type="button" data-voice="woman_en" onclick="genieFabSetVoice('woman_en')">👩 Woman (English)</button>
-            <button type="button" data-voice="british" onclick="genieFabSetVoice('british')">🇬🇧 British</button>
-          </div>
-        </div>
         <button class="genie-fab-icon-btn" id="genieFabVoiceBtn" onclick="genieFabToggleVoice()" title="Turn Genie's voice on/off" type="button">🔊</button>
         <button class="genie-fab-icon-btn" onclick="if(confirm('Start a new conversation? This clears what Genie remembers about your past chats.'))genieClearMemory()" title="Start a new conversation" type="button">↺</button>
         <button class="genie-fab-icon-btn" onclick="toggleGenieFab(false)" title="Close" type="button">✕</button>
       </div>
+    </div>
+    <div class="genie-voice-preferences">
+      <label for="genieMemberVoice">Genie's voice</label>
+      <select id="genieMemberVoice" onchange="genieFabSetVoice(this.value)" aria-describedby="genieVoiceSaved">
+        <option value="default">Genie · new default</option>
+        <option value="language">Match chat language</option>
+        <option value="woman_en">Woman · English</option>
+        <option value="british">British</option>
+      </select>
+      <span id="genieVoiceSaved" role="status">Saved on this device for your account.</span>
     </div>
     <div class="genie-fab-sub" id="genieFabSub">Tell me what you want done — I can click, type, and navigate for you.</div>
     <div class="ai-chat-log" id="genieFabLog"></div>
@@ -17151,8 +17152,7 @@ function genieFabBubble(text, who, opts) {
 }
 
 // ── GENIE VOICE — ElevenLabs only, same as the pre-signup funnel Genie.
-// Per David: the ONLY voice that may ever come out of Genie anywhere on the
-// site is the ElevenLabs voice -- no browser SpeechSynthesis fallback. This
+// Members choose among the server-approved ElevenLabs voices below. This
 // hits the same public /funnel-speak endpoint on the genie-railway backend
 // (see genie_voice.py) the funnel uses, which always calls ElevenLabs
 // directly. Follows the site-wide language switcher via _genieFabSpeechLang()
@@ -17163,13 +17163,16 @@ function genieFabBubble(text, who, opts) {
 // header lets a member mute it, saved per-browser so it sticks between visits.
 var GENIE_FAB_SPEAK_URL = "https://money-masteries-webapp-genie-production.up.railway.app/funnel-speak";
 var _genieFabAudio = null;
-function _genieFabVoiceOn(){ try { return localStorage.getItem('genieVoiceOff') !== '1'; } catch(e){ return true; } }
+var _genieFabAudioEpoch = 0;
+function _genieFabPreferenceKey(name){ return 'mm-genie:'+((window.currentUser && window.currentUser.uid)||'guest')+':'+name; }
+function _genieFabVoiceOn(){ try { return localStorage.getItem(_genieFabPreferenceKey('muted')) !== '1'; } catch(e){ return true; } }
 function _genieFabStopAudio(){
+  _genieFabAudioEpoch++;
   if (_genieFabAudio) { try { _genieFabAudio.pause(); } catch(e){} _genieFabAudio = null; }
 }
 function genieFabToggleVoice(){
   var on = !_genieFabVoiceOn();
-  try { localStorage.setItem('genieVoiceOff', on ? '0' : '1'); } catch(e){}
+  try { localStorage.setItem(_genieFabPreferenceKey('muted'), on ? '0' : '1'); } catch(e){}
   var btn = document.getElementById('genieFabVoiceBtn');
   if (btn) btn.textContent = on ? '🔊' : '🔇';
   if (!on) _genieFabStopAudio();
@@ -17184,6 +17187,7 @@ function genieFabSpeak(text){
     .replace(/\s+/g, ' ').trim();
   if (!clean) return;
   _genieFabStopAudio(); // don't stack replies — newest reply always wins
+  var speechEpoch = _genieFabAudioEpoch;
   var langPrefix = (_genieFabSpeechLang ? _genieFabSpeechLang() : 'en-US').split('-')[0].toLowerCase();
   var lang = langPrefix === 'es' ? 'es' : 'en'; // ElevenLabs voice pool is EN/ES only for now
   var voiceChoice = (GENIE_FAB_VOICE_NAMES[_genieFabVoiceGet()] || {}).id || null;
@@ -17198,7 +17202,7 @@ function genieFabSpeak(text){
     return r.blob();
   }).then(function(blob){
     if (!blob || blob.size < 200) throw new Error('empty audio');
-    if (!_genieFabVoiceOn()) return; // got muted while the request was in flight
+    if (!_genieFabVoiceOn() || speechEpoch !== _genieFabAudioEpoch) return;
     var url = URL.createObjectURL(blob);
     var audio = new Audio(url);
     _genieFabAudio = audio;
@@ -17674,29 +17678,32 @@ document.addEventListener('click', function(e){
 });
 
 // ── GENIE VOICE PICKER — lets a member choose which ElevenLabs voice
-// Genie speaks replies in inside the Ask Genie chat window. "default"
-// keeps the existing behavior (English/Spanish voice matched to Genie's
-// current chat language); the rest are fixed voice IDs David picked,
+// Genie speaks replies in inside the Ask Genie chat window. The new default
+// uses Voice 1; members can instead match the chat language or select another
+// server-approved voice. The choices are fixed voice IDs,
 // sent straight through to the /funnel-speak backend (see genie_voice.py
 // on the genie-railway service) which validates them against its own
 // whitelist before calling ElevenLabs.
 var GENIE_FAB_VOICE_NAMES = {
-  default:  { label: 'Default', id: null },
+  default:  { label: 'Genie · new default', id: 'cCYjmrGZaI86GUJ7F2Nn' },
+  language: { label: 'Match chat language', id: null },
   voice1:   { label: 'Voice 1', id: 'cCYjmrGZaI86GUJ7F2Nn' },
   woman_en: { label: 'Woman (EN)', id: 'rCuVrCHOUMY3OwyJBJym' },
   british:  { label: 'British', id: 'fATgBRI8wg5KkDFg8vBd' }
 };
 function _genieFabVoiceGet(){
   try {
-    var saved = localStorage.getItem('genieFabVoice');
+    var saved = localStorage.getItem(_genieFabPreferenceKey('voice'));
     if (saved && GENIE_FAB_VOICE_NAMES[saved]) return saved;
   } catch(e){}
   return 'default';
 }
 function _genieFabVoiceSet(code){
-  try { localStorage.setItem('genieFabVoice', code); } catch(e){}
+  try { localStorage.setItem(_genieFabPreferenceKey('voice'), code); } catch(e){}
 }
 function genieFabRenderVoiceBtn(){
+  var picker = document.getElementById('genieMemberVoice');
+  if (picker) picker.value = _genieFabVoiceGet() === 'voice1' ? 'default' : _genieFabVoiceGet();
   var menu = document.getElementById('genieFabVoiceMenu');
   if (menu) {
     var code = _genieFabVoiceGet();
@@ -17718,6 +17725,7 @@ function genieFabToggleVoiceMenu(ev){
 }
 window.genieFabSetVoice = function(code){
   if (!GENIE_FAB_VOICE_NAMES[code]) return;
+  _genieFabStopAudio();
   _genieFabVoiceSet(code);
   genieFabRenderVoiceBtn();
   genieFabCloseVoiceMenu();
@@ -17729,6 +17737,12 @@ document.addEventListener('click', function(e){
   var btn = document.getElementById('genieFabVoicePickBtn');
   if (btn && (e.target === btn || btn.contains(e.target))) return;
   genieFabCloseVoiceMenu();
+});
+document.addEventListener('mm:auth', function(){
+  _genieFabStopAudio();
+  genieFabRenderVoiceBtn();
+  var btn = document.getElementById('genieFabVoiceBtn');
+  if (btn) btn.textContent = _genieFabVoiceOn() ? '🔊' : '🔇';
 });
 try { genieFabRenderVoiceBtn(); } catch(e){}
 try { genieFabRenderLangBtn(); } catch(e){}
@@ -27758,7 +27772,7 @@ function reiCalc(){
 <script src="assets/member-numbers.js?v=20261123"></script>
 <script src="assets/member-access.js?v=20261124"></script>
 <script src="assets/compensation-share.js?v=20261124"></script>
-<script src="assets/courses/surplus/course.js?v=20261124"></script>
+<script src="assets/courses/surplus/course.js?v=20261124-ugc-badge"></script>
 <script src="assets/surplus-finder/finder.js?v=20261124"></script>
 </body>
 </html>

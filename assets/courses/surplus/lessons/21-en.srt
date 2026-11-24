@@ -1,0 +1,129 @@
+1
+00:00:00,000 --> 00:00:04,160
+Think about this: What may a course
+exercise agent do automatically?
+
+2
+00:00:04,840 --> 00:00:06,000
+Let’s work through it together.
+
+3
+00:00:06,600 --> 00:00:11,780
+I'm Doctor Gainz. Lesson 21: Protect
+records and review every
+
+4
+00:00:11,780 --> 00:00:16,620
+external action. Separate education
+content from private case files.
+
+5
+00:00:17,340 --> 00:00:21,320
+Keep client materials in an appropriately
+protected workspace with access
+
+6
+00:00:21,320 --> 00:00:23,900
+limited to the people authorized for that
+task.
+
+7
+00:00:24,540 --> 00:00:28,920
+Retain only what is needed, respect
+applicable retention requirements, and
+
+8
+00:00:28,920 --> 00:00:31,140
+track who can view or share the file.
+
+9
+00:00:31,700 --> 00:00:34,360
+Do not place client documents in public
+downloads.
+
+10
+00:00:35,180 --> 00:00:40,200
+Require human review before any message,
+submission, signature request, data
+
+11
+00:00:40,200 --> 00:00:43,380
+purchase, or status statement goes outside
+the workspace.
+
+12
+00:00:44,100 --> 00:00:48,680
+Check the recipient, purpose, facts,
+authority, and applicable use
+
+13
+00:00:48,680 --> 00:00:53,180
+restrictions. A task queue should display
+a blocked item when a prerequisite
+
+14
+00:00:53,180 --> 00:00:56,060
+is missing, rather than treating silence
+as approval.
+
+15
+00:00:56,660 --> 00:01:00,960
+If permission is withdrawn or a mistake is
+discovered, stop affected work,
+
+16
+00:01:01,320 --> 00:01:04,840
+preserve the necessary audit history, and
+follow the applicable correction
+
+17
+00:01:04,840 --> 00:01:08,940
+and retention process. A useful AI
+assistant can pause.
+
+18
+00:01:09,800 --> 00:01:13,700
+Automation speed is not a reason to skip
+verification or consent.
+
+19
+00:01:14,580 --> 00:01:15,480
+Pause and try this.
+
+20
+00:01:16,160 --> 00:01:20,120
+Design a five-item pre-send checklist for
+a fictional case update.
+
+21
+00:01:20,520 --> 00:01:23,820
+Include a way to halt the task after
+authorization changes.
+
+22
+00:01:24,540 --> 00:01:28,760
+Quick knowledge check. What may a course
+exercise agent do automatically?
+
+23
+00:01:28,760 --> 00:01:33,820
+The answer: Organize the supplied
+fictional documents within its stated
+
+24
+00:01:33,820 --> 00:01:38,280
+scope. External and sensitive actions
+require their own authority and
+
+25
+00:01:38,280 --> 00:01:41,400
+review; a learning task does not grant it.
+
+26
+00:01:41,400 --> 00:01:44,500
+Keep the source, the date, and the
+unknowns visible.
+
+27
+00:01:45,100 --> 00:01:46,140
+I'll see you in the next lesson.

@@ -1,0 +1,133 @@
+1
+00:00:00,000 --> 00:00:04,360
+Piensa en esto: ¿Qué debe producir la IA
+cuando falta un importe?
+
+2
+00:00:04,900 --> 00:00:06,040
+Vamos a entenderlo juntos.
+
+3
+00:00:06,580 --> 00:00:07,620
+Soy el Doctor Gainz.
+
+4
+00:00:08,240 --> 00:00:12,480
+Lección 19: Usa IA para organizar
+documentos autorizados.
+
+5
+00:00:13,080 --> 00:00:16,760
+Empieza con un propósito permitido y el
+mínimo material autorizado.
+
+6
+00:00:17,300 --> 00:00:20,260
+Por ejemplo: Indexa estos documentos
+ficticios.
+
+7
+00:00:20,260 --> 00:00:23,400
+Extrae fecha y concepto de cada cifra.
+
+8
+00:00:23,400 --> 00:00:27,600
+Cita la página. Escribe desconocido cuando
+falten datos.
+
+9
+00:00:28,260 --> 00:00:31,520
+No deduzcas propietarios, contactos ni
+derechos legales.
+
+10
+00:00:32,000 --> 00:00:35,860
+Así conviertes un asistente general en una
+ayuda administrativa acotada.
+
+11
+00:00:36,340 --> 00:00:38,520
+Comprueba los resultados con los
+originales.
+
+12
+00:00:39,000 --> 00:00:43,800
+La IA puede confundir oferta y saldo,
+mezclar personas, omitir una condición
+
+13
+00:00:43,800 --> 00:00:45,460
+de fecha o inventar un campo.
+
+14
+00:00:46,040 --> 00:00:48,460
+Mantén columnas de prueba y estado de
+revisión.
+
+15
+00:00:48,960 --> 00:00:51,620
+Un puntaje de confianza no sustituye una
+fuente.
+
+16
+00:00:51,620 --> 00:00:55,720
+Usa almacenamiento privado adecuado para
+el material del cliente, no
+
+17
+00:00:55,720 --> 00:00:59,180
+archivos públicos del sitio ni carpetas de
+publicidad compartidas.
+
+18
+00:00:59,700 --> 00:01:01,660
+Este curso gratuito enseña el proceso.
+
+19
+00:01:02,220 --> 00:01:07,020
+No activa agentes, compra datos, envía
+mensajes ni verifica un caso por sí
+
+20
+00:01:07,020 --> 00:01:11,480
+solo. Las herramientas de pago y los
+servicios activados tienen acceso y uso
+
+21
+00:01:11,480 --> 00:01:14,560
+facturados por separado. Pausa y pruébalo.
+
+22
+00:01:14,560 --> 00:01:18,340
+Practica un índice documental únicamente
+con material ficticio.
+
+23
+00:01:18,840 --> 00:01:22,320
+Corrige al menos un campo ambiguo o
+intencionalmente faltante.
+
+24
+00:01:22,960 --> 00:01:27,480
+Pregunta de repaso. ¿Qué debe producir la
+IA cuando falta un importe?
+
+25
+00:01:28,080 --> 00:01:31,880
+La respuesta: Desconocido, identificando
+la fuente faltante.
+
+26
+00:01:32,340 --> 00:01:36,260
+La información financiera faltante debe
+seguir faltando hasta que una fuente
+
+27
+00:01:36,260 --> 00:01:40,320
+fiable la establezca. Conserva la fuente y
+la fecha, y señala lo
+
+28
+00:01:40,320 --> 00:01:43,040
+desconocido. Nos vemos en la próxima
+lección.

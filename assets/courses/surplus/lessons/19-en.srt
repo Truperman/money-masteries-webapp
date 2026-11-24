@@ -1,0 +1,134 @@
+1
+00:00:00,000 --> 00:00:04,080
+Think about this: What should AI output
+when an amount is missing?
+
+2
+00:00:04,800 --> 00:00:05,840
+Let’s work through it together.
+
+3
+00:00:06,440 --> 00:00:11,840
+I'm Doctor Gainz. Lesson 19: Use AI to
+organize authorized
+
+4
+00:00:11,840 --> 00:00:16,640
+documents. Start an AI task with a
+permitted purpose and the minimum
+
+5
+00:00:16,640 --> 00:00:21,100
+authorized material. For example: “Index
+these fictional documents.
+
+6
+00:00:21,700 --> 00:00:24,420
+Extract the document date and stated
+figure label.
+
+7
+00:00:24,420 --> 00:00:26,520
+Cite the page for each item.
+
+8
+00:00:27,100 --> 00:00:29,040
+Use unknown for missing information.
+
+9
+00:00:29,040 --> 00:00:34,320
+Do not infer an owner, contact
+information, or legal entitlement.” This
+
+10
+00:00:34,320 --> 00:00:37,880
+turns a broad assistant into a constrained
+administrative helper.
+
+11
+00:00:38,560 --> 00:00:40,720
+Review the output against the originals.
+
+12
+00:00:41,180 --> 00:00:45,800
+AI can confuse a bid with a balance, merge
+two people, overlook a date
+
+13
+00:00:45,800 --> 00:00:48,280
+qualifier, or invent a missing field.
+
+14
+00:00:48,780 --> 00:00:51,160
+Keep an evidence column and a review
+status.
+
+15
+00:00:51,820 --> 00:00:54,780
+Do not use a confidence score as a
+replacement for a source.
+
+16
+00:00:55,640 --> 00:00:59,440
+Use private storage appropriate to the
+client material rather than public
+
+17
+00:00:59,440 --> 00:01:01,840
+website assets or shared marketing files.
+
+18
+00:01:02,440 --> 00:01:04,460
+This free course teaches the workflow.
+
+19
+00:01:04,820 --> 00:01:09,660
+It does not activate live agents, purchase
+data, send messages, or verify a
+
+20
+00:01:09,660 --> 00:01:14,240
+case by itself. Money Masteries paid tools
+and activated services have
+
+21
+00:01:14,240 --> 00:01:16,060
+separate access and usage terms.
+
+22
+00:01:16,980 --> 00:01:18,040
+Pause and try this.
+
+23
+00:01:18,720 --> 00:01:22,380
+Run a document-index exercise using only
+fictional material.
+
+24
+00:01:22,760 --> 00:01:26,420
+Correct at least one intentionally missing
+or ambiguous field.
+
+25
+00:01:26,420 --> 00:01:31,420
+Quick knowledge check. What should AI
+output when an amount is missing?
+
+26
+00:01:32,240 --> 00:01:35,500
+The answer: Unknown with the missing
+source identified.
+
+27
+00:01:36,180 --> 00:01:40,200
+Missing financial information must remain
+missing until a reliable source
+
+28
+00:01:40,200 --> 00:01:44,280
+supplies it. Keep the source, the date,
+and the unknowns visible.
+
+29
+00:01:44,880 --> 00:01:45,980
+I'll see you in the next lesson.

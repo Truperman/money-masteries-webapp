@@ -1,0 +1,27 @@
+Think about this: Which brief is easiest to audit?
+Let’s work through it together.
+I'm Doctor Gainz. Lesson 20: Build a source-constrained case brief.
+A useful case brief separates confirmed facts, estimates, questions, and
+next actions. Every financial figure should carry a label, source, effective
+date, and reviewer status.
+Keep the original document reference beside the summary so another person
+can check it without reconstructing your reasoning.
+Use this original prompt with fictional or authorized material: “Summarize
+only the supplied records.
+Create sections for process, authority, accounting, events, unresolved
+issues, and requested review.
+Attach source references. Mark conflicts.
+Do not search for private people, fabricate missing data, rank legal rights,
+or contact anyone.” Check the result line by line before sharing it.
+Be especially careful with current-tense statements.
+“The ledger recorded a deposit on a date” is different from “The money
+remains available.” A brief should preserve that distinction and make stale
+sources easy to spot.
+Pause and try this.
+Write a one-page fictional brief with two source-linked facts, one estimate,
+three unresolved questions, and a specific handoff request.
+Quick knowledge check. Which brief is easiest to audit?
+The answer: A structured summary separating sourced facts and unresolved
+questions. Source references and clear uncertainty let a reviewer verify the
+work. Keep the source, the date, and the unknowns visible.
+I'll see you in the next lesson.

@@ -1,0 +1,29 @@
+Think about this: What should AI output when an amount is missing?
+Let’s work through it together.
+I'm Doctor Gainz. Lesson 19: Use AI to organize authorized
+documents. Start an AI task with a permitted purpose and the minimum
+authorized material. For example: “Index these fictional documents.
+Extract the document date and stated figure label.
+Cite the page for each item.
+Use unknown for missing information.
+Do not infer an owner, contact information, or legal entitlement.” This
+turns a broad assistant into a constrained administrative helper.
+Review the output against the originals.
+AI can confuse a bid with a balance, merge two people, overlook a date
+qualifier, or invent a missing field.
+Keep an evidence column and a review status.
+Do not use a confidence score as a replacement for a source.
+Use private storage appropriate to the client material rather than public
+website assets or shared marketing files.
+This free course teaches the workflow.
+It does not activate live agents, purchase data, send messages, or verify a
+case by itself. Money Masteries paid tools and activated services have
+separate access and usage terms.
+Pause and try this.
+Run a document-index exercise using only fictional material.
+Correct at least one intentionally missing or ambiguous field.
+Quick knowledge check. What should AI output when an amount is missing?
+The answer: Unknown with the missing source identified.
+Missing financial information must remain missing until a reliable source
+supplies it. Keep the source, the date, and the unknowns visible.
+I'll see you in the next lesson.

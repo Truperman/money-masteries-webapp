@@ -1,0 +1,389 @@
+{
+  "version": 2,
+  "lessons": {
+    "surplus-01": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/87f590e3-37d5-4d92-a360-418544196dac.mp4",
+        "duration": 135.6,
+        "captions": "/assets/courses/surplus/lessons/01-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/2ab22705-2121-4352-828a-13921ed941b1.mp4",
+        "duration": 152.24,
+        "captions": "/assets/courses/surplus/lessons/01-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-02": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/a96bc060-9f50-4ad5-a424-1c479b67a583.mp4",
+        "duration": 107.36,
+        "captions": "/assets/courses/surplus/lessons/02-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/f362d54c-f295-4c6d-ba05-c5a30510be71.mp4",
+        "duration": 114.32,
+        "captions": "/assets/courses/surplus/lessons/02-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-03": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/ed00e597-d938-4432-a425-e84005e9cc9f.mp4",
+        "duration": 106.88,
+        "captions": "/assets/courses/surplus/lessons/03-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/559fee47-77bc-4080-8eb3-557a6703f427.mp4",
+        "duration": 107.36,
+        "captions": "/assets/courses/surplus/lessons/03-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-04": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/dcc9b805-d879-405e-a3b0-7688f6186ed5.mp4",
+        "duration": 112.56,
+        "captions": "/assets/courses/surplus/lessons/04-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/352863d8-ec3a-4616-8c60-e389ce19e7a9.mp4",
+        "duration": 116.48,
+        "captions": "/assets/courses/surplus/lessons/04-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-05": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/e186660e-2aef-466e-b468-4bd119db927e.mp4",
+        "duration": 110.72,
+        "captions": "/assets/courses/surplus/lessons/05-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/404c8a73-55ff-48f2-8363-16f22ccdc75c.mp4",
+        "duration": 117.12,
+        "captions": "/assets/courses/surplus/lessons/05-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-06": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/cc8c2f7e-5ee5-4242-b63d-a22394f933d2.mp4",
+        "duration": 100,
+        "captions": "/assets/courses/surplus/lessons/06-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/d5b39d06-d2a9-4e84-ad32-5e4762f65c5a.mp4",
+        "duration": 100.56,
+        "captions": "/assets/courses/surplus/lessons/06-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-07": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/35a87db1-bd3c-4e7c-84c5-983a84b0dc7c.mp4",
+        "duration": 110.16,
+        "captions": "/assets/courses/surplus/lessons/07-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/95493f65-a736-444b-ad5c-883f783d02ae.mp4",
+        "duration": 108.56,
+        "captions": "/assets/courses/surplus/lessons/07-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-08": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/b8db3169-07bc-4db4-976a-3bd77f143aa6.mp4",
+        "duration": 111.12,
+        "captions": "/assets/courses/surplus/lessons/08-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/39bdb797-649e-4a9d-86d8-e051773ed2ce.mp4",
+        "duration": 110.64,
+        "captions": "/assets/courses/surplus/lessons/08-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-09": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/100994a4-b71e-4a10-b7e3-a93de3054a14.mp4",
+        "duration": 99.44,
+        "captions": "/assets/courses/surplus/lessons/09-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/54e750fd-4831-4fb0-86be-3a9578537ada.mp4",
+        "duration": 102.96,
+        "captions": "/assets/courses/surplus/lessons/09-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-10": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/937a3783-2f24-40b2-95b7-aa0b7c7afdb3.mp4",
+        "duration": 111.04,
+        "captions": "/assets/courses/surplus/lessons/10-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/4f41d67a-0291-4375-a921-b77a9421a285.mp4",
+        "duration": 112.48,
+        "captions": "/assets/courses/surplus/lessons/10-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-11": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/0f9ee8b9-bff9-4a2c-93c1-dfcc7dd75960.mp4",
+        "duration": 103.84,
+        "captions": "/assets/courses/surplus/lessons/11-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/8351d0b6-1168-4a5f-9d62-fcfcb5bde712.mp4",
+        "duration": 110.24,
+        "captions": "/assets/courses/surplus/lessons/11-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-12": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/455766e0-1e75-4d3d-bc97-478830b82818.mp4",
+        "duration": 99.6,
+        "captions": "/assets/courses/surplus/lessons/12-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/2674745f-60e9-4350-81ae-ffaa24dcd515.mp4",
+        "duration": 105.28,
+        "captions": "/assets/courses/surplus/lessons/12-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-13": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/29ee7dc5-3cb4-4cb8-a89f-f27996dcb55b.mp4",
+        "duration": 121.12,
+        "captions": "/assets/courses/surplus/lessons/13-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/8f356ef1-cafb-479b-a09a-683445779abf.mp4",
+        "duration": 116.16,
+        "captions": "/assets/courses/surplus/lessons/13-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-14": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/da4b578d-8531-4815-a5c0-2251e3ade1a7.mp4",
+        "duration": 99.92,
+        "captions": "/assets/courses/surplus/lessons/14-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/74aaa4e8-462d-4505-9fca-9005f7d36520.mp4",
+        "duration": 108.8,
+        "captions": "/assets/courses/surplus/lessons/14-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-15": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/5c34f268-b90a-4117-9080-ea112c2fa124.mp4",
+        "duration": 102.72,
+        "captions": "/assets/courses/surplus/lessons/15-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/9457c265-b264-4d94-bae6-0610f318e214.mp4",
+        "duration": 107.84,
+        "captions": "/assets/courses/surplus/lessons/15-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-16": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/5877f0b3-a8c9-4e3c-a018-191f64597966.mp4",
+        "duration": 99.04,
+        "captions": "/assets/courses/surplus/lessons/16-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/184626fe-4291-441d-a9c8-c26b362d37ac.mp4",
+        "duration": 94.56,
+        "captions": "/assets/courses/surplus/lessons/16-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-17": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/c1e2d72b-a3d4-4814-9b5f-019d7a1bb2ad.mp4",
+        "duration": 105.76,
+        "captions": "/assets/courses/surplus/lessons/17-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/9c6080a6-4f4f-4908-a3e0-1a1d36c48690.mp4",
+        "duration": 103.6,
+        "captions": "/assets/courses/surplus/lessons/17-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-18": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/0cc4d7c0-fef5-4676-9200-e235071c2e21.mp4",
+        "duration": 106.72,
+        "captions": "/assets/courses/surplus/lessons/18-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/d4bf8ce8-0b61-4327-81d8-14e2a6f8377a.mp4",
+        "duration": 107.6,
+        "captions": "/assets/courses/surplus/lessons/18-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-19": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/523ea619-c9d7-41d5-84e2-7eb14fd0a2bd.mp4",
+        "duration": 106.32,
+        "captions": "/assets/courses/surplus/lessons/19-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/4c8d6ebd-b827-4413-9375-b771d9b469ad.mp4",
+        "duration": 103.36,
+        "captions": "/assets/courses/surplus/lessons/19-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-20": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/3211fc71-665e-4078-822d-d968926d771d.mp4",
+        "duration": 99.04,
+        "captions": "/assets/courses/surplus/lessons/20-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/a1d491ec-9a61-4ae6-b42c-137205e1f1c2.mp4",
+        "duration": 103.2,
+        "captions": "/assets/courses/surplus/lessons/20-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-21": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/f31f7084-00fa-407e-bd8c-49301859aa40.mp4",
+        "duration": 106.48,
+        "captions": "/assets/courses/surplus/lessons/21-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/0109befd-e529-48fb-ab15-550ba5c3eb0d.mp4",
+        "duration": 109.84,
+        "captions": "/assets/courses/surplus/lessons/21-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-22": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/f3785149-57db-4be8-9f84-e884c21acf1f.mp4",
+        "duration": 116.16,
+        "captions": "/assets/courses/surplus/lessons/22-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/22b91f9c-e39a-4165-b7ba-c3e49a98dcc5.mp4",
+        "duration": 110.88,
+        "captions": "/assets/courses/surplus/lessons/22-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-23": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/60bc8c90-bb18-436f-b733-4b921206ac32.mp4",
+        "duration": 106.64,
+        "captions": "/assets/courses/surplus/lessons/23-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/453094d6-b3ca-408a-a77e-78e02591e0a5.mp4",
+        "duration": 106.24,
+        "captions": "/assets/courses/surplus/lessons/23-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    },
+    "surplus-24": {
+      "en": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/4df439d1-629d-4f5a-9e7b-2074e771f89c.mp4",
+        "duration": 104.16,
+        "captions": "/assets/courses/surplus/lessons/24-en.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      },
+      "es": {
+        "ready": true,
+        "src": "https://d2ol7oe51mr4n9.cloudfront.net/user_3JlF0knSb9CyjiqgcYKchzfykKX/1727f534-9127-44a5-9fbe-0e9552827272.mp4",
+        "duration": 104.72,
+        "captions": "/assets/courses/surplus/lessons/24-es.srt",
+        "poster": "/assets/courses/surplus/dr-gainz.webp?v=20261124-ugc-badge"
+      }
+    }
+  }
+}

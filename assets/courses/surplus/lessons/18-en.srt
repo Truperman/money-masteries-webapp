@@ -1,0 +1,129 @@
+1
+00:00:00,000 --> 00:00:04,280
+Think about this: What should an AI case
+brief do with a disputed
+
+2
+00:00:04,280 --> 00:00:06,620
+entitlement? Let’s work through it
+together.
+
+3
+00:00:07,240 --> 00:00:12,180
+I'm Doctor Gainz. Lesson 18: Coordinate
+with the appropriate professional.
+
+4
+00:00:12,960 --> 00:00:16,180
+Some situations require legal judgment or
+representation.
+
+5
+00:00:16,840 --> 00:00:22,300
+Examples include disputed entitlement,
+estates, entities, competing claims,
+
+6
+00:00:22,800 --> 00:00:25,720
+assignments, and questions about permitted
+compensation.
+
+7
+00:00:25,720 --> 00:00:30,800
+Requirements vary. A professional handoff
+should ask a focused question
+
+8
+00:00:30,800 --> 00:00:34,900
+instead of asking someone to validate a
+conclusion an AI already announced
+
+9
+00:00:34,900 --> 00:00:39,780
+to the client. Explain who performs each
+task, who communicates with the
+
+10
+00:00:39,780 --> 00:00:44,480
+custodian, who may sign or file, and how
+costs are handled under reviewed
+
+11
+00:00:44,480 --> 00:00:49,180
+terms. Obtain appropriate permission
+before sharing client information.
+
+12
+00:00:49,780 --> 00:00:53,640
+Do not promise that a professional will
+accept a case, that a fee will be
+
+13
+00:00:53,640 --> 00:00:57,160
+allowed, or that a referral arrangement is
+lawful without review.
+
+14
+00:00:57,860 --> 00:00:59,860
+Keep a written responsibility list.
+
+15
+00:01:00,400 --> 00:01:04,300
+A helpful administrative role can coexist
+with professional representation,
+
+16
+00:01:04,680 --> 00:01:06,520
+but boundaries must be explicit.
+
+17
+00:01:07,200 --> 00:01:11,080
+When a professional requests
+clarification, update the evidence file
+and
+
+18
+00:01:11,080 --> 00:01:15,020
+retain the earlier version rather than
+silently changing what was supplied.
+
+19
+00:01:15,820 --> 00:01:17,000
+Pause and try this.
+
+20
+00:01:17,600 --> 00:01:21,820
+Draft a fictional handoff request asking
+about a disputed interest and the
+
+21
+00:01:21,820 --> 00:01:23,560
+limits of administrative assistance.
+
+22
+00:01:24,000 --> 00:01:26,080
+Include no private person’s information.
+
+23
+00:01:26,900 --> 00:01:31,200
+Quick knowledge check. What should an AI
+case brief do with a disputed
+
+24
+00:01:31,200 --> 00:01:35,920
+entitlement? The answer: Flag the sourced
+dispute for the appropriate
+
+25
+00:01:35,920 --> 00:01:41,040
+review. A case brief supports review; it
+does not exercise legal authority.
+
+26
+00:01:41,660 --> 00:01:44,560
+Keep the source, the date, and the
+unknowns visible.
+
+27
+00:01:45,200 --> 00:01:46,380
+I'll see you in the next lesson.

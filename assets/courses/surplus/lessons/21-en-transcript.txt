@@ -1,0 +1,27 @@
+Think about this: What may a course exercise agent do automatically?
+Let’s work through it together.
+I'm Doctor Gainz. Lesson 21: Protect records and review every
+external action. Separate education content from private case files.
+Keep client materials in an appropriately protected workspace with access
+limited to the people authorized for that task.
+Retain only what is needed, respect applicable retention requirements, and
+track who can view or share the file.
+Do not place client documents in public downloads.
+Require human review before any message, submission, signature request, data
+purchase, or status statement goes outside the workspace.
+Check the recipient, purpose, facts, authority, and applicable use
+restrictions. A task queue should display a blocked item when a prerequisite
+is missing, rather than treating silence as approval.
+If permission is withdrawn or a mistake is discovered, stop affected work,
+preserve the necessary audit history, and follow the applicable correction
+and retention process. A useful AI assistant can pause.
+Automation speed is not a reason to skip verification or consent.
+Pause and try this.
+Design a five-item pre-send checklist for a fictional case update.
+Include a way to halt the task after authorization changes.
+Quick knowledge check. What may a course exercise agent do automatically?
+The answer: Organize the supplied fictional documents within its stated
+scope. External and sensitive actions require their own authority and
+review; a learning task does not grant it.
+Keep the source, the date, and the unknowns visible.
+I'll see you in the next lesson.

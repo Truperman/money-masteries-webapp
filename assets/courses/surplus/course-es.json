@@ -1,0 +1,1000 @@
+{
+  "id": "surplus-foundations-v1",
+  "version": 3,
+  "title": "Fundamentos de recuperación de fondos excedentes",
+  "subtitle": "Comprende el proceso, verifica las fuentes y organiza un expediente autorizado.",
+  "presenter": "Dr. Gainz",
+  "presenterDisclosure": "Presentador educativo ficticio de IA. Contenido educativo, no representación profesional.",
+  "language": "Español",
+  "updated": "2026-11-24",
+  "modules": [
+    {
+      "id": "foundations",
+      "title": "Comprende los fondos"
+    },
+    {
+      "id": "jurisdictions",
+      "title": "Elige una jurisdicción viable"
+    },
+    {
+      "id": "intake",
+      "title": "Comienza con permiso del propietario"
+    },
+    {
+      "id": "evidence",
+      "title": "Construye un expediente fiable"
+    },
+    {
+      "id": "analysis",
+      "title": "Analiza sin adivinar"
+    },
+    {
+      "id": "communications",
+      "title": "Coordina ayuda responsable"
+    },
+    {
+      "id": "ai",
+      "title": "Usa IA con control"
+    },
+    {
+      "id": "capstone",
+      "title": "Practica y avanza con cuidado"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "surplus-01",
+      "module": "foundations",
+      "title": "Sigue el ciclo de los fondos excedentes",
+      "goal": "Sigue el ciclo de los fondos excedentes.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Una venta de propiedad puede producir más dinero que las obligaciones y los costos pagados mediante esa venta. El remanente puede llamarse excedente, fondos sobrantes o exceso de la subasta. El nombre no establece quién tiene derecho a recibirlo. Separa estos eventos: ocurrió una venta, se depositaron fondos y el procedimiento correspondiente determinó quién puede recibirlos."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Dibuja una cadena desde la entidad que realizó la venta hasta el custodio, el procedimiento de reclamación y el desembolso documentado. Pueden intervenir oficinas del condado, secretarios judiciales, fiduciarios, tribunales o agencias estatales de bienes no reclamados. Las funciones varían. Una publicación antigua o un resultado de subasta es una pista, no una confirmación del saldo actual. Anota la fecha junto a cada fuente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Nuestro objetivo es organizar expedientes con precisión. No existe un pago estándar, una tarifa universal de recuperación ni ingresos garantizados. Dr. Gainz es un presentador educativo ficticio de IA. Su bata es parte del personaje y no una credencial profesional."
+        }
+      ],
+      "exercise": "Usa un caso ficticio y dibuja cuatro eventos: venta, depósito, determinación del derecho al cobro y desembolso. Marca como desconocido lo que falte.",
+      "quiz": {
+        "question": "¿Qué permite establecer una reclamación pagadera actualmente?",
+        "choices": [
+          "Solo un precio de subasta alto",
+          "El nombre de un propietario en una lista antigua",
+          "La verificación oficial actual del saldo y del derecho al cobro mediante el procedimiento aplicable",
+          "Un anuncio de una empresa de recuperación"
+        ],
+        "answer": 2,
+        "explanation": "El resultado de la venta y las pistas sobre propiedad no establecen por sí solos la disponibilidad actual ni el derecho al cobro."
+      },
+      "sources": [
+        "nc",
+        "fl"
+      ],
+      "productionScene": "whiteboard",
+      "narration": "Bienvenido a Money Masteries. Soy el Doctor Gainz, tu presentador educativo de inteligencia artificial, un personaje ficticio. Lección uno: sigue el ciclo de los fondos excedentes. La venta de una propiedad puede producir más dinero que las obligaciones y los costos pagados mediante esa venta. El remanente puede llamarse fondos excedentes, sobrantes o exceso de la subasta. Estos términos describen un posible remanente. No indican quién tiene derecho a recibirlo. Recuerda esta secuencia: venta, depósito, determinación del derecho al cobro y desembolso. Son cuatro eventos diferentes. Primero, se realiza una venta. El resultado de la venta es un punto de partida. Segundo, cualquier remanente se deposita con la entidad responsable de custodiarlo. Puede intervenir una oficina del condado, un secretario judicial, un fiduciario, un tribunal o, más adelante, una agencia estatal de bienes no reclamados. El procedimiento depende de la jurisdicción y del tipo de venta. Tercero, el procedimiento aplicable determina quién puede recibir el dinero. Cuarto, un desembolso documentado confirma que se realizó un pago. Veamos un ejemplo ficticio. Un documento muestra que se vendió una propiedad. Otro muestra que se depositaron fondos hace seis meses. ¿Podemos asegurarle al antiguo propietario que hoy sigue disponible la misma cantidad? No. Desde entonces podrían haberse presentado reclamaciones, asignaciones o pagos. Todavía necesitamos verificar la disponibilidad actual y determinar quién tiene derecho a cobrar. Cada documento es una fotografía de un momento específico. Anota su fuente y su fecha. Si falta información, escribe desconocido en lugar de adivinar. Tu ejercicio: dibuja cuatro casillas con los títulos venta, depósito, determinación del derecho al cobro y desembolso. Usa un caso ficticio. Debajo de cada casilla, anota una fuente y una fecha. Marca como desconocido lo que no puedas verificar. Pregunta de repaso. ¿Un precio alto de subasta demuestra que existe una reclamación pagadera hoy? No. La disponibilidad actual y el derecho a recibir los fondos deben verificarse mediante el procedimiento correspondiente. No hay un pago estándar, una tarifa universal de recuperación ni ingresos garantizados. Nuestro objetivo es organizar expedientes con precisión. En la próxima lección, distinguiremos las ventas por impuestos de las ejecuciones hipotecarias."
+    },
+    {
+      "id": "surplus-02",
+      "module": "foundations",
+      "title": "Distingue las ventas por impuestos de las ejecuciones hipotecarias",
+      "goal": "Distingue las ventas por impuestos de las ejecuciones hipotecarias.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Una venta por impuestos comienza con obligaciones públicas impagadas. Una ejecución hipotecaria generalmente busca hacer cumplir un préstamo garantizado. Pueden variar las oficinas, fechas, derechos de rescate, prioridades y formularios. Incluso dentro de un estado, los procesos judiciales y no judiciales pueden seguir caminos distintos. No reutilices un formulario solo porque ambos casos involucran una casa y dinero."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Prepara una carátula con estado, condado, tipo de venta, oficina responsable y fuente que respalda esa clasificación. Anota si la venta es definitiva y si falta algún período de espera o revisión. Si los documentos no establecen el proceso, deja la clasificación pendiente y consulta a la oficina responsable o a un profesional local calificado."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Distingue lo que dice un documento de lo que tú deduces. La palabra ejecución en un resultado de búsqueda es demasiado amplia para seleccionar un procedimiento. El siguiente paso debe resolver la clasificación que falta, en lugar de suponerla."
+        }
+      ],
+      "exercise": "Compara dos carátulas ficticias: una venta por impuestos y una ejecución hipotecaria. Escribe tres preguntas que debes resolver antes de elegir un formulario.",
+      "quiz": {
+        "question": "¿Puede suponerse que un solo formulario nacional sirve para todas las ventas?",
+        "choices": [
+          "Sí, si firma el propietario",
+          "No; hay que establecer el tipo de venta y el procedimiento local",
+          "Sí, para cantidades inferiores a $50,000",
+          "Sí, si lo redacta la IA"
+        ],
+        "answer": 1,
+        "explanation": "Los procesos y las jurisdicciones pueden exigir pruebas, formularios y representación diferentes."
+      },
+      "sources": [
+        "nc",
+        "fl",
+        "denver"
+      ],
+      "productionScene": "porch",
+      "narration": "Piensa en esto: ¿Puede suponerse que un solo formulario nacional sirve para todas las ventas? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 2: Distingue las ventas por impuestos de las ejecuciones hipotecarias. Una venta por impuestos comienza con obligaciones públicas impagadas. Una ejecución hipotecaria generalmente busca hacer cumplir un préstamo garantizado. Pueden variar las oficinas, fechas, derechos de rescate, prioridades y formularios. Incluso dentro de un estado, los procesos judiciales y no judiciales pueden seguir caminos distintos. No reutilices un formulario solo porque ambos casos involucran una casa y dinero. Prepara una carátula con estado, condado, tipo de venta, oficina responsable y fuente que respalda esa clasificación. Anota si la venta es definitiva y si falta algún período de espera o revisión. Si los documentos no establecen el proceso, deja la clasificación pendiente y consulta a la oficina responsable o a un profesional local calificado. Distingue lo que dice un documento de lo que tú deduces. La palabra ejecución en un resultado de búsqueda es demasiado amplia para seleccionar un procedimiento. El siguiente paso debe resolver la clasificación que falta, en lugar de suponerla. Pausa y pruébalo. Compara dos carátulas ficticias: una venta por impuestos y una ejecución hipotecaria. Escribe tres preguntas que debes resolver antes de elegir un formulario. Pregunta de repaso. ¿Puede suponerse que un solo formulario nacional sirve para todas las ventas? La respuesta: No; hay que establecer el tipo de venta y el procedimiento local. Los procesos y las jurisdicciones pueden exigir pruebas, formularios y representación diferentes. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-03",
+      "module": "foundations",
+      "title": "Define un servicio que aporte valor real",
+      "goal": "Define un servicio que aporte valor real.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "La ayuda útil puede incluir organizar documentos proporcionados por el cliente, registrar información faltante, explicar la fuente de una actualización y coordinar una revisión profesional. Su valor depende de un trabajo preciso y de actividades permitidas. Localizar posibles fondos no te autoriza automáticamente a representar a alguien, cobrar, comprar derechos ni presentar escritos."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Redacta una descripción de una página: qué haces, qué no decides, qué cobrarías únicamente si está permitido y acordado, y cuándo remites el asunto. Explica que puede existir una vía de reclamación directa para el propietario. Muestra la fuente oficial sin insinuar que eres parte del gobierno o que contratarte es obligatorio."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Los ingresos del negocio son inciertos. Capacitación, herramientas, revisión legal y tiempo son costos. No anuncies recuperaciones típicas ni ingresos mensuales sin una base adecuada para esa afirmación. Este curso enseña un proceso; no promete ingresos."
+        }
+      ],
+      "exercise": "Redacta una descripción clara del servicio, informa sobre la vía directa y define cuándo remitirás el caso. No incluyas promesas de ingresos.",
+      "quiz": {
+        "question": "¿Qué descripción del servicio es adecuada?",
+        "choices": [
+          "Garantizamos el pago en 30 días",
+          "Solo nuestra empresa puede liberar el dinero",
+          "Organizamos documentos autorizados y coordinamos ayuda permitida; los resultados requieren verificación",
+          "Todos los casos pagan un porcentaje fijo"
+        ],
+        "answer": 2,
+        "explanation": "Describe el trabajo y sus límites sin atribuirte control sobre un desembolso gubernamental."
+      },
+      "sources": [
+        "ftc",
+        "pinellas",
+        "jeffco"
+      ],
+      "productionScene": "desk",
+      "narration": "Piensa en esto: ¿Qué descripción del servicio es adecuada? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 3: Define un servicio que aporte valor real. La ayuda útil puede incluir organizar documentos proporcionados por el cliente, registrar información faltante, explicar la fuente de una actualización y coordinar una revisión profesional. Su valor depende de un trabajo preciso y de actividades permitidas. Localizar posibles fondos no te autoriza automáticamente a representar a alguien, cobrar, comprar derechos ni presentar escritos. Redacta una descripción de una página: qué haces, qué no decides, qué cobrarías únicamente si está permitido y acordado, y cuándo remites el asunto. Explica que puede existir una vía de reclamación directa para el propietario. Muestra la fuente oficial sin insinuar que eres parte del gobierno o que contratarte es obligatorio. Los ingresos del negocio son inciertos. Capacitación, herramientas, revisión legal y tiempo son costos. No anuncies recuperaciones típicas ni ingresos mensuales sin una base adecuada para esa afirmación. Este curso enseña un proceso; no promete ingresos. Pausa y pruébalo. Redacta una descripción clara del servicio, informa sobre la vía directa y define cuándo remitirás el caso. No incluyas promesas de ingresos. Pregunta de repaso. ¿Qué descripción del servicio es adecuada? La respuesta: Organizamos documentos autorizados y coordinamos ayuda permitida; los resultados requieren verificación. Describe el trabajo y sus límites sin atribuirte control sobre un desembolso gubernamental. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-04",
+      "module": "jurisdictions",
+      "title": "Localiza programas oficiales antes de investigar casos",
+      "goal": "Localiza programas oficiales antes de investigar casos.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Comienza con páginas oficiales de programas y procedimientos. Identifica agencia, tipo de venta, enlace oficial, fecha de actualización, canal de contacto de la oficina y límites de acceso. La investigación por condado permite entender un mercado sin crear perfiles financieros de particulares. Separa los anuncios de terceros de las pruebas de la agencia."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "El directorio complementario reúne 75 entradas de programas de 72 condados en 16 estados, revisadas el 24 de noviembre de 2026. Es un punto de partida, no una lista de reclamaciones disponibles ni de dinero. Lee las limitaciones de cada entrada. Distingue fuentes históricas, cerradas, con acceso restringido y de procedimientos actuales. Verifica las fechas; una revisión puntual no es una fuente que se actualiza continuamente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "La ausencia de una lista no demuestra que no haya fondos. La existencia de un enlace tampoco demuestra disponibilidad. Registra lo desconocido con honestidad. El acceso público y el uso comercial permitido son cuestiones distintas."
+        }
+      ],
+      "exercise": "Crea un inventario de programas de tres condados con enlaces oficiales y un estado separado de disponibilidad desconocida o verificada. No agregues personas ni saldos de casos.",
+      "quiz": {
+        "question": "¿Qué demuestra la página de un programa del condado?",
+        "choices": [
+          "Que todos los importes históricos siguen sin reclamar",
+          "Que se puede contactar comercialmente a todos los propietarios",
+          "Que existe una fuente o un procedimiento oficial; los hechos del caso requieren verificación",
+          "Que existe un número mínimo de clientes de pago"
+        ],
+        "answer": 2,
+        "explanation": "La fuente identifica un procedimiento, no dinero actual ni permiso para contactar particulares comercialmente."
+      },
+      "sources": [
+        "king",
+        "denver"
+      ],
+      "productionScene": "desk",
+      "narration": "Piensa en esto: ¿Qué demuestra la página de un programa del condado? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 4: Localiza programas oficiales antes de investigar casos. Comienza con páginas oficiales de programas y procedimientos. Identifica agencia, tipo de venta, enlace oficial, fecha de actualización, canal de contacto de la oficina y límites de acceso. La investigación por condado permite entender un mercado sin crear perfiles financieros de particulares. Separa los anuncios de terceros de las pruebas de la agencia. El directorio complementario reúne 75 entradas de programas de 72 condados en 16 estados, revisadas el 24 de noviembre de 2026. Es un punto de partida, no una lista de reclamaciones disponibles ni de dinero. Lee las limitaciones de cada entrada. Distingue fuentes históricas, cerradas, con acceso restringido y de procedimientos actuales. Verifica las fechas; una revisión puntual no es una fuente que se actualiza continuamente. La ausencia de una lista no demuestra que no haya fondos. La existencia de un enlace tampoco demuestra disponibilidad. Registra lo desconocido con honestidad. El acceso público y el uso comercial permitido son cuestiones distintas. Pausa y pruébalo. Crea un inventario de programas de tres condados con enlaces oficiales y un estado separado de disponibilidad desconocida o verificada. No agregues personas ni saldos de casos. Pregunta de repaso. ¿Qué demuestra la página de un programa del condado? La respuesta: Que existe una fuente o un procedimiento oficial; los hechos del caso requieren verificación. La fuente identifica un procedimiento, no dinero actual ni permiso para contactar particulares comercialmente. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-05",
+      "module": "jurisdictions",
+      "title": "Comprueba primero las restricciones de uso y de tarifas",
+      "goal": "Comprueba primero las restricciones de uso y de tarifas.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Poder consultar información gubernamental no permite automáticamente cualquier uso. La página de excedentes de King County advierte contra el uso comercial de listas de personas. La ley de Carolina del Sur limita obtener o usar conscientemente información personal de registros gubernamentales para solicitudes comerciales. Son ejemplos; no constituyen un mapa completo de reglas nacionales."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Mantén una hoja de requisitos con fuente oficial exacta, fecha de consulta, actividad propuesta y pregunta pendiente. Revisa declaraciones de acceso, solicitudes comerciales, representación, licencias, compensación, cesiones y conservación. No aceptes una declaración incompatible con tu propósito ni uses un agente para cruzar una restricción que tú no podrías aceptar honestamente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Las reglas de tarifas pueden hacer inviable un modelo. Jefferson County publica una advertencia sobre períodos de espera para cobrar por localizar fondos. Revisa la autoridad vigente con un profesional local antes de adoptar precios. Un ejemplo de otro estado no es permiso."
+        }
+      ],
+      "exercise": "Registra dos restricciones publicadas en fuentes oficiales y explica cómo afectan la actividad propuesta, sin recopilar información de reclamantes.",
+      "quiz": {
+        "question": "Una condición de acceso prohíbe el uso comercial de listas de personas. ¿Qué debe hacer un agente?",
+        "choices": [
+          "Aceptarla y extraer la lista",
+          "Ignorarla si el saldo es alto",
+          "Detener ese uso y registrar la restricción",
+          "Pedir a otro agente que copie la lista"
+        ],
+        "answer": 2,
+        "explanation": "La automatización debe respetar las mismas restricciones de acceso y uso que la persona que la dirige."
+      },
+      "sources": [
+        "king",
+        "sc",
+        "jeffco"
+      ],
+      "productionScene": "planning",
+      "narration": "Piensa en esto. Una condición de acceso prohíbe el uso comercial de listas de personas. ¿Qué debe hacer un agente? Vamos a entenderlo juntos. Soy el Dr. Gainz. Lección 5. Comprueba primero las restricciones de uso y de tarifas. Poder consultar información gubernamental no permite automáticamente cualquier uso. La página de excedentes de King County advierte contra el uso comercial de listas de personas. La Ley de Carolina del Sur limita obtener o usar conscientemente información personal de registros gubernamentales para solicitudes comerciales. Son ejemplos, no constituyen un mapa completo de reglas nacionales. Mantén una hoja de requisitos con fuente oficial exacta, fecha de consulta, actividad propuesta y pregunta pendiente. Revisa declaraciones de acceso, solicitudes comerciales, representación, licencias, compensación, cesiones y conservación. No aceptes una declaración incompatible con tu propósito, ni uses un agente para cruzar una restricción que tú no podrías aceptar honestamente. Las reglas de tarifas pueden hacer inviable un modelo. Jefferson County publica una advertencia sobre periodos de espera para cobrar por localizar fondos. Revisa la autoridad vigente con un profesional local antes de adoptar precios. Un ejemplo de otro estado no es permiso. Pausa y pruébalo. Registra dos restricciones publicadas en fuentes oficiales y explica cómo afectan la actividad propuesta sin recopilar información de reclamantes. Pregunta de repaso. Una condición de acceso prohíbe el uso comercial de listas de personas. ¿Qué debe hacer un agente? La respuesta? Detener ese uso y registrar la restricción. La automatización debe respetar las mismas restricciones de acceso y uso que la persona que la dirige. Conserva la fuente y la fecha y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-06",
+      "module": "jurisdictions",
+      "title": "Prepara una lista de requisitos por jurisdicción",
+      "goal": "Prepara una lista de requisitos por jurisdicción.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Registra quién custodia los fondos, cómo se cuentan las fechas pertinentes, quién puede reclamar, qué pruebas se requieren y dónde se resuelven disputas. Incluye si una entidad necesita abogado y si una cesión o acuerdo de honorarios exige requisitos especiales. Una lista con respuestas desconocidas es más útil que una suposición segura de sí misma."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Conserva una nota y un enlace oficial para cada requisito. Márcalo como confirmado para ese tipo de venta, pendiente de aclaración o fuera de tu función. No copies un plazo antiguo sin verificar qué evento inicia el cómputo. Fecha de publicación, fecha de venta y plazo de reclamación son campos diferentes."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Actualiza la lista sin reescribir las pruebas originales. Cuando cambie una orientación, conserva la fecha de la versión anterior y señala qué requiere revisión profesional. Esta lista organiza la investigación; no resuelve cuestiones legales."
+        }
+      ],
+      "exercise": "Prepara una lista vacía de diez requisitos. Completa solo los hechos establecidos por una fuente oficial actual y deja lo demás pendiente de revisión.",
+      "quiz": {
+        "question": "¿Qué fecha debe usarse automáticamente como plazo de reclamación?",
+        "choices": [
+          "La fecha en que encontraste la página",
+          "La fecha del anuncio",
+          "Ninguna; verifica el evento y la regla aplicables",
+          "Treinta días después de crear el expediente"
+        ],
+        "answer": 2,
+        "explanation": "Cada procedimiento puede utilizar eventos iniciales y períodos diferentes."
+      },
+      "sources": [
+        "fl",
+        "assign",
+        "king"
+      ],
+      "productionScene": "whiteboard",
+      "narration": "Piensa en esto: ¿Qué fecha debe usarse automáticamente como plazo de reclamación? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 6: Prepara una lista de requisitos por jurisdicción. Registra quién custodia los fondos, cómo se cuentan las fechas pertinentes, quién puede reclamar, qué pruebas se requieren y dónde se resuelven disputas. Incluye si una entidad necesita abogado y si una cesión o acuerdo de honorarios exige requisitos especiales. Una lista con respuestas desconocidas es más útil que una suposición segura de sí misma. Conserva una nota y un enlace oficial para cada requisito. Márcalo como confirmado para ese tipo de venta, pendiente de aclaración o fuera de tu función. No copies un plazo antiguo sin verificar qué evento inicia el cómputo. Fecha de publicación, fecha de venta y plazo de reclamación son campos diferentes. Actualiza la lista sin reescribir las pruebas originales. Cuando cambie una orientación, conserva la fecha de la versión anterior y señala qué requiere revisión profesional. Esta lista organiza la investigación; no resuelve cuestiones legales. Pausa y pruébalo. Prepara una lista vacía de diez requisitos. Completa solo los hechos establecidos por una fuente oficial actual y deja lo demás pendiente de revisión. Pregunta de repaso. ¿Qué fecha debe usarse automáticamente como plazo de reclamación? La respuesta: Ninguna; verifica el evento y la regla aplicables. Cada procedimiento puede utilizar eventos iniciales y períodos diferentes. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-07",
+      "module": "intake",
+      "title": "Comienza con una admisión autorizada",
+      "goal": "Comienza con una admisión autorizada.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Usa una consulta iniciada por el propietario u otra vía autorizada en lugar de formar listas masivas de particulares y saldos financieros. Explica tu identidad comercial y el propósito de la conversación. Pregunta qué ayuda solicita la persona antes de recibir documentos. Aceptar una conversación no equivale a autorizar publicidad no relacionada, firmas, venta de información ni acceso a todos sus registros."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Recopila solo lo necesario para la siguiente tarea permitida. Registra alcance de autorización, fecha, personas con quienes se puede compartir y forma de retirarla. No pidas números de identidad, datos bancarios ni originales sin una necesidad justificada y un proceso seguro adecuado. Explica cómo utilizar directamente la vía oficial."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "La autorización de admisión es un registro administrativo. No es una cesión de derechos sobre fondos, una facultad para ejercer derecho ni una determinación del derecho al cobro. Mantén esas ideas separadas y somete los documentos legales operativos a revisión local."
+        }
+      ],
+      "exercise": "Escribe una breve explicación del propósito de la admisión y una lista de permisos. Practica únicamente con información ficticia.",
+      "quiz": {
+        "question": "¿El permiso para organizar documentos permite firmar una reclamación judicial?",
+        "choices": [
+          "Sí, en todos los casos",
+          "Sí, si lo recomienda la IA",
+          "No; la representación y la facultad de firmar requieren verificación separada",
+          "Sí, para cantidades pequeñas"
+        ],
+        "answer": 2,
+        "explanation": "El permiso administrativo no establece representación legal ni autoridad para firmar."
+      },
+      "sources": [
+        "pinellas",
+        "fl"
+      ],
+      "productionScene": "cafe",
+      "narration": "Piensa en esto: ¿El permiso para organizar documentos permite firmar una reclamación judicial? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 7: Comienza con una admisión autorizada. Usa una consulta iniciada por el propietario u otra vía autorizada en lugar de formar listas masivas de particulares y saldos financieros. Explica tu identidad comercial y el propósito de la conversación. Pregunta qué ayuda solicita la persona antes de recibir documentos. Aceptar una conversación no equivale a autorizar publicidad no relacionada, firmas, venta de información ni acceso a todos sus registros. Recopila solo lo necesario para la siguiente tarea permitida. Registra alcance de autorización, fecha, personas con quienes se puede compartir y forma de retirarla. No pidas números de identidad, datos bancarios ni originales sin una necesidad justificada y un proceso seguro adecuado. Explica cómo utilizar directamente la vía oficial. La autorización de admisión es un registro administrativo. No es una cesión de derechos sobre fondos, una facultad para ejercer derecho ni una determinación del derecho al cobro. Mantén esas ideas separadas y somete los documentos legales operativos a revisión local. Pausa y pruébalo. Escribe una breve explicación del propósito de la admisión y una lista de permisos. Practica únicamente con información ficticia. Pregunta de repaso. ¿El permiso para organizar documentos permite firmar una reclamación judicial? La respuesta: No; la representación y la facultad de firmar requieren verificación separada. El permiso administrativo no establece representación legal ni autoridad para firmar. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-08",
+      "module": "intake",
+      "title": "Verifica quién tiene autoridad para actuar",
+      "goal": "Verifica quién tiene autoridad para actuar.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Quien te contacta podría ser un antiguo propietario, copropietario, representante de empresa, familiar o persona que ayuda a una sucesión. Esas descripciones no prueban por sí solas autoridad ni derecho al cobro. Separa la identidad, el historial de propiedad y el derecho a recibir una distribución específica."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Solicita mediante un canal seguro los documentos pertinentes para la siguiente revisión. En sucesiones, entidades, fideicomisos o propiedad en disputa, registra el asunto y busca orientación calificada en lugar de adivinar quién puede firmar. No localices familiares, deduzcas herederos ni decidas derechos sucesorios con un árbol familiar generado por IA. Trabaja con material autorizado y determinaciones oficiales adecuadas."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Mantén un campo de autoridad: verificada para la tarea indicada, pendiente de revisión o no establecida. Conserva los límites de difusión. Detén las tareas que excedan la autoridad documentada."
+        }
+      ],
+      "exercise": "Clasifica tres ejemplos ficticios: propietario que consulta sus registros, hijo adulto sin documentos de autoridad y representante de una entidad. Anota las dudas pendientes.",
+      "quiz": {
+        "question": "Un familiar afirma ser el único heredero. ¿Qué corresponde hacer?",
+        "choices": [
+          "Pagarle inmediatamente",
+          "Solicitar pruebas adecuadas de autoridad y revisión profesional",
+          "Aceptar su afirmación como una orden",
+          "Dejar que la IA decida la sucesión"
+        ],
+        "answer": 1,
+        "explanation": "El parentesco o una afirmación no establecen autoridad ni derechos a una distribución."
+      },
+      "sources": [
+        "nc",
+        "assign"
+      ],
+      "productionScene": "handoff",
+      "narration": "Piensa en esto: Un familiar afirma ser el único heredero. ¿Qué corresponde hacer? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 8: Verifica quién tiene autoridad para actuar. Quien te contacta podría ser un antiguo propietario, copropietario, representante de empresa, familiar o persona que ayuda a una sucesión. Esas descripciones no prueban por sí solas autoridad ni derecho al cobro. Separa la identidad, el historial de propiedad y el derecho a recibir una distribución específica. Solicita mediante un canal seguro los documentos pertinentes para la siguiente revisión. En sucesiones, entidades, fideicomisos o propiedad en disputa, registra el asunto y busca orientación calificada en lugar de adivinar quién puede firmar. No localices familiares, deduzcas herederos ni decidas derechos sucesorios con un árbol familiar generado por IA. Trabaja con material autorizado y determinaciones oficiales adecuadas. Mantén un campo de autoridad: verificada para la tarea indicada, pendiente de revisión o no establecida. Conserva los límites de difusión. Detén las tareas que excedan la autoridad documentada. Pausa y pruébalo. Clasifica tres ejemplos ficticios: propietario que consulta sus registros, hijo adulto sin documentos de autoridad y representante de una entidad. Anota las dudas pendientes. Pregunta de repaso. Un familiar afirma ser el único heredero. ¿Qué corresponde hacer? La respuesta: Solicitar pruebas adecuadas de autoridad y revisión profesional. El parentesco o una afirmación no establecen autoridad ni derechos a una distribución. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-09",
+      "module": "intake",
+      "title": "Explica la opción de reclamación directa",
+      "goal": "Explica la opción de reclamación directa.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Las personas deben entender que puede existir un procedimiento gubernamental o judicial al que puedan acudir directamente. Explica qué aportaría tu negocio, si la actividad y su compensación están permitidas. No insinúes que controlas al custodio, que tienes una relación exclusiva con el gobierno ni que deben pagarte antes de consultar sobre sus propios fondos."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Puedes practicar esta explicación: La oficina oficial describe un procedimiento directo y puedo mostrarte ese recurso. Si quieres ayuda para organizar documentos o coordinar una revisión permitida, podemos hablar del alcance y de condiciones revisadas localmente. Ajusta la información a la jurisdicción; no afirmes que todas las reclamaciones son gratuitas ni que todos los casos necesitan abogado."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Invita a hacer preguntas y permite tiempo para revisar. Separa pedir información de contratar ayuda. Si existe confusión sobre tarifas, autoridad o derechos, detente. La urgencia no justifica omitir la explicación."
+        }
+      ],
+      "exercise": "Practica una explicación de dos minutos que incluya recurso oficial, ayuda opcional, hechos pendientes y siguiente paso claro.",
+      "quiz": {
+        "question": "¿Qué afirmación debes evitar?",
+        "choices": [
+          "Aquí está la fuente oficial",
+          "La ayuda es opcional",
+          "Debes contratarnos para obtener tus propios fondos",
+          "Revisemos qué sigue sin verificar"
+        ],
+        "answer": 2,
+        "explanation": "La asistencia opcional no debe presentarse como una puerta obligatoria a un procedimiento público."
+      },
+      "sources": [
+        "pinellas",
+        "fl"
+      ],
+      "productionScene": "cafe",
+      "narration": "Piensa en esto: ¿Qué afirmación debes evitar? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 9: Explica la opción de reclamación directa. Las personas deben entender que puede existir un procedimiento gubernamental o judicial al que puedan acudir directamente. Explica qué aportaría tu negocio, si la actividad y su compensación están permitidas. No insinúes que controlas al custodio, que tienes una relación exclusiva con el gobierno ni que deben pagarte antes de consultar sobre sus propios fondos. Puedes practicar esta explicación: La oficina oficial describe un procedimiento directo y puedo mostrarte ese recurso. Si quieres ayuda para organizar documentos o coordinar una revisión permitida, podemos hablar del alcance y de condiciones revisadas localmente. Ajusta la información a la jurisdicción; no afirmes que todas las reclamaciones son gratuitas ni que todos los casos necesitan abogado. Invita a hacer preguntas y permite tiempo para revisar. Separa pedir información de contratar ayuda. Si existe confusión sobre tarifas, autoridad o derechos, detente. La urgencia no justifica omitir la explicación. Pausa y pruébalo. Practica una explicación de dos minutos que incluya recurso oficial, ayuda opcional, hechos pendientes y siguiente paso claro. Pregunta de repaso. ¿Qué afirmación debes evitar? La respuesta: Debes contratarnos para obtener tus propios fondos. La asistencia opcional no debe presentarse como una puerta obligatoria a un procedimiento público. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-10",
+      "module": "evidence",
+      "title": "Localiza al custodio actual",
+      "goal": "Localiza al custodio actual.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Una fuente puede describir la venta, el depósito inicial o una cuenta de custodia antigua. Nada de eso identifica automáticamente dónde está el dinero hoy. Pueden intervenir un secretario judicial, fiduciario, tesorero, registro judicial o agencia estatal. Identifica al custodio real y distingue su función contable de la función de un tribunal al decidir derechos."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "En un caso autorizado, solicita o revisa el estado oficial por el procedimiento aplicable. Registra fecha de respuesta, documento fuente, definición del saldo y transferencias o distribuciones. Si se trasladaron los fondos, conserva las referencias antiguas y nuevas. No conviertas un saldo histórico en actual porque una página todavía lo muestre."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Usa tres campos distintos: depósito originalmente reportado, saldo actual confirmado y fecha de verificación. Deja desconocidos los datos que falten. Una respuesta escrita actual también puede incluir condiciones o asuntos pendientes; conserva esas limitaciones en el resumen."
+        }
+      ],
+      "exercise": "Sigue una transferencia ficticia del condado al estado. Identifica qué cantidad antigua no puede llamarse saldo actual del condado.",
+      "quiz": {
+        "question": "Una lista antigua muestra $35,000 y consta una transferencia. ¿Cuál es el saldo actual del condado?",
+        "choices": [
+          "Exactamente $35,000",
+          "Cero automáticamente",
+          "Desconocido hasta verificar custodia y contabilidad actuales",
+          "El que estime la IA"
+        ],
+        "answer": 2,
+        "explanation": "La transferencia cambia lo que hay que verificar; no inventes un saldo actual ni un cero."
+      },
+      "sources": [
+        "fl",
+        "denver"
+      ],
+      "productionScene": "secure",
+      "narration": "Piensa en esto: Una lista antigua muestra $35,000 y consta una transferencia. ¿Cuál es el saldo actual del condado? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 10: Localiza al custodio actual. Una fuente puede describir la venta, el depósito inicial o una cuenta de custodia antigua. Nada de eso identifica automáticamente dónde está el dinero hoy. Pueden intervenir un secretario judicial, fiduciario, tesorero, registro judicial o agencia estatal. Identifica al custodio real y distingue su función contable de la función de un tribunal al decidir derechos. En un caso autorizado, solicita o revisa el estado oficial por el procedimiento aplicable. Registra fecha de respuesta, documento fuente, definición del saldo y transferencias o distribuciones. Si se trasladaron los fondos, conserva las referencias antiguas y nuevas. No conviertas un saldo histórico en actual porque una página todavía lo muestre. Usa tres campos distintos: depósito originalmente reportado, saldo actual confirmado y fecha de verificación. Deja desconocidos los datos que falten. Una respuesta escrita actual también puede incluir condiciones o asuntos pendientes; conserva esas limitaciones en el resumen. Pausa y pruébalo. Sigue una transferencia ficticia del condado al estado. Identifica qué cantidad antigua no puede llamarse saldo actual del condado. Pregunta de repaso. Una lista antigua muestra treinta y cinco mil dólares y consta una transferencia. ¿Cuál es el saldo actual del condado? La respuesta: Desconocido hasta verificar custodia y contabilidad actuales. La transferencia cambia lo que hay que verificar; no inventes un saldo actual ni un cero. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-11",
+      "module": "evidence",
+      "title": "Lee los documentos de venta y distribución",
+      "goal": "Lee los documentos de venta y distribución.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "La oferta ganadora, la oferta inicial, el importe de una sentencia y el saldo depositado son conceptos distintos. Empieza por un índice documental, no restando los dos números más fáciles de encontrar. Registra qué representa cada cifra y su fecha efectiva. Intereses, costos permitidos, devoluciones y distribuciones posteriores pueden cambiar la contabilidad."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Crea una tabla ficticia con título del documento, fuente, fecha, concepto, importe y limitación. Relaciona el resultado de la venta con la contabilidad oficial adecuada. Cada asiento debe poder rastrearse a una fuente: un resumen de IA no es la fuente. Cuando falte una cifra o haya inconsistencias, registra una pregunta y no un cero."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "La norma de Carolina del Norte ilustra por qué deben contabilizarse costos y obligaciones siguiendo un orden definido. Otros procedimientos requieren revisión propia. La aritmética educativa de este curso no sustituye la contabilidad ni la determinación del derecho al cobro."
+        }
+      ],
+      "exercise": "Crea un índice de seis documentos ficticios. Identifica la oferta inicial como una oferta, no como deuda final verificada.",
+      "quiz": {
+        "question": "¿Qué resta basta para verificar el pago actual a un propietario?",
+        "choices": [
+          "Precio anunciado menos una deuda supuesta",
+          "Oferta inicial menos un costo estimado",
+          "Ninguna sin la contabilidad y la revisión de derechos correspondientes",
+          "Precio de la casa menos cero"
+        ],
+        "answer": 2,
+        "explanation": "Las cifras no son intercambiables ni equivalen por sí solas a un pago verificado."
+      },
+      "sources": [
+        "nc",
+        "fl"
+      ],
+      "productionScene": "desk",
+      "narration": "Piensa en esto: ¿Qué resta basta para verificar el pago actual a un propietario? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 11: Lee los documentos de venta y distribución. La oferta ganadora, la oferta inicial, el importe de una sentencia y el saldo depositado son conceptos distintos. Empieza por un índice documental, no restando los dos números más fáciles de encontrar. Registra qué representa cada cifra y su fecha efectiva. Intereses, costos permitidos, devoluciones y distribuciones posteriores pueden cambiar la contabilidad. Crea una tabla ficticia con título del documento, fuente, fecha, concepto, importe y limitación. Relaciona el resultado de la venta con la contabilidad oficial adecuada. Cada asiento debe poder rastrearse a una fuente: un resumen de IA no es la fuente. Cuando falte una cifra o haya inconsistencias, registra una pregunta y no un cero. La norma de Carolina del Norte ilustra por qué deben contabilizarse costos y obligaciones siguiendo un orden definido. Otros procedimientos requieren revisión propia. La aritmética educativa de este curso no sustituye la contabilidad ni la determinación del derecho al cobro. Pausa y pruébalo. Crea un índice de seis documentos ficticios. Identifica la oferta inicial como una oferta, no como deuda final verificada. Pregunta de repaso. ¿Qué resta basta para verificar el pago actual a un propietario? La respuesta: Ninguna sin la contabilidad y la revisión de derechos correspondientes. Las cifras no son intercambiables ni equivalen por sí solas a un pago verificado. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-12",
+      "module": "evidence",
+      "title": "Registra reclamaciones, distribuciones y plazos",
+      "goal": "Registra reclamaciones, distribuciones y plazos.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Presentar una solicitud o reclamación no significa que una distribución esté aprobada. Una distribución aprobada podría estar pagada, suspendida, corregida o impugnada. Mantén un historial que distinga presentado, pendiente, ordenado, desembolsado y sin resolver. Usa el lenguaje de la fuente y conserva sus condiciones."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Para cada fecha importante, registra evento inicial, fuente y quién confirmó su significado. Señala los plazos que necesitan interpretación profesional. Conserva el historial en lugar de sobrescribir un importe anterior sin explicación. Si la fuente es antigua, está cerrada o tiene acceso limitado, muestra esa limitación al inicio del expediente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "No es adecuado prometer un tiempo general para todos los casos. Una actualización útil explica qué se revisó, cuándo, qué sigue desconocido y qué acción está permitida. No digas que el dinero viene en camino solo porque se presentó un documento."
+        }
+      ],
+      "exercise": "Redacta un historial ficticio con una reclamación, otra competidora y una audiencia pendiente. Prepara una actualización precisa de dos oraciones.",
+      "quiz": {
+        "question": "Si ayer se presentó una reclamación, ¿qué estado está establecido?",
+        "choices": [
+          "Pago aprobado",
+          "Dinero enviado",
+          "Presentada; el resultado sigue sin verificar",
+          "Derecho definitivo al cobro"
+        ],
+        "answer": 2,
+        "explanation": "El registro de presentación prueba un evento, no una decisión sobre derechos o pagos."
+      },
+      "sources": [
+        "fl",
+        "assign"
+      ],
+      "productionScene": "planning",
+      "narration": "Piensa en esto: Si ayer se presentó una reclamación, ¿qué estado está establecido? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 12: Registra reclamaciones, distribuciones y plazos. Presentar una solicitud o reclamación no significa que una distribución esté aprobada. Una distribución aprobada podría estar pagada, suspendida, corregida o impugnada. Mantén un historial que distinga presentado, pendiente, ordenado, desembolsado y sin resolver. Usa el lenguaje de la fuente y conserva sus condiciones. Para cada fecha importante, registra evento inicial, fuente y quién confirmó su significado. Señala los plazos que necesitan interpretación profesional. Conserva el historial en lugar de sobrescribir un importe anterior sin explicación. Si la fuente es antigua, está cerrada o tiene acceso limitado, muestra esa limitación al inicio del expediente. No es adecuado prometer un tiempo general para todos los casos. Una actualización útil explica qué se revisó, cuándo, qué sigue desconocido y qué acción está permitida. No digas que el dinero viene en camino solo porque se presentó un documento. Pausa y pruébalo. Redacta un historial ficticio con una reclamación, otra competidora y una audiencia pendiente. Prepara una actualización precisa de dos oraciones. Pregunta de repaso. Si ayer se presentó una reclamación, ¿qué estado está establecido? La respuesta: Presentada; el resultado sigue sin verificar. El registro de presentación prueba un evento, no una decisión sobre derechos o pagos. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-13",
+      "module": "analysis",
+      "title": "Utiliza aritmética ilustrativa de excedentes",
+      "goal": "Utiliza aritmética ilustrativa de excedentes.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Supongamos un ejemplo de clase: $225,000 de venta, $18,000 de costos documentados y $172,000 de una obligación garantizada documentada. La resta produce un remanente ilustrativo de $35,000. Esto demuestra una operación matemática; no determina que hoy se deba esa cantidad a un propietario. Los casos reales requieren contabilidad, prioridades y saldo actual conforme al procedimiento."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Si una revisión calificada establece después una distribución adicional de $13,000 en este mismo ejemplo ficticio, el remanente ilustrativo queda en $22,000. No restes una reclamación disputada como si fuera un pago aprobado, ni la ignores como si no pudiera afectar el resultado. Presenta escenarios alternativos claramente identificados."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "La calculadora de práctica acepta datos ficticios y no trata los campos vacíos como ceros. Solo calcula un remanente ilustrativo. No verifica fondos, aplica leyes estatales, determina prioridades de gravámenes ni calcula tu tarifa."
+        }
+      ],
+      "exercise": "Introduce 225000, 18000, 172000 y 13000 en la calculadora. Explica por qué el resultado de $22,000 no es un pago verificado.",
+      "quiz": {
+        "question": "¿Cuál es el remanente aritmético después de las cuatro cantidades ficticias?",
+        "choices": [
+          "$35,000",
+          "$22,000",
+          "$13,000",
+          "$225,000"
+        ],
+        "answer": 1,
+        "explanation": "225,000 menos 18,000 menos 172,000 menos 13,000 son 22,000, bajo las suposiciones del ejemplo."
+      },
+      "sources": [
+        "nc"
+      ],
+      "productionScene": "budget",
+      "narration": "Piensa en esto. ¿Cuál es el remanente aritmético después de las cuatro cantidades ficticias? Vamos a entenderlo juntos. Soy el Dr. Gainz. Lección 13. Utiliza aritmética ilustrativa de excedentes. Supongamos un ejemplo de clase. 225 mil dólares de venta, 18 mil dólares de costos documentados y 172 mil dólares de una obligación garantizada documentada. La resta produce un remanente ilustrativo de $35 ,000. Esto demuestra una operación matemática. No determina que hoy se deba esa cantidad a un propietario. Los casos reales requieren contabilidad, prioridades y saldo actual conforme el procedimiento. Si una revisión calificada establece después una distribución adicional de $13 ,000 en este mismo ejemplo ficticio, el remanente ilustrativo queda en $22 ,000. dólares. No restes una reclamación disputada como si fuera un pago aprobado, ni la ignores como si no pudiera afectar el resultado. Presenta escenarios alternativos claramente identificados. La calculadora de práctica acepta datos ficticios y no trata los campos vacíos como ceros, solo calcula un remanente ilustrativo. No verifica fondos, aplica leyes estatales, determina prioridades de gravámenes, ni calcula tu tarifa. Pausa y pruébalo. Introduce 225 .000, 18 .000, 172 .000 y 13 .000 en la calculadora. Explica por qué el resultado de 22 .000 dólares no es un pago verificado. Pregunta de repaso. ¿Cuál es el remanente aritmético después de las cuatro cantidades ficticias? La respuesta? 22 .000 dólares. 225 .000 menos 18 .000 menos 172 .000 menos 13 .000 son 22 .000 bajo las suposiciones del ejemplo. Conserva la fuente y la fecha y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-14",
+      "module": "analysis",
+      "title": "Identifica intereses de terceros",
+      "goal": "Identifica intereses de terceros.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "El interés de un antiguo propietario puede coexistir con intereses reclamados por acreedores con gravamen, copropietarios, una sucesión, un cesionario u otras partes. El procedimiento de venta y reclamación determina cómo se resuelven. Un nombre en una escritura no responde todas las preguntas sobre un fondo específico."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Elabora una lista de asuntos a partir de documentos que el cliente esté autorizado a compartir. Anota la fuente de cada interés alegado, lo confirmado y lo disputado. No establezcas prioridades ni niegues derechos basándote en una conclusión generada por IA. Señala documentos contradictorios y solicita revisión profesional o el procedimiento oficial correspondiente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Un asistente de investigación organiza pruebas para quien decide. No convierte una alegación en una orden. Distingue se afirmó una reclamación de se aprobó una distribución, tanto en cálculos como en comunicaciones."
+        }
+      ],
+      "exercise": "En un expediente ficticio, identifica una duda de copropiedad y un gravamen disputado. Escribe una lista neutral sin decidir derechos.",
+      "quiz": {
+        "question": "La IA encuentra un posible gravamen subordinado. ¿Qué debe indicar el resumen?",
+        "choices": [
+          "El propietario no tiene derechos",
+          "La IA ya decidió la prioridad",
+          "Hay un posible interés que requiere revisar su fuente y prioridad",
+          "Debe pagarse de inmediato"
+        ],
+        "answer": 2,
+        "explanation": "Conserva el asunto para la verificación adecuada en lugar de tomar una decisión legal sin fundamento."
+      },
+      "sources": [
+        "fl",
+        "assign"
+      ],
+      "productionScene": "handoff",
+      "narration": "Piensa en esto: La IA encuentra un posible gravamen subordinado. ¿Qué debe indicar el resumen? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 14: Identifica intereses de terceros. El interés de un antiguo propietario puede coexistir con intereses reclamados por acreedores con gravamen, copropietarios, una sucesión, un cesionario u otras partes. El procedimiento de venta y reclamación determina cómo se resuelven. Un nombre en una escritura no responde todas las preguntas sobre un fondo específico. Elabora una lista de asuntos a partir de documentos que el cliente esté autorizado a compartir. Anota la fuente de cada interés alegado, lo confirmado y lo disputado. No establezcas prioridades ni niegues derechos basándote en una conclusión generada por IA. Señala documentos contradictorios y solicita revisión profesional o el procedimiento oficial correspondiente. Un asistente de investigación organiza pruebas para quien decide. No convierte una alegación en una orden. Distingue se afirmó una reclamación de se aprobó una distribución, tanto en cálculos como en comunicaciones. Pausa y pruébalo. En un expediente ficticio, identifica una duda de copropiedad y un gravamen disputado. Escribe una lista neutral sin decidir derechos. Pregunta de repaso. La IA encuentra un posible gravamen subordinado. ¿Qué debe indicar el resumen? La respuesta: Hay un posible interés que requiere revisar su fuente y prioridad. Conserva el asunto para la verificación adecuada en lugar de tomar una decisión legal sin fundamento. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-15",
+      "module": "analysis",
+      "title": "Elige un siguiente paso responsable",
+      "goal": "Elige un siguiente paso responsable.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Un caso puede parecer atractivo y aun así carecer de datos esenciales. Revisa cinco áreas antes de avanzar: actividad permitida, autoridad del cliente, pruebas fiables, estado actual de los fondos y necesidad de representación profesional. Un dato desconocido debe permanecer visible aunque las demás áreas parezcan completas."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Usa etiquetas de acciones claras. Organizar documentos autorizados corresponde a trabajo administrativo listo para comenzar. Esperar confirmación del custodio corresponde a un saldo no verificado. Remitir una cuestión de autoridad o derechos corresponde a una reclamación compleja o disputada. Son tareas, no aprobaciones legales ni puntajes automáticos de negocio."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Un importe pequeño no justifica omitir la autoridad, y uno grande no justifica ignorar restricciones. Registra por qué te detuviste y qué pruebas permitirían el siguiente paso. Protege los intereses del cliente en lugar de perseguir una cifra."
+        }
+      ],
+      "exercise": "Evalúa el caso ficticio final con un documento de autoridad faltante y una reclamación competidora pendiente. Elige dos acciones específicas.",
+      "quiz": {
+        "question": "¿Qué expediente está listo para anunciar una recuperación garantizada?",
+        "choices": [
+          "Uno con una cifra antigua alta",
+          "Uno con una dirección conocida",
+          "Uno con una resta preliminar",
+          "Ninguno establece una recuperación garantizada"
+        ],
+        "answer": 3,
+        "explanation": "La preparación administrativa, el derecho al cobro y el pago eventual son cuestiones diferentes."
+      },
+      "sources": [
+        "fl",
+        "ftc"
+      ],
+      "productionScene": "whiteboard",
+      "narration": "Piensa en esto: ¿Qué expediente está listo para anunciar una recuperación garantizada? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 15: Elige un siguiente paso responsable. Un caso puede parecer atractivo y aun así carecer de datos esenciales. Revisa cinco áreas antes de avanzar: actividad permitida, autoridad del cliente, pruebas fiables, estado actual de los fondos y necesidad de representación profesional. Un dato desconocido debe permanecer visible aunque las demás áreas parezcan completas. Usa etiquetas de acciones claras. Organizar documentos autorizados corresponde a trabajo administrativo listo para comenzar. Esperar confirmación del custodio corresponde a un saldo no verificado. Remitir una cuestión de autoridad o derechos corresponde a una reclamación compleja o disputada. Son tareas, no aprobaciones legales ni puntajes automáticos de negocio. Un importe pequeño no justifica omitir la autoridad, y uno grande no justifica ignorar restricciones. Registra por qué te detuviste y qué pruebas permitirían el siguiente paso. Protege los intereses del cliente en lugar de perseguir una cifra. Pausa y pruébalo. Evalúa el caso ficticio final con un documento de autoridad faltante y una reclamación competidora pendiente. Elige dos acciones específicas. Pregunta de repaso. ¿Qué expediente está listo para anunciar una recuperación garantizada? La respuesta: Ninguno establece una recuperación garantizada. La preparación administrativa, el derecho al cobro y el pago eventual son cuestiones diferentes. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-16",
+      "module": "communications",
+      "title": "Realiza una consulta autorizada",
+      "goal": "Realiza una consulta autorizada.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Comienza por identidad y permiso: quién eres, por qué la persona pidió la conversación y qué quiere entender. Explica que no eres el custodio y no puedes prometer un desembolso. Basa la explicación en los documentos disponibles del expediente autorizado."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Un ejemplo neutral de práctica sería: Nos pediste organizar tus documentos. El registro que tenemos es de este mes y describe un depósito. Aún no verificamos saldo restante ni derecho al cobro. La oficina oficial explica aquí el procedimiento directo. ¿Quieres revisar una lista de los documentos que faltan? Es un guion ficticio, no permiso para contactar desconocidos."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Evita presionar con miedo, plazos inventados o exclusividad falsa. Si pudiera existir un plazo real, identifica la fuente y remite oportunamente la cuestión legal. Pregunta qué entendió la persona antes de hablar de condiciones de servicio revisadas localmente."
+        }
+      ],
+      "exercise": "Practica con hechos ficticios una consulta que incluya un hecho confirmado, dos datos desconocidos, la vía directa y un siguiente paso específico.",
+      "quiz": {
+        "question": "¿Qué comunicación es adecuada?",
+        "choices": [
+          "Somos la única vía para cobrar",
+          "El dinero está garantizado",
+          "Aquí está lo que dice la fuente fechada y lo que sigue sin verificar",
+          "Debes firmar por un plazo inventado"
+        ],
+        "answer": 2,
+        "explanation": "Comunica los hechos verificados y sus límites sin presión ni falsa autoridad."
+      },
+      "sources": [
+        "pinellas",
+        "ftc"
+      ],
+      "productionScene": "cafe",
+      "narration": "Piensa en esto: ¿Qué comunicación es adecuada? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 16: Realiza una consulta autorizada. Comienza por identidad y permiso: quién eres, por qué la persona pidió la conversación y qué quiere entender. Explica que no eres el custodio y no puedes prometer un desembolso. Basa la explicación en los documentos disponibles del expediente autorizado. Un ejemplo neutral de práctica sería: Nos pediste organizar tus documentos. El registro que tenemos es de este mes y describe un depósito. Aún no verificamos saldo restante ni derecho al cobro. La oficina oficial explica aquí el procedimiento directo. ¿Quieres revisar una lista de los documentos que faltan? Es un guion ficticio, no permiso para contactar desconocidos. Evita presionar con miedo, plazos inventados o exclusividad falsa. Si pudiera existir un plazo real, identifica la fuente y remite oportunamente la cuestión legal. Pregunta qué entendió la persona antes de hablar de condiciones de servicio revisadas localmente. Pausa y pruébalo. Practica con hechos ficticios una consulta que incluya un hecho confirmado, dos datos desconocidos, la vía directa y un siguiente paso específico. Pregunta de repaso. ¿Qué comunicación es adecuada? La respuesta: Aquí está lo que dice la fuente fechada y lo que sigue sin verificar. Comunica los hechos verificados y sus límites sin presión ni falsa autoridad. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-17",
+      "module": "communications",
+      "title": "Prepara una solicitud documental y un paquete de entrega",
+      "goal": "Prepara una solicitud documental y un paquete de entrega.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Explica el propósito de cada documento solicitado. Usa la referencia del caso y pide copias mediante un canal seguro adecuado. No solicites un conjunto completo de documentos de identidad, bancarios o familiares solo porque podrían servir después. Los originales deben permanecer con la persona salvo que un procedimiento apropiado requiera otra cosa."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Un paquete de entrega puede incluir índice, alcance de autorización, clasificación de la venta, historial fechado, cifras contables vinculadas a fuentes, preguntas pendientes y revisión solicitada. Señala material incompleto o contradictorio. No ocultes reclamaciones competidoras, posibles problemas de fechas ni restricciones de acceso al revisor."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Las descargas del curso incluyen una lista administrativa, no una reclamación legal operativa, contrato de honorarios, cesión ni poder. Un profesional local calificado debe seleccionar y revisar los instrumentos legales que requieran las circunstancias reales."
+        }
+      ],
+      "exercise": "Prepara un índice ficticio de entrega con columnas de fuente y elementos faltantes. Explica para qué se necesita cada documento.",
+      "quiz": {
+        "question": "¿Qué instrumento legal universal proporciona este curso?",
+        "choices": [
+          "Una cesión válida en todo el país",
+          "Un poder para firmar siempre",
+          "Un contrato de honorarios obligatorio",
+          "Ninguno; las hojas son ayudas administrativas de aprendizaje"
+        ],
+        "answer": 3,
+        "explanation": "Las hojas administrativas no sustituyen documentos legales específicos ni autoridad para actuar."
+      },
+      "sources": [
+        "assign",
+        "fl"
+      ],
+      "productionScene": "desk",
+      "narration": "Piensa en esto: ¿Qué instrumento legal universal proporciona este curso? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 17: Prepara una solicitud documental y un paquete de entrega. Explica el propósito de cada documento solicitado. Usa la referencia del caso y pide copias mediante un canal seguro adecuado. No solicites un conjunto completo de documentos de identidad, bancarios o familiares solo porque podrían servir después. Los originales deben permanecer con la persona salvo que un procedimiento apropiado requiera otra cosa. Un paquete de entrega puede incluir índice, alcance de autorización, clasificación de la venta, historial fechado, cifras contables vinculadas a fuentes, preguntas pendientes y revisión solicitada. Señala material incompleto o contradictorio. No ocultes reclamaciones competidoras, posibles problemas de fechas ni restricciones de acceso al revisor. Las descargas del curso incluyen una lista administrativa, no una reclamación legal operativa, contrato de honorarios, cesión ni poder. Un profesional local calificado debe seleccionar y revisar los instrumentos legales que requieran las circunstancias reales. Pausa y pruébalo. Prepara un índice ficticio de entrega con columnas de fuente y elementos faltantes. Explica para qué se necesita cada documento. Pregunta de repaso. ¿Qué instrumento legal universal proporciona este curso? La respuesta: Ninguno; las hojas son ayudas administrativas de aprendizaje. Las hojas administrativas no sustituyen documentos legales específicos ni autoridad para actuar. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-18",
+      "module": "communications",
+      "title": "Coordina con el profesional adecuado",
+      "goal": "Coordina con el profesional adecuado.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Algunas situaciones requieren juicio legal o representación: derechos disputados, sucesiones, entidades, reclamaciones competidoras, cesiones y preguntas sobre compensación permitida. Los requisitos varían. La entrega debe plantear una pregunta concreta, no pedir que alguien valide una conclusión que la IA ya comunicó al cliente."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Aclara quién hace cada tarea, quién habla con el custodio, quién puede firmar o presentar documentos y cómo se manejan los costos conforme a condiciones revisadas. Obtén permiso antes de compartir información. No prometas que un profesional aceptará el caso, que se permitirá una tarifa ni que un acuerdo de referidos es lícito sin revisión."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Mantén una lista escrita de responsabilidades. La ayuda administrativa puede coexistir con representación profesional, pero los límites deben ser explícitos. Si se pide una aclaración, actualiza el expediente y conserva la versión anterior en lugar de cambiar silenciosamente lo entregado."
+        }
+      ],
+      "exercise": "Redacta una solicitud ficticia de revisión de un interés disputado y de los límites de la ayuda administrativa. No incluyas datos de una persona privada.",
+      "quiz": {
+        "question": "¿Qué debe hacer un resumen de IA ante un derecho al cobro disputado?",
+        "choices": [
+          "Decidir quién gana",
+          "Ignorarla para avanzar",
+          "Señalar la disputa respaldada por fuentes para la revisión adecuada",
+          "Prometer una distribución"
+        ],
+        "answer": 2,
+        "explanation": "El resumen apoya la revisión; no ejerce autoridad legal."
+      },
+      "sources": [
+        "assign",
+        "fl",
+        "jeffco"
+      ],
+      "productionScene": "handoff",
+      "narration": "Piensa en esto: ¿Qué debe hacer un resumen de IA ante un derecho al cobro disputado? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 18: Coordina con el profesional adecuado. Algunas situaciones requieren juicio legal o representación: derechos disputados, sucesiones, entidades, reclamaciones competidoras, cesiones y preguntas sobre compensación permitida. Los requisitos varían. La entrega debe plantear una pregunta concreta, no pedir que alguien valide una conclusión que la IA ya comunicó al cliente. Aclara quién hace cada tarea, quién habla con el custodio, quién puede firmar o presentar documentos y cómo se manejan los costos conforme a condiciones revisadas. Obtén permiso antes de compartir información. No prometas que un profesional aceptará el caso, que se permitirá una tarifa ni que un acuerdo de referidos es lícito sin revisión. Mantén una lista escrita de responsabilidades. La ayuda administrativa puede coexistir con representación profesional, pero los límites deben ser explícitos. Si se pide una aclaración, actualiza el expediente y conserva la versión anterior en lugar de cambiar silenciosamente lo entregado. Pausa y pruébalo. Redacta una solicitud ficticia de revisión de un interés disputado y de los límites de la ayuda administrativa. No incluyas datos de una persona privada. Pregunta de repaso. ¿Qué debe hacer un resumen de IA ante un derecho al cobro disputado? La respuesta: Señalar la disputa respaldada por fuentes para la revisión adecuada. El resumen apoya la revisión; no ejerce autoridad legal. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-19",
+      "module": "ai",
+      "title": "Usa IA para organizar documentos autorizados",
+      "goal": "Usa IA para organizar documentos autorizados.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Empieza con un propósito permitido y el mínimo material autorizado. Por ejemplo: Indexa estos documentos ficticios. Extrae fecha y concepto de cada cifra. Cita la página. Escribe desconocido cuando falten datos. No deduzcas propietarios, contactos ni derechos legales. Así conviertes un asistente general en una ayuda administrativa acotada."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Comprueba los resultados con los originales. La IA puede confundir oferta y saldo, mezclar personas, omitir una condición de fecha o inventar un campo. Mantén columnas de prueba y estado de revisión. Un puntaje de confianza no sustituye una fuente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Usa almacenamiento privado adecuado para el material del cliente, no archivos públicos del sitio ni carpetas de publicidad compartidas. Este curso gratuito enseña el proceso. No activa agentes, compra datos, envía mensajes ni verifica un caso por sí solo. Las herramientas de pago y los servicios activados tienen acceso y uso facturados por separado."
+        }
+      ],
+      "exercise": "Practica un índice documental únicamente con material ficticio. Corrige al menos un campo ambiguo o intencionalmente faltante.",
+      "quiz": {
+        "question": "¿Qué debe producir la IA cuando falta un importe?",
+        "choices": [
+          "Un promedio probable",
+          "La cifra más grande",
+          "Desconocido, identificando la fuente faltante",
+          "Cero siempre"
+        ],
+        "answer": 2,
+        "explanation": "La información financiera faltante debe seguir faltando hasta que una fuente fiable la establezca."
+      },
+      "sources": [],
+      "productionScene": "secure",
+      "narration": "Piensa en esto: ¿Qué debe producir la IA cuando falta un importe? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 19: Usa IA para organizar documentos autorizados. Empieza con un propósito permitido y el mínimo material autorizado. Por ejemplo: Indexa estos documentos ficticios. Extrae fecha y concepto de cada cifra. Cita la página. Escribe desconocido cuando falten datos. No deduzcas propietarios, contactos ni derechos legales. Así conviertes un asistente general en una ayuda administrativa acotada. Comprueba los resultados con los originales. La IA puede confundir oferta y saldo, mezclar personas, omitir una condición de fecha o inventar un campo. Mantén columnas de prueba y estado de revisión. Un puntaje de confianza no sustituye una fuente. Usa almacenamiento privado adecuado para el material del cliente, no archivos públicos del sitio ni carpetas de publicidad compartidas. Este curso gratuito enseña el proceso. No activa agentes, compra datos, envía mensajes ni verifica un caso por sí solo. Las herramientas de pago y los servicios activados tienen acceso y uso facturados por separado. Pausa y pruébalo. Practica un índice documental únicamente con material ficticio. Corrige al menos un campo ambiguo o intencionalmente faltante. Pregunta de repaso. ¿Qué debe producir la IA cuando falta un importe? La respuesta: Desconocido, identificando la fuente faltante. La información financiera faltante debe seguir faltando hasta que una fuente fiable la establezca. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-20",
+      "module": "ai",
+      "title": "Construye un resumen limitado a sus fuentes",
+      "goal": "Construye un resumen limitado a sus fuentes.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Separa hechos confirmados, estimaciones, preguntas y siguientes pasos. Cada cifra financiera debe incluir concepto, fuente, fecha efectiva y estado de revisión. Conserva la referencia original junto al resumen para que otra persona pueda comprobarlo sin reconstruir tus razonamientos."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Prueba esta instrucción con material ficticio o autorizado: Resume solo los documentos proporcionados. Organiza proceso, autoridad, contabilidad, eventos, cuestiones pendientes y revisión solicitada. Adjunta referencias y marca conflictos. No busques particulares, inventes datos, establezcas prioridades legales ni contactes personas. Revisa cada línea antes de compartir."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Ten especial cuidado con el presente verbal. El libro registró un depósito en una fecha no equivale a el dinero sigue disponible. El resumen debe preservar esa diferencia y permitir identificar rápidamente las fuentes antiguas."
+        }
+      ],
+      "exercise": "Escribe un resumen ficticio de una página con dos hechos vinculados a fuentes, una estimación, tres preguntas pendientes y una solicitud de entrega específica.",
+      "quiz": {
+        "question": "¿Qué resumen es más fácil de auditar?",
+        "choices": [
+          "Una cifra sin fecha",
+          "Un relato sin enlaces",
+          "Un resumen estructurado que separa hechos respaldados y preguntas pendientes",
+          "Una afirmación de confianza de la IA"
+        ],
+        "answer": 2,
+        "explanation": "Las referencias y la incertidumbre explícita permiten al revisor comprobar el trabajo."
+      },
+      "sources": [
+        "nc",
+        "fl"
+      ],
+      "productionScene": "secure",
+      "narration": "Piensa en esto: ¿Qué resumen es más fácil de auditar? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 20: Construye un resumen limitado a sus fuentes. Separa hechos confirmados, estimaciones, preguntas y siguientes pasos. Cada cifra financiera debe incluir concepto, fuente, fecha efectiva y estado de revisión. Conserva la referencia original junto al resumen para que otra persona pueda comprobarlo sin reconstruir tus razonamientos. Prueba esta instrucción con material ficticio o autorizado: Resume solo los documentos proporcionados. Organiza proceso, autoridad, contabilidad, eventos, cuestiones pendientes y revisión solicitada. Adjunta referencias y marca conflictos. No busques particulares, inventes datos, establezcas prioridades legales ni contactes personas. Revisa cada línea antes de compartir. Ten especial cuidado con el presente verbal. El libro registró un depósito en una fecha no equivale a el dinero sigue disponible. El resumen debe preservar esa diferencia y permitir identificar rápidamente las fuentes antiguas. Pausa y pruébalo. Escribe un resumen ficticio de una página con dos hechos vinculados a fuentes, una estimación, tres preguntas pendientes y una solicitud de entrega específica. Pregunta de repaso. ¿Qué resumen es más fácil de auditar? La respuesta: Un resumen estructurado que separa hechos respaldados y preguntas pendientes. Las referencias y la incertidumbre explícita permiten al revisor comprobar el trabajo. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-21",
+      "module": "ai",
+      "title": "Protege los registros y revisa cada acción externa",
+      "goal": "Protege los registros y revisa cada acción externa.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Separa contenido educativo y expedientes privados. Guarda los documentos del cliente en un espacio protegido y limita el acceso a quienes estén autorizados para esa tarea. Conserva solo lo necesario, respeta los requisitos de conservación aplicables y registra quién puede ver o compartir el expediente. No pongas documentos de clientes en descargas públicas."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Exige revisión humana antes de enviar mensajes, presentar documentos, pedir firmas, comprar datos o comunicar estados fuera del espacio de trabajo. Comprueba destinatario, propósito, hechos, autoridad y restricciones de uso. Si falta un requisito, la tarea debe aparecer bloqueada; el silencio no es aprobación."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Si se retira el permiso o descubres un error, detén el trabajo afectado, conserva el historial necesario y sigue el proceso correspondiente de corrección y conservación. Un asistente útil sabe detenerse. La velocidad no justifica omitir verificación ni consentimiento."
+        }
+      ],
+      "exercise": "Diseña una lista de cinco comprobaciones antes de enviar una actualización ficticia. Incluye cómo detenerla si cambia la autorización.",
+      "quiz": {
+        "question": "¿Qué puede hacer automáticamente un agente en un ejercicio del curso?",
+        "choices": [
+          "Contactar personas desconocidas",
+          "Firmar una reclamación",
+          "Comprar información personal",
+          "Organizar los documentos ficticios proporcionados dentro del alcance indicado"
+        ],
+        "answer": 3,
+        "explanation": "Las acciones externas o sensibles requieren autoridad y revisión propias; una tarea educativa no las concede."
+      },
+      "sources": [
+        "king",
+        "sc"
+      ],
+      "productionScene": "secure",
+      "narration": "Piensa en esto: ¿Qué puede hacer automáticamente un agente en un ejercicio del curso? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 21: Protege los registros y revisa cada acción externa. Separa contenido educativo y expedientes privados. Guarda los documentos del cliente en un espacio protegido y limita el acceso a quienes estén autorizados para esa tarea. Conserva solo lo necesario, respeta los requisitos de conservación aplicables y registra quién puede ver o compartir el expediente. No pongas documentos de clientes en descargas públicas. Exige revisión humana antes de enviar mensajes, presentar documentos, pedir firmas, comprar datos o comunicar estados fuera del espacio de trabajo. Comprueba destinatario, propósito, hechos, autoridad y restricciones de uso. Si falta un requisito, la tarea debe aparecer bloqueada; el silencio no es aprobación. Si se retira el permiso o descubres un error, detén el trabajo afectado, conserva el historial necesario y sigue el proceso correspondiente de corrección y conservación. Un asistente útil sabe detenerse. La velocidad no justifica omitir verificación ni consentimiento. Pausa y pruébalo. Diseña una lista de cinco comprobaciones antes de enviar una actualización ficticia. Incluye cómo detenerla si cambia la autorización. Pregunta de repaso. ¿Qué puede hacer automáticamente un agente en un ejercicio del curso? La respuesta: Organizar los documentos ficticios proporcionados dentro del alcance indicado. Las acciones externas o sensibles requieren autoridad y revisión propias; una tarea educativa no las concede. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-22",
+      "module": "capstone",
+      "title": "Revisa un caso ficticio de principio a entrega",
+      "goal": "Revisa un caso ficticio de principio a entrega.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "El Caso A es totalmente ficticio. Un propietario inicia el contacto y autoriza organizar documentos. La venta registra $225,000. La contabilidad proporcionada muestra $18,000 de costos y una obligación de $172,000. Una hoja antigua sugiere $35,000 de remanente. Otro documento posterior describe un posible interés competidor de $13,000, pero el material no establece cómo se resolvió ni un saldo actual pagadero."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Tu tarea es organizar lo conocido, no decidir que se deben $35,000 o $22,000. Prepara clasificación del proceso, alcance de autoridad, índice, historial, escenarios ilustrativos y preguntas pendientes. Solicita información actual del custodio por el procedimiento adecuado y remite el interés competidor a la revisión correspondiente."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Una buena práctica identifica abiertamente los datos faltantes. No te premies por calcular una recuperación más alta. Evalúa si otro revisor puede seguir las fuentes y entender exactamente qué decisiones siguen pendientes."
+        }
+      ],
+      "exercise": "Completa la hoja final. Prepara un resumen de entrega de una página y una actualización neutral al propietario usando solo el Caso A ficticio.",
+      "quiz": {
+        "question": "¿Qué se ha establecido sobre el saldo pagadero actual del Caso A?",
+        "choices": [
+          "Que es $35,000",
+          "Que es $22,000",
+          "Que sigue sin verificarse",
+          "Que ya fue enviado"
+        ],
+        "answer": 2,
+        "explanation": "Los escenarios ilustrativos y un posible interés competidor no establecen un saldo actual pagadero."
+      },
+      "sources": [
+        "nc",
+        "fl",
+        "assign"
+      ],
+      "productionScene": "desk",
+      "narration": "Piensa en esto: ¿Qué se ha establecido sobre el saldo pagadero actual del Caso A? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 22: Revisa un caso ficticio de principio a entrega. El Caso A es totalmente ficticio. Un propietario inicia el contacto y autoriza organizar documentos. La venta registra doscientos veinticinco mil dólares. La contabilidad proporcionada muestra dieciocho mil dólares de costos y una obligación de ciento setenta y dos mil dólares. Una hoja antigua sugiere treinta y cinco mil dólares de remanente. Otro documento posterior describe un posible interés competidor de trece mil dólares pero el material no establece cómo se resolvió ni un saldo actual pagadero. Tu tarea es organizar lo conocido, no decidir que se deben treinta y cinco mil dólares o veintidós mil dólares. Prepara clasificación del proceso, alcance de autoridad, índice, historial, escenarios ilustrativos y preguntas pendientes. Solicita información actual del custodio por el procedimiento adecuado y remite el interés competidor a la revisión correspondiente. Una buena práctica identifica abiertamente los datos faltantes. No te premies por calcular una recuperación más alta. Evalúa si otro revisor puede seguir las fuentes y entender exactamente qué decisiones siguen pendientes. Pausa y pruébalo. Completa la hoja final. Prepara un resumen de entrega de una página y una actualización neutral al propietario usando solo el Caso A ficticio. Pregunta de repaso. ¿Qué se ha establecido sobre el saldo pagadero actual del Caso A? La respuesta: Que sigue sin verificarse. Los escenarios ilustrativos y un posible interés competidor no establecen un saldo actual pagadero. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-23",
+      "module": "capstone",
+      "title": "Evalúa los costos antes de ofrecer el servicio",
+      "goal": "Evalúa los costos antes de ofrecer el servicio.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Un plan responsable incluye tiempo de formación, herramientas seguras, administración, revisión profesional, publicidad permitida y la posibilidad de no conseguir trabajo pagado. El importe potencial de un caso no es tu ingreso. La compensación depende de acuerdos lícitos y revisados y de trabajo efectivamente realizado conforme a ellos."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Para un ejercicio ficticio, supón $200 en herramientas y $300 en otros costos fijos mensuales. Con una contribución hipotética de $250 después de los costos de cada caso, dos servicios de pago terminados cubrirían aritméticamente esos costos fijos. Solo es una ilustración del punto de equilibrio. No demuestra demanda, tarifas permitidas, probabilidad de cobro ni ingresos mensuales probables."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Investiga las limitaciones locales antes de gastar. Define cuándo detener un modelo restringido, antieconómico o dependiente de promesas de ingresos sin fundamento. Aprender una habilidad no crea un mercado garantizado."
+        }
+      ],
+      "exercise": "Prepara un presupuesto ficticio y señala tres incógnitas que debes resolver antes de considerar una tarifa ilustrativa como ingreso alcanzable.",
+      "quiz": {
+        "question": "¿Qué demuestra el ejemplo del punto de equilibrio?",
+        "choices": [
+          "Una tarifa legal en todos los estados",
+          "Una demanda asegurada",
+          "Una relación aritmética bajo supuestos ficticios",
+          "Ingresos futuros garantizados"
+        ],
+        "answer": 2,
+        "explanation": "La aritmética del negocio no demuestra precios lícitos, demanda ni resultados futuros."
+      },
+      "sources": [
+        "ftc",
+        "jeffco"
+      ],
+      "productionScene": "budget",
+      "narration": "Piensa en esto: ¿Qué demuestra el ejemplo del punto de equilibrio? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 23: Evalúa los costos antes de ofrecer el servicio. Un plan responsable incluye tiempo de formación, herramientas seguras, administración, revisión profesional, publicidad permitida y la posibilidad de no conseguir trabajo pagado. El importe potencial de un caso no es tu ingreso. La compensación depende de acuerdos lícitos y revisados y de trabajo efectivamente realizado conforme a ellos. Para un ejercicio ficticio, supón doscientos dólares en herramientas y trescientos dólares en otros costos fijos mensuales. Con una contribución hipotética de doscientos cincuenta dólares después de los costos de cada caso, dos servicios de pago terminados cubrirían aritméticamente esos costos fijos. Solo es una ilustración del punto de equilibrio. No demuestra demanda, tarifas permitidas, probabilidad de cobro ni ingresos mensuales probables. Investiga las limitaciones locales antes de gastar. Define cuándo detener un modelo restringido, antieconómico o dependiente de promesas de ingresos sin fundamento. Aprender una habilidad no crea un mercado garantizado. Pausa y pruébalo. Prepara un presupuesto ficticio y señala tres incógnitas que debes resolver antes de considerar una tarifa ilustrativa como ingreso alcanzable. Pregunta de repaso. ¿Qué demuestra el ejemplo del punto de equilibrio? La respuesta: Una relación aritmética bajo supuestos ficticios. La aritmética del negocio no demuestra precios lícitos, demanda ni resultados futuros. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    },
+    {
+      "id": "surplus-24",
+      "module": "capstone",
+      "title": "Completa un plan de práctica de treinta días",
+      "goal": "Completa un plan de práctica de treinta días.",
+      "sections": [
+        {
+          "heading": "La idea principal",
+          "text": "Semana uno: aprende términos, distingue tipos de venta y prepara un inventario de tres programas oficiales. Semana dos: revisa requisitos locales y practica admisión autorizada con material ficticio. Semana tres: arma el índice documental, el historial y escenarios contables ilustrativos. Semana cuatro: completa un resumen de entrega respaldado por fuentes y revisa cada cuestión pendiente."
+        },
+        {
+          "heading": "Ponlo en práctica",
+          "text": "Mide la calidad: fuentes fechadas, incógnitas preservadas, restricciones registradas, permisos acotados y cálculos comprobados. No uses una meta de ingresos como evidencia de que el proceso funciona. Para pasar a casos reales, usa material autorizado y la revisión calificada adecuada antes de ofrecer actividades reguladas o tarifas."
+        },
+        {
+          "heading": "Punto de control de Dr. Gainz",
+          "text": "Completar las lecciones y comprobaciones permite obtener un registro educativo de finalización. No es una licencia, certificación profesional, calificación legal ni promesa de ingresos. El siguiente paso práctico es la tarea específica permitida que tus pruebas respaldan."
+        }
+      ],
+      "exercise": "Escribe un plan de treinta días con cuatro entregables semanales y una condición para detenerte. Termina el caso final ficticio antes de pasar a trabajo autorizado.",
+      "quiz": {
+        "question": "¿Qué significa el registro de finalización?",
+        "choices": [
+          "Licencia nacional de recuperación",
+          "Derecho a firmar reclamaciones",
+          "Finalización del curso educativo y de sus prácticas",
+          "Ingresos mensuales confirmados"
+        ],
+        "answer": 2,
+        "explanation": "El registro refleja únicamente el progreso de aprendizaje."
+      },
+      "sources": [
+        "ftc",
+        "fl"
+      ],
+      "productionScene": "planning",
+      "narration": "Piensa en esto: ¿Qué significa el registro de finalización? Vamos a entenderlo juntos. Soy el Doctor Gainz. Lección 24: Completa un plan de práctica de treinta días. Semana uno: aprende términos, distingue tipos de venta y prepara un inventario de tres programas oficiales. Semana dos: revisa requisitos locales y practica admisión autorizada con material ficticio. Semana tres: arma el índice documental, el historial y escenarios contables ilustrativos. Semana cuatro: completa un resumen de entrega respaldado por fuentes y revisa cada cuestión pendiente. Mide la calidad: fuentes fechadas, incógnitas preservadas, restricciones registradas, permisos acotados y cálculos comprobados. No uses una meta de ingresos como evidencia de que el proceso funciona. Para pasar a casos reales, usa material autorizado y la revisión calificada adecuada antes de ofrecer actividades reguladas o tarifas. Completar las lecciones y comprobaciones permite obtener un registro educativo de finalización. No es una licencia, certificación profesional, calificación legal ni promesa de ingresos. El siguiente paso práctico es la tarea específica permitida que tus pruebas respaldan. Pausa y pruébalo. Escribe un plan de treinta días con cuatro entregables semanales y una condición para detenerte. Termina el caso final ficticio antes de pasar a trabajo autorizado. Pregunta de repaso. ¿Qué significa el registro de finalización? La respuesta: Finalización del curso educativo y de sus prácticas. El registro refleja únicamente el progreso de aprendizaje. Conserva la fuente y la fecha, y señala lo desconocido. Nos vemos en la próxima lección."
+    }
+  ],
+  "sources": {
+    "nc": {
+      "title": "North Carolina Legislature: distribution of sale proceeds",
+      "url": "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_45/GS_45-21.31.html"
+    },
+    "fl": {
+      "title": "Florida Legislature: foreclosure surplus procedures",
+      "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0045/Sections/0045.032.html"
+    },
+    "assign": {
+      "title": "Florida Legislature: assignment of surplus rights",
+      "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0045/Sections/0045.033.html"
+    },
+    "king": {
+      "title": "King County: auction surplus and record-use restrictions",
+      "url": "https://kingcounty.gov/en/dept/executive-services/buildings-property/treasury-operations/tax-foreclosures/excess-auction-money"
+    },
+    "sc": {
+      "title": "South Carolina Legislature: personal information and solicitation",
+      "url": "https://www.scstatehouse.gov/code/t30c002"
+    },
+    "jeffco": {
+      "title": "Jefferson County: overbid funds and finder-fee warning",
+      "url": "https://www.jeffco.us/4675/Overbid-Funds"
+    },
+    "denver": {
+      "title": "Denver Public Trustee: foreclosure process and owner resources",
+      "url": "https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Denver-Clerk-and-Recorder/Recording-Division/Denver-Public-Trustee"
+    },
+    "pinellas": {
+      "title": "Pinellas Clerk: owner claim for mortgage foreclosure surplus",
+      "url": "https://www.mypinellasclerk.gov/Portals/0/Civil%20Court/OwnersClaimforSurplus.pdf"
+    },
+    "ftc": {
+      "title": "FTC: substantiation of money-making opportunity claims",
+      "url": "https://www.ftc.gov/enforcement/notices-penalty-offenses/penalty-offenses-concerning-money-making-opportunities"
+    }
+  },
+  "introVideo": "/assets/courses/surplus/dr-gainz-welcome.mp4",
+  "videoStyle": "Realistic UGC with captions, floating key concepts and labeled fictional dramatizations"
+}
