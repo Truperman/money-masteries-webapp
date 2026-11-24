@@ -3,6 +3,7 @@
 !nginx.conf
 !index.html
 !compensation.html
+!surplus-course.html
 !assets/
 !assets/**
 !downloads/
