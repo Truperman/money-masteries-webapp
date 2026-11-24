@@ -1,0 +1,7 @@
+'use strict';const {defineSecret}=require('firebase-functions/params');const {onCall}=require('firebase-functions/v2/https');const {runtime}=require('./membership-access');const key=defineSecret('MM_MEMBERSHIP_STRIPE_KEY');
+module.exports={mmMembershipStatus:onCall({region:'us-central1',invoker:'public',secrets:[key],maxInstances:5},r=>runtime(key.value()).state(r)),mmSelectProNiche:onCall({region:'us-central1',invoker:'public',secrets:[key],maxInstances:5},r=>runtime(key.value()).choose(r))};
+
+module.exports.mmAssertMembershipNiche=onCall({region:'us-central1',invoker:'public',maxInstances:5},async r=>{const niche=r.data?.niche;if(!require('./membership-access').NICHES.includes(niche))throw new (require('firebase-functions/v2/https').HttpsError)('invalid-argument','Choose a valid niche.');await runtime().assertNiche(r,niche);return {allowed:true};});
+
+module.exports.mmDirectReferrals=onCall({region:'us-central1',invoker:'public',maxInstances:5},r=>runtime().referrals(r));
+module.exports.mmLookupReferralNumber=onCall({region:'us-central1',invoker:'public',maxInstances:3},async r=>{const number=String(r.data?.number||'');if(!/^[0-9]{4,8}$/.test(number))return {code:null};const {getFirestore}=require('firebase-admin/firestore'),db=getFirestore(),snap=await db.collection('users').where('referralNumber','==',number).limit(2).get();if(snap.size!==1)return {code:null};return {code:'MM'+snap.docs[0].id.slice(0,6).toUpperCase()};});

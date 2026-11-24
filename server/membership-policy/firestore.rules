@@ -1,0 +1,59 @@
+rules_version = '2';
+// Models: users/{uid} is a private profile (uid/email/name required), with server-owned billing fields.
+// membershipAccess/{uid} is a server-written mirror: plan/status/expiresAt/niches/automation/commissionRate.
+// products/{id}: ownerUid, id, name, price required; ecommerce publishing only. Public sales use server checkout.
+// community/{id}: uid/name/photo/text/likes/createdAt; authenticated discussion, author-owned writes.
+// Financial records, configuration and admin records are server/admin written. Unknown paths deny by default.
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn(){return request.auth != null;}
+  function admin(){return signedIn() && request.auth.uid == 'Md5xBlA3DTV2RSAaftUEVzCNteI3' && request.auth.token.email_verified == true && request.auth.token.email == 'reachdavid.work@gmail.com';}
+  function own(uid){return signedIn() && request.auth.uid == uid;}
+  function niche(n){let m=get(/databases/$(database)/documents/membershipAccess/$(request.auth.uid)).data;return signedIn() && m.status == 'active' && m.expiresAt > request.time.toMillis() && n in m.niches;}
+  function validUser(d,uid){return d.uid==uid && d.email is string && d.email.size()<=320 && d.name is string && d.name.size()<=200 && d.plan in ['free','basic','pro','elite'] && d.progress is map;}
+  function userCreate(d,uid){return validUser(d,uid) && d.email==request.auth.token.email && d.keys().hasOnly(['uid','name','email','photo','plan','subscriptionStatus','affiliateCode','referralNumber','referredBy','joinedAt','progress','totalEarned','pendingPayout','referrals','billingHistory','lastPaymentAt','lastPaymentAmount']) && d.plan=='free' && d.subscriptionStatus=='pending_payment' && d.totalEarned==0 && d.pendingPayout==0 && d.referrals==0 && d.billingHistory==[] && d.lastPaymentAmount==0;}
+  function userUpdate(d,uid){return validUser(d,uid) && d.email==resource.data.email && d.uid==resource.data.uid && d.diff(resource.data).affectedKeys().hasOnly(['name','photo','progress','payoutInfo','businessFocus','businessProfile','profile','tradingMaster','toolProofs','creations','store','gainzPlanComplete','gainzSteps','onboarding','language','preferences']) && (!d.diff(resource.data).affectedKeys().hasAny(['store','creations']) || niche('ecommerce'));}
+  match /users/{uid} {
+   allow get: if own(uid) || admin();
+   allow list: if admin();
+   allow create: if admin() || (own(uid) && userCreate(request.resource.data,uid));
+   allow update: if admin() || (own(uid) && userUpdate(request.resource.data,uid));
+   allow delete: if admin();
+   match /{sub}/{record} {
+    function validRecord(d){return d is map && d.keys().size()<=80 && (!('uid' in d) || d.uid==uid);}
+    function allowedSub(){return sub in ['crmClients','crmProjects','crmInvoices','crmLeads','crmTeam'] || (sub=='reiSavedLeads' && niche('realestate'));}
+    allow read: if admin() || (own(uid) && allowedSub());
+    allow create: if admin() || (own(uid) && allowedSub() && validRecord(request.resource.data));
+    allow update: if admin() || (own(uid) && allowedSub() && validRecord(request.resource.data));
+    allow delete: if admin() || (own(uid) && allowedSub());
+   }
+  }
+  match /membershipAccess/{uid} {allow read: if own(uid) || admin();allow write: if false;}
+  match /products/{id} {
+   function validProduct(d){return d.ownerUid is string && d.id is string && d.id.size()<=128 && d.name is string && d.name.size()>0 && d.name.size()<=200 && d.price is number && d.price>=0 && d.price<=1000000;}
+   allow read: if signedIn();
+   allow create: if admin() || (niche('ecommerce') && validProduct(request.resource.data) && request.resource.data.ownerUid==request.auth.uid);
+   allow update: if admin() || (niche('ecommerce') && resource.data.ownerUid==request.auth.uid && validProduct(request.resource.data) && request.resource.data.ownerUid==resource.data.ownerUid && request.resource.data.id==resource.data.id);
+   allow delete: if admin() || (niche('ecommerce') && resource.data.ownerUid==request.auth.uid);
+  }
+  match /community/{id} {
+   function validPost(d){return d.keys().hasOnly(['uid','name','photo','text','likes','createdAt']) && d.uid==request.auth.uid && d.name is string && d.name.size()<=200 && d.photo is string && d.photo.size()<=2000 && d.text is string && d.text.size()>0 && d.text.size()<=6000 && d.likes is int && d.likes>=0;}
+   allow read: if signedIn();
+   allow create: if signedIn() && validPost(request.resource.data) && request.resource.data.likes==0;
+   allow update: if admin() || (signedIn() && resource.data.uid==request.auth.uid && validPost(request.resource.data) && request.resource.data.uid==resource.data.uid && request.resource.data.likes==resource.data.likes);
+   allow delete: if admin() || (signedIn() && resource.data.uid==request.auth.uid);
+  }
+  match /referralEvents/{uid} {
+   function validReferral(d){return d.newUid==uid && d.referredBy is string && d.referredBy.size()<=128 && d.credited==false;}
+   allow read: if admin() || own(uid);
+   allow create: if own(uid) && validReferral(request.resource.data);
+   allow update,delete: if admin();
+  }
+  match /config/{id} {allow read: if signedIn();allow write: if admin();}
+  match /broadcasts/{id} {allow read: if signedIn();allow write: if admin();}
+  match /masterTools/{id} {allow read: if signedIn();allow write: if admin();}
+  match /orders/{id} {allow read: if admin() || (signedIn() && (resource.data.buyerUid==request.auth.uid || resource.data.sellerUid==request.auth.uid));allow write: if admin();}
+  match /tradingJournal/{id} {allow read: if admin() || (niche('trading') && resource.data.uid==request.auth.uid);allow write: if false;}
+  match /{collection}/{record} {allow read,write: if admin();}
+ }
+}
