@@ -8,3 +8,5 @@
 !assets/**
 !downloads/
 !downloads/**
+
+!sw.js

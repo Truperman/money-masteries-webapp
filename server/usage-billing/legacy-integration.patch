@@ -1,0 +1,442 @@
+diff --git a/work/usage-production/legacy-before.js b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js
+index 7f0c3ac..0198378 100644
+--- a/work/usage-production/legacy-before.js
++++ b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js	
+@@ -138,60 +138,7 @@ async function maybeChargeGenieAccessFee(businessId) {
+ }
+ 
+ async function writeCreditLedgerEvent(uid, vertical, rawCost, billedCost, meta, pricingVersion) {
+-  try {
+-    const userSnap = await db.collection("users").doc(uid).get();
+-    const u = userSnap.exists ? userSnap.data() : {};
+-    const businessId = Array.isArray(u.ownedBusinessIds) ? u.ownedBusinessIds[0] : null;
+-    if (!businessId) return; // not yet auto-provisioned a business — nothing to mirror to yet
+-    const serviceGrossProfit = billedCost - rawCost;
+-    await db.collection("businesses").doc(businessId).collection("creditLedger").add({
+-      uid,
+-      vertical, // 'ai' | 'video' | 'leads' | 'phone'
+-      rawCost,
+-      billedCost,
+-      profit: serviceGrossProfit,
+-      // Spec ("retained-contribution decomposition"): same value as
+-      // `profit` above (kept for backward compatibility — other code reads
+-      // `profit`), under the name the spec prefers.
+-      serviceGrossProfit,
+-      // Standard Stripe card processing estimate (2.9% + $0.30). This is
+-      // an ESTIMATE for event-level reporting only — the actual fee Stripe
+-      // charges is only known once the settlement invoice/charge for this
+-      // amount actually clears (see settleUnbilledUsage), and can differ
+-      // (different card brand, currency, dispute, etc).
+-      paymentFeeEstimate: billedCost > 0 ? Math.round((billedCost * 0.029 + 0.3) * 1e6) / 1e6 : 0,
+-      // Real affiliate commission on this event's profit is NOT knowable
+-      // at write time — it depends on which affiliate (if any) referred
+-      // this business AND that affiliate's CURRENT plan tier, both of
+-      // which are only resolved once at settlement time, in
+-      // creditQualifyingProfitCommission, over the whole settlement
+-      // period (not per-event). Left null here deliberately; do not
+-      // attempt to estimate it per-event.
+-      affiliateCommissionEstimate: null,
+-      pricingVersion: pricingVersion != null ? pricingVersion : null,
+-      meta: meta || {},
+-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+-    });
+-    // Genie Blueprint Section D: every billable event also grows the
+-    // business's running unbilled balance, which settleUnbilledUsage (below)
+-    // reads to decide when to charge. Only does anything once a payment
+-    // method is actually on file for this business — additive no-op before
+-    // that, so nothing changes for a business that hasn't gone through the
+-    // new payment-method-setup step yet.
+-    await db.collection("businesses").doc(businessId).set(
+-      { billing: { unbilledAmount: admin.firestore.FieldValue.increment(billedCost) } },
+-      { merge: true }
+-    );
+-    // Every 'ai'-vertical event is a real Genie interaction (the product's
+-    // own framing: "the same Genie across every tool on the site") -- so
+-    // this is the one place that decides whether the $19 access fee for
+-    // this rolling period has already been charged.
+-    if (vertical === "ai") {
+-      await maybeChargeGenieAccessFee(businessId);
+-    }
+-  } catch (e) {
+-    logger.warn("writeCreditLedgerEvent: non-fatal bridge write failed", { uid, vertical, error: e.message });
+-  }
++  return require('./usage-billing/runtime').recordLegacy(uid, vertical, rawCost, billedCost, meta, pricingVersion);
+ }
+ 
+ /** Re-posts the raw IPN body back to PayPal with cmd=_notify-validate prepended.
+@@ -1788,6 +1735,19 @@ exports.setUserBillingMode = onCall({ invoker: "public" }, async (request) => {
+   return { ok: true, uid, billingMode, billingCadence };
+ });
+ 
++async function callAnthropicBilled(uid, prompt, model, maxTokens, service) {
++  const usage = require('./usage-billing/runtime').runtime();
++  await usage.billing.assert(uid);
++  await getServicePricingConfig('ai-usage');
++  const data = await callAnthropic(prompt, model, maxTokens);
++  if (!data.id || !data.usage) throw new HttpsError('failed-precondition', 'The AI provider did not return a verifiable usage receipt.');
++  const p = priceForModel(model), tokens = data.usage;
++  const raw = ((tokens.input_tokens || 0) / 1e6) * p.input + ((tokens.output_tokens || 0) / 1e6) * p.output;
++  const priced = await applyMemberProfitCap(uid, await priceService('ai-usage', raw));
++  await usage.billing.record(uid, { provider: 'anthropic', receiptId: data.id, service, costNanoUsd: Math.round(raw * 1e9), chargeNanoUsd: Math.round(priced.customerPrice * 1e9), rateVersion: String(priced.pricingVersion || 'existing-ai-rate'), quantity: (tokens.input_tokens || 0) + (tokens.output_tokens || 0), unit: 'tokens' });
++  return data;
++}
++
+ async function callAnthropic(prompt, model, maxTokens) {
+   const apiKey = process.env.ANTHROPIC_API_KEY;
+   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured in functions/.env");
+@@ -1815,27 +1775,8 @@ async function callAnthropic(prompt, model, maxTokens) {
+  *  Stripe billing is fully configured. Safe no-op otherwise — never throws,
+  *  so a missing Stripe setup never breaks the AI feature itself. */
+ async function reportUsageToStripe(uid, billedCost) {
+-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+-  const meterEventName = process.env.STRIPE_AI_METER_EVENT_NAME;
+-  if (!stripeKey || !meterEventName) {
+-    logger.info("Stripe usage reporting not configured yet (STRIPE_SECRET_KEY / STRIPE_AI_METER_EVENT_NAME) — usage tracked in Firestore only.");
+-    return;
+-  }
+-  const userSnap = await db.collection("users").doc(uid).get();
+-  const user = userSnap.data() || {};
+-  if (!user.stripeCustomerId) {
+-    logger.info("No stripeCustomerId on file for uid " + uid + " — skipping Stripe usage report.");
+-    return;
+-  }
+-  const stripe = require("stripe")(stripeKey);
+-  await stripe.billing.meterEvents.create({
+-    event_name: meterEventName,
+-    payload: {
+-      stripe_customer_id: user.stripeCustomerId,
+-      // report in cents to avoid fractional-cent rounding issues; minimum 1.
+-      value: String(Math.max(1, Math.round(billedCost * 100))),
+-    },
+-  });
++  // Recorded once by writeCreditLedgerEvent; only the private outbox submits usage to Stripe.
++  return;
+ }
+ 
+ exports.askAI = onRequest({ cors: true, invoker: "public", timeoutSeconds: 300 }, async (req, res) => {
+@@ -4332,7 +4273,9 @@ async function seedGenieClientWelcomeMessage(uid, business) {
+  *  (returns broadly useful starter ideas and nudges them toward answering
+  *  a few questions for sharper ones next time). */
+ async function generateGenieGrowthIdeas(uid, opts) {
+-  const skipBilling = !!(opts && opts.skipBilling);
++  if (!opts?.manual) return []; // Background AI is not activated by account creation.
++  await require('./usage-billing/runtime').runtime().billing.assert(uid);
++  const skipBilling = false; // Real provider usage is never a free admin-preview bypass.
+   const clientDoc = await db.collection("genieClients").doc(uid).get();
+   const client = clientDoc.exists ? clientDoc.data() : {};
+   const answeredSnap = await db.collection("genieClients").doc(uid).collection("learningQuestions")
+@@ -4889,7 +4832,7 @@ exports.syncZernioAdSpendBilling = onSchedule({ schedule: "every 6 hours", regio
+         if (feeAmount > 0) {
+           await writeCreditLedgerEvent(
+             biz.ownerUid, "ad-spend", 0, feeAmount,
+-            { type: "management_fee", adSpendDelta: delta, cumulativeSpend, feeRate },
++            { type: "management_fee", businessId, adSpendDelta: delta, cumulativeSpend, feeRate },
+             feeConfig.pricingVersion || null
+           );
+         }
+@@ -6009,7 +5952,7 @@ exports.getGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
+ exports.refreshGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
+   if (!request.auth) throw new HttpsError("unauthenticated", "Please log in.");
+   const isAdminPreview = !!(request.auth.token && request.auth.token.previewByAdmin);
+-  const ideas = await generateGenieGrowthIdeas(request.auth.uid, { skipBilling: isAdminPreview });
++  const ideas = await generateGenieGrowthIdeas(request.auth.uid, { manual: true });
+   return { ok: true, ideas };
+ });
+ 
+@@ -6519,26 +6462,8 @@ async function getEffectiveLeadMarkupMultiplier(uid, userDocData) {
+  *  reportUsageToStripe exactly, with its own meter-event env var so lead
+  *  charges and AI charges can be priced/reported independently. */
+ async function reportLeadUsageToStripe(uid, billedCost) {
+-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+-  const meterEventName = process.env.STRIPE_LEADS_METER_EVENT_NAME;
+-  if (!stripeKey || !meterEventName) {
+-    logger.info("Stripe lead-usage reporting not configured yet (STRIPE_LEADS_METER_EVENT_NAME) — usage tracked in Firestore only.");
+-    return;
+-  }
+-  const userSnap = await db.collection("users").doc(uid).get();
+-  const user = userSnap.data() || {};
+-  if (!user.stripeCustomerId) {
+-    logger.info("No stripeCustomerId on file for uid " + uid + " — skipping Stripe lead-usage report.");
+-    return;
+-  }
+-  const stripe = require("stripe")(stripeKey);
+-  await stripe.billing.meterEvents.create({
+-    event_name: meterEventName,
+-    payload: {
+-      stripe_customer_id: user.stripeCustomerId,
+-      value: String(Math.max(1, Math.round(billedCost * 100))), // cents
+-    },
+-  });
++  // Recorded once by writeCreditLedgerEvent; only the private outbox submits usage to Stripe.
++  return;
+ }
+ 
+ function tracerfyHeaders() {
+@@ -6871,26 +6796,8 @@ async function getEffectiveVideoMarkupMultiplier(uid, userDocData) {
+  *  Mirrors reportLeadUsageToStripe exactly, with its own meter-event env
+  *  var so video charges can be priced/reported independently. */
+ async function reportVideoUsageToStripe(uid, billedCost) {
+-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+-  const meterEventName = process.env.STRIPE_VIDEO_METER_EVENT_NAME;
+-  if (!stripeKey || !meterEventName) {
+-    logger.info("Stripe video-usage reporting not configured yet (STRIPE_VIDEO_METER_EVENT_NAME) — usage tracked in Firestore only.");
+-    return;
+-  }
+-  const userSnap = await db.collection("users").doc(uid).get();
+-  const user = userSnap.data() || {};
+-  if (!user.stripeCustomerId) {
+-    logger.info("No stripeCustomerId on file for uid " + uid + " — skipping Stripe video-usage report.");
+-    return;
+-  }
+-  const stripe = require("stripe")(stripeKey);
+-  await stripe.billing.meterEvents.create({
+-    event_name: meterEventName,
+-    payload: {
+-      stripe_customer_id: user.stripeCustomerId,
+-      value: String(Math.max(1, Math.round(billedCost * 100))), // cents
+-    },
+-  });
++  // Recorded once by writeCreditLedgerEvent; only the private outbox submits usage to Stripe.
++  return;
+ }
+ 
+ /** Uploads a data: URL image to Firebase Storage and returns a public URL —
+@@ -7102,30 +7009,8 @@ const PHONE_MARKUP_MULTIPLIER_FALLBACK = Number(process.env.PHONE_MARKUP_MULTIPL
+  *  client, IF Stripe billing is fully configured — exact mirror of
+  *  reportLeadUsageToStripe/reportVideoUsageToStripe above. Never throws. */
+ async function reportPhoneUsageToStripe(uid, billedCost) {
+-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+-  const meterEventName = process.env.STRIPE_PHONE_METER_EVENT_NAME;
+-  if (!stripeKey || !meterEventName) {
+-    logger.info("Stripe phone-usage reporting not configured yet (STRIPE_PHONE_METER_EVENT_NAME) — usage tracked in Firestore only.");
+-    return;
+-  }
+-  const userSnap = await db.collection("users").doc(uid).get();
+-  const user = userSnap.data() || {};
+-  if (!user.stripeCustomerId) {
+-    logger.info("No stripeCustomerId on file for uid " + uid + " — skipping Stripe phone-usage report.");
+-    return;
+-  }
+-  try {
+-    const stripe = require("stripe")(stripeKey);
+-    await stripe.billing.meterEvents.create({
+-      event_name: meterEventName,
+-      payload: {
+-        stripe_customer_id: user.stripeCustomerId,
+-        value: String(Math.max(1, Math.round(billedCost * 100))), // cents
+-      },
+-    });
+-  } catch (e) {
+-    logger.warn("reportPhoneUsageToStripe: failed (non-fatal)", e.message);
+-  }
++  // Recorded once by writeCreditLedgerEvent; only the private outbox submits usage to Stripe.
++  return;
+ }
+ 
+ /** Reads config/phonePricing, falling back to PHONE_MARKUP_MULTIPLIER_FALLBACK
+@@ -7289,7 +7174,7 @@ async function logGeniePhoneEvent({ uid, type, direction, otherPartyNumber, ownN
+   });
+ 
+   await reportPhoneUsageToStripe(uid, billedCost);
+-  await writeCreditLedgerEvent(uid, "phone", rawCost, billedCost, { type, direction, durationSeconds: durationSeconds || null, segments: segments || null }, priceResult.pricingVersion);
++  await writeCreditLedgerEvent(uid, "phone", rawCost, billedCost, { type, direction, durationSeconds: durationSeconds || null, segments: segments || null, telnyxId }, priceResult.pricingVersion);
+ }
+ 
+ /** ProsHub Master "Conversations" tab -- real per-member call/text
+@@ -9160,52 +9045,7 @@ exports.getMyBillingStatus = onCall({ invoker: "public" }, async (request) => {
+  * rather than the generic "try again shortly" message a carded member sees
+  * — because for a cardless member there is nothing to auto-settle against.
+  */
+-async function assertUnderExposureLimit(uid) {
+-  // The Master (owner) account itself is never gated by member usage
+-  // billing — this whole mechanism exists to protect against member
+-  // over-usage, not to meter the site owner testing their own platform.
+-  try {
+-    const authUser = await admin.auth().getUser(uid);
+-    if (isMasterAccount(authUser.email)) return;
+-  } catch (e) {
+-    // Non-fatal — fall through to the normal per-business gate below.
+-  }
+-  const userSnap = await db.collection("users").doc(uid).get();
+-  const u = userSnap.exists ? userSnap.data() : {};
+-  const businessId = Array.isArray(u.ownedBusinessIds) ? u.ownedBusinessIds[0] : null;
+-  if (!businessId) return; // not yet provisioned a business — nothing to gate on yet
+-  const bizSnap = await db.collection("businesses").doc(businessId).get();
+-  const billing = (bizSnap.exists && bizSnap.data().billing) || null;
+-  const hasCard = !!(billing && billing.paymentMethodOnFile);
+-  if (hasCard && (billing.billingStatus === "limited" || billing.billingStatus === "suspended")) {
+-    throw new HttpsError(
+-      "failed-precondition",
+-      "Your MoneyMasteries billing needs attention before you can start new paid activity. Please update your payment method."
+-    );
+-  }
+-  // Per-business override (billing.exposureLimitUsd) wins if set; otherwise
+-  // fall back to the Master Portal's live config doc — NOT the hardcoded
+-  // USAGE_BILLING_DEFAULTS constant, which only seeds that doc once and is
+-  // never re-read afterward. (Was reading the hardcoded constant directly
+-  // here, so adminSetUsageBillingConfig's global default silently had no
+-  // effect on this gate — fixed.)
+-  const usageCfg = await getUsageBillingConfig();
+-  const exposureLimit = Number(billing && billing.exposureLimitUsd) || Number(usageCfg.unbilledExposureLimitUsd) || USAGE_BILLING_DEFAULTS.unbilledExposureLimitUsd;
+-  const unbilled = Number(billing && billing.unbilledAmount) || 0;
+-  if (unbilled >= exposureLimit) {
+-    if (!hasCard) {
+-      const err = new HttpsError(
+-        "failed-precondition",
+-        "You've used up your free usage for now — add a payment method to keep going. Start Free stays $0.00 today; you're only charged for what you actually use."
+-      );
+-      err.details = { code: "PAYMENT_METHOD_REQUIRED" };
+-      throw err;
+-    }
+-    throw new HttpsError(
+-      "resource-exhausted",
+-      "You're approaching your current usage limit — MoneyMasteries will settle your balance shortly. Try again in a moment."
+-    );
+-  }
++async function assertUnderExposureLimit(uid) { return require('./usage-billing/runtime').runtime().billing.assert(uid);
+ }
+ 
+ /** Stricter than assertUnderExposureLimit's $10-cardless-trial allowance --
+@@ -9216,21 +9056,7 @@ async function assertUnderExposureLimit(uid) {
+  *  other verticals (AI usage) intentionally allow. This is a deliberate,
+  *  narrower policy than assertUnderExposureLimit, not a replacement for
+  *  it -- both still run where both are wired in. */
+-async function requireBusinessPaymentMethod(uid) {
+-  const userSnap = await db.collection("users").doc(uid).get();
+-  const u = userSnap.exists ? userSnap.data() : {};
+-  const businessId = Array.isArray(u.ownedBusinessIds) ? u.ownedBusinessIds[0] : null;
+-  const bizSnap = businessId ? await db.collection("businesses").doc(businessId).get() : null;
+-  const hasCard = !!(bizSnap && bizSnap.exists && bizSnap.data().billing && bizSnap.data().billing.paymentMethodOnFile);
+-  if (!hasCard) {
+-    const err = new HttpsError(
+-      "failed-precondition",
+-      "Add a payment method first -- this feature has real usage costs and can't be turned on without one."
+-    );
+-    err.details = { code: "PAYMENT_METHOD_REQUIRED" };
+-    throw err;
+-  }
+-  return businessId;
++async function requireBusinessPaymentMethod(uid) { return require('./usage-billing/runtime').runtime().billing.assert(uid);
+ }
+ 
+ /**
+@@ -10489,11 +10315,9 @@ exports.previewAiVoice = onCall({ invoker: "public", secrets: ["ELEVENLABS_API_K
+   if (!ELEVENLABS_VOICES.some((v) => v.id === voiceId)) {
+     throw new HttpsError("invalid-argument", "Unknown voiceId.");
+   }
+-  if (!process.env.ELEVENLABS_API_KEY) {
+-    throw new HttpsError("failed-precondition", "ElevenLabs isn't configured yet -- add ELEVENLABS_API_KEY and redeploy first.");
+-  }
++
+   const sampleText = "Hi, thanks for calling! How can I help you today?";
+-  const audioBuffer = await elevenLabsTts(sampleText, voiceId);
++  const audioBuffer = await elevenLabsTts(sampleText, voiceId, request.auth.uid);
+   if (!audioBuffer) throw new HttpsError("internal", "Couldn't generate a preview right now -- try again in a moment.");
+   return { ok: true, audioBase64: audioBuffer.toString("base64"), mimeType: "audio/mpeg" };
+ });
+@@ -10534,10 +10358,7 @@ exports.sendBusinessSms = onCall({ invoker: "public" }, async (request) => {
+   const body = await resp.json().catch(() => ({}));
+   if (!resp.ok) throw new HttpsError("internal", "Message failed to send: " + (body.errors ? JSON.stringify(body.errors) : resp.status));
+ 
+-  await logGeniePhoneEvent({
+-    uid, type: "sms", direction: "outbound", otherPartyNumber: to, ownNumber: phone.number,
+-    segments: 1, telnyxId: body.data && body.data.id,
+-  });
++  // Bill actual SMS parts once from the signed message.sent provider callback.
+   return { ok: true, telnyxId: body.data && body.data.id };
+ });
+ 
+@@ -10703,35 +10524,27 @@ async function telnyxCallAction(callControlId, action, payload) {
+  *  picking one doesn't require anything set up on the ElevenLabs account
+  *  beyond the API key. */
+ const ELEVENLABS_VOICES = [
+-  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", desc: "Warm, calm — female" },
+-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella", desc: "Soft, friendly — female" },
+-  { id: "MF3mGyEYCl7XYWbV9V6O", name: "Elli", desc: "Bright, upbeat — female" },
+-  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", desc: "Deep, confident — male" },
+-  { id: "ErXwobaYiN019PkySvjV", name: "Antoni", desc: "Well-rounded, professional — male" },
+-  { id: "TxGEqnHWrfWFTfGW9XjX", name: "Josh", desc: "Deep, casual — male" },
++ {id:'cCYjmrGZaI86GUJ7F2Nn',name:'David',desc:'Documentary and audiobook voice'},
++ {id:'EXAVITQu4vr4xnSDxMaL',name:'Sarah',desc:'Warm and reassuring'},
++ {id:'fATgBRI8wg5KkDFg8vBd',name:'James',desc:'British professional voice'},
+ ];
+ const ELEVENLABS_DEFAULT_VOICE_ID = ELEVENLABS_VOICES[0].id;
+ 
+ /** Calls ElevenLabs' text-to-speech API and returns the raw mp3 bytes, or
+  *  null if the key isn't configured or the call fails (callers fall back
+  *  to Telnyx's own built-in voice so a call never goes dead over this). */
+-async function elevenLabsTts(text, voiceId) {
+-  const apiKey = process.env.ELEVENLABS_API_KEY;
+-  if (!apiKey) return null;
++async function elevenLabsTts(text, voiceId, uid) {
++  if (!uid) return null;
+   try {
+-    const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId || ELEVENLABS_DEFAULT_VOICE_ID}`, {
+-      method: "POST",
+-      headers: { "xi-api-key": apiKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
+-      body: JSON.stringify({ text: String(text).slice(0, 2000), model_id: "eleven_turbo_v2_5" }),
+-    });
+-    if (!resp.ok) {
+-      logger.error("elevenLabsTts: non-OK response", resp.status, await resp.text().catch(() => ""));
+-      return null;
+-    }
+-    const arrayBuffer = await resp.arrayBuffer();
+-    return Buffer.from(arrayBuffer);
++    const R = require('./usage-billing/runtime'), runtime = R.runtime();
++    const voice = Object.entries(runtime.config.voices).find(([, id]) => id === voiceId)?.[0] || 'voice1';
++    const scope = R.context.getStore();
++    const identity = scope?.providerEventId || require('node:crypto').randomUUID();
++    const requestId = 'phone_voice_' + require('./usage-billing/service').hash(identity + ':' + uid + ':' + voice + ':' + text);
++    const result = await runtime.speech.speak(uid, {text:String(text).slice(0,700), voice, requestId});
++    return Buffer.from(result.audio, 'base64');
+   } catch (e) {
+-    logger.error("elevenLabsTts failed", e);
++    logger.warn('Metered phone speech unavailable; using carrier voice', {uid, code:e.code || 'unavailable'});
+     return null;
+   }
+ }
+@@ -10748,7 +10561,7 @@ async function synthesizeSpeechUrl(uid, text) {
+       const snap = await db.collection("genieClients").doc(uid).get();
+       voiceId = (snap.exists && snap.data().phone && snap.data().phone.voiceId) || ELEVENLABS_DEFAULT_VOICE_ID;
+     }
+-    const audioBuffer = await elevenLabsTts(text, voiceId);
++    const audioBuffer = await elevenLabsTts(text, voiceId, uid);
+     if (!audioBuffer) return null;
+     const path = "ai-voice-cache/" + Date.now() + "-" + Math.random().toString(36).slice(2) + ".mp3";
+     const bucket = admin.storage().bucket();
+@@ -10843,7 +10656,7 @@ async function aiReceptionistRespond(callControlId, uid, spokenText, turn, other
+   let replyText;
+   try {
+     const prompt = AI_RECEPTIONIST_PERSONA + "\n\n" + rosterLine + "\n\nCALLER SAID: " + spokenText;
+-    const data = await callAnthropic(prompt, "claude-sonnet-4-5-20250929", 120);
++    const data = await callAnthropicBilled(uid, prompt, "claude-sonnet-4-5-20250929", 120, "phone_ai");
+     replyText = (data.content && data.content[0] && data.content[0].text) || null;
+   } catch (e) {
+     replyText = null;
+@@ -10896,7 +10709,7 @@ async function aiOutreachRespond(callControlId, clientState, spokenText, otherPa
+       "What you opened with: \"" + clientState.script + "\"\n" +
+       "THEY JUST SAID: " + spokenText + "\n" +
+       "Reply naturally and briefly (1-2 sentences), like a real person on a phone call, not a script.";
+-    const data = await callAnthropic(prompt, "claude-sonnet-4-5-20250929", 120);
++    const data = await callAnthropicBilled(uid, prompt, "claude-sonnet-4-5-20250929", 120, "phone_ai");
+     replyText = (data.content && data.content[0] && data.content[0].text) || null;
+   } catch (e) {
+     replyText = null;
+@@ -11142,7 +10955,7 @@ exports.generateDailyBriefs = onSchedule({ schedule: "every day 07:00", region:
+ 
+       let text;
+       try {
+-        const data = await callAnthropic(summaryPrompt, "claude-sonnet-4-5-20250929", 300);
++        const data = { content: [] }; // The factual fallback below uses existing activity; no automatic paid AI generation.
+         text = (data.content && data.content[0] && data.content[0].text) || null;
+       } catch (e) {
+         text = null;
+@@ -11227,3 +11040,8 @@ Object.assign(exports, require('./masterWorkspace').createWorkspaceExports({
+ 
+ // Server-authoritative niche and membership access; client profile.plan is display-only.
+ require('./membership-gates')(exports);
++
++Object.assign(exports, require('./usage-billing/exports').createExports());
++require('./usage-billing/exports').installLegacy(exports, {verifyTelnyx:verifyTelnyxSignature});
++
++exports.mmExportProsHubRecords = require('./usage-billing/export-records').createExport();
