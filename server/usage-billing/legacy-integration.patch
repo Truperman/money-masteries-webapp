@@ -1,8 +1,6 @@
-diff --git a/Users/trujillolaptop/Documents/Codex/2026-09-16/files-mentioned-by-the-user-money/work/usage-production/legacy-before.js b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js
-index 7f0c3ac..8c64dd6 100644
---- a/Users/trujillolaptop/Documents/Codex/2026-09-16/files-mentioned-by-the-user-money/work/usage-production/legacy-before.js
-+++ b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js	
-@@ -138,60 +138,7 @@ async function maybeChargeGenieAccessFee(businessId) {
+--- a/functions/index.js
++++ b/functions/index.js
+@@ -138,60 +138,7 @@
  }
  
  async function writeCreditLedgerEvent(uid, vertical, rawCost, billedCost, meta, pricingVersion) {
@@ -64,7 +62,31 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  /** Re-posts the raw IPN body back to PayPal with cmd=_notify-validate prepended.
-@@ -1788,6 +1735,19 @@ exports.setUserBillingMode = onCall({ invoker: "public" }, async (request) => {
+@@ -1331,16 +1278,14 @@
+  *      set up, usage is still tracked in Firestore so nothing is lost.
+  */
+ 
+-// Claude API pricing per million tokens, current as of Aug 2026
+-// (https://platform.claude.com/docs/en/about-claude/pricing). Update this if
+-// Anthropic changes pricing — it directly controls your profit margin.
+-const ANTHROPIC_PRICING = [
+-  { match: /opus/i, input: 5, output: 25 },
+-  { match: /sonnet/i, input: 3, output: 15 },
+-  { match: /haiku/i, input: 1, output: 5 },
+-];
++// Only provider-verified models can generate paid usage.
+ function priceForModel(model) {
+-  return (ANTHROPIC_PRICING.find((p) => p.match.test(model || "")) || { input: 3, output: 15 });
++  return require('./usage-billing/ai-pricing').priceForModel(model || 'claude-sonnet-4-5-20250929');
++}
++function captureAnthropicReceipt(data) {
++  if (!data.id || !data.usage) throw new HttpsError('failed-precondition', 'The AI provider did not return a verifiable usage receipt.');
++  const scope = require('./usage-billing/runtime').context.getStore();
++  if (scope) { scope.aiReceipts ||= []; if (!scope.aiReceipts.includes(data.id)) scope.aiReceipts.push(data.id); }
+ }
+ 
+ /**
+@@ -1788,9 +1733,23 @@
    return { ok: true, uid, billingMode, billingCadence };
  });
  
@@ -82,9 +104,23 @@ index 7f0c3ac..8c64dd6 100644
 +}
 +
  async function callAnthropic(prompt, model, maxTokens) {
-   const apiKey = process.env.ANTHROPIC_API_KEY;
-   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured in functions/.env");
-@@ -1815,27 +1775,8 @@ async function callAnthropic(prompt, model, maxTokens) {
+-  const apiKey = process.env.ANTHROPIC_API_KEY;
+-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured in functions/.env");
++  priceForModel(model);
++  const apiKey = require('./usage-billing/runtime').runtime().config.aiKey;
++  if (!apiKey) throw new HttpsError('failed-precondition', 'The AI connection is awaiting configuration.');
+   const resp = await fetch("https://api.anthropic.com/v1/messages", {
+     method: "POST",
+     headers: {
+@@ -1808,6 +1767,7 @@
+   if (!resp.ok) {
+     throw new Error("Anthropic API error (" + resp.status + "): " + (data.error && data.error.message ? data.error.message : JSON.stringify(data)));
+   }
++  captureAnthropicReceipt(data);
+   return data;
+ }
+ 
+@@ -1815,27 +1775,8 @@
   *  Stripe billing is fully configured. Safe no-op otherwise — never throws,
   *  so a missing Stripe setup never breaks the AI feature itself. */
  async function reportUsageToStripe(uid, billedCost) {
@@ -114,7 +150,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  exports.askAI = onRequest({ cors: true, invoker: "public", timeoutSeconds: 300 }, async (req, res) => {
-@@ -4332,7 +4273,9 @@ async function seedGenieClientWelcomeMessage(uid, business) {
+@@ -4332,7 +4273,9 @@
   *  (returns broadly useful starter ideas and nudges them toward answering
   *  a few questions for sharper ones next time). */
  async function generateGenieGrowthIdeas(uid, opts) {
@@ -125,7 +161,27 @@ index 7f0c3ac..8c64dd6 100644
    const clientDoc = await db.collection("genieClients").doc(uid).get();
    const client = clientDoc.exists ? clientDoc.data() : {};
    const answeredSnap = await db.collection("genieClients").doc(uid).collection("learningQuestions")
-@@ -4889,7 +4832,7 @@ exports.syncZernioAdSpendBilling = onSchedule({ schedule: "every 6 hours", regio
+@@ -4412,8 +4355,9 @@
+  *  doesn't need the loop (server-executed tools like web_search resolve in
+  *  ONE call and never need this — only client-executed custom tools do). */
+ async function callAnthropicMessages(systemPrompt, messages, model, maxTokens, tools) {
+-  const apiKey = process.env.ANTHROPIC_API_KEY;
+-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured in functions/.env");
++  priceForModel(model);
++  const apiKey = require('./usage-billing/runtime').runtime().config.aiKey;
++  if (!apiKey) throw new HttpsError('failed-precondition', 'The AI connection is awaiting configuration.');
+   const body = {
+     model: model || "claude-sonnet-4-5-20250929",
+     max_tokens: maxTokens || 1024,
+@@ -4434,6 +4378,7 @@
+   if (!resp.ok) {
+     throw new Error("Anthropic API error (" + resp.status + "): " + (data.error && data.error.message ? data.error.message : JSON.stringify(data)));
+   }
++  captureAnthropicReceipt(data);
+   return data;
+ }
+ 
+@@ -4889,7 +4834,7 @@
          if (feeAmount > 0) {
            await writeCreditLedgerEvent(
              biz.ownerUid, "ad-spend", 0, feeAmount,
@@ -134,7 +190,7 @@ index 7f0c3ac..8c64dd6 100644
              feeConfig.pricingVersion || null
            );
          }
-@@ -5394,6 +5337,12 @@ const GENIE_CLIENT_TOOLS = [
+@@ -5394,6 +5339,12 @@
   *  Genie can explain it to the client in its own words rather than the
   *  whole turn failing. */
  async function runGenieClientTool(name, input, ctx) {
@@ -147,7 +203,7 @@ index 7f0c3ac..8c64dd6 100644
    const uid = ctx.uid;
    input = input || {};
    switch (name) {
-@@ -6009,7 +5958,7 @@ exports.getGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
+@@ -6009,7 +5960,7 @@
  exports.refreshGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
    if (!request.auth) throw new HttpsError("unauthenticated", "Please log in.");
    const isAdminPreview = !!(request.auth.token && request.auth.token.previewByAdmin);
@@ -156,7 +212,7 @@ index 7f0c3ac..8c64dd6 100644
    return { ok: true, ideas };
  });
  
-@@ -6519,26 +6468,8 @@ async function getEffectiveLeadMarkupMultiplier(uid, userDocData) {
+@@ -6519,26 +6470,8 @@
   *  reportUsageToStripe exactly, with its own meter-event env var so lead
   *  charges and AI charges can be priced/reported independently. */
  async function reportLeadUsageToStripe(uid, billedCost) {
@@ -185,7 +241,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  function tracerfyHeaders() {
-@@ -6871,26 +6802,8 @@ async function getEffectiveVideoMarkupMultiplier(uid, userDocData) {
+@@ -6871,26 +6804,8 @@
   *  Mirrors reportLeadUsageToStripe exactly, with its own meter-event env
   *  var so video charges can be priced/reported independently. */
  async function reportVideoUsageToStripe(uid, billedCost) {
@@ -214,7 +270,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  /** Uploads a data: URL image to Firebase Storage and returns a public URL —
-@@ -7102,30 +7015,8 @@ const PHONE_MARKUP_MULTIPLIER_FALLBACK = Number(process.env.PHONE_MARKUP_MULTIPL
+@@ -7102,30 +7017,8 @@
   *  client, IF Stripe billing is fully configured — exact mirror of
   *  reportLeadUsageToStripe/reportVideoUsageToStripe above. Never throws. */
  async function reportPhoneUsageToStripe(uid, billedCost) {
@@ -247,7 +303,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  /** Reads config/phonePricing, falling back to PHONE_MARKUP_MULTIPLIER_FALLBACK
-@@ -7289,7 +7180,7 @@ async function logGeniePhoneEvent({ uid, type, direction, otherPartyNumber, ownN
+@@ -7289,7 +7182,7 @@
    });
  
    await reportPhoneUsageToStripe(uid, billedCost);
@@ -256,7 +312,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  /** ProsHub Master "Conversations" tab -- real per-member call/text
-@@ -9160,52 +9051,7 @@ exports.getMyBillingStatus = onCall({ invoker: "public" }, async (request) => {
+@@ -9160,52 +9053,7 @@
   * rather than the generic "try again shortly" message a carded member sees
   * — because for a cardless member there is nothing to auto-settle against.
   */
@@ -310,7 +366,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  /** Stricter than assertUnderExposureLimit's $10-cardless-trial allowance --
-@@ -9216,21 +9062,7 @@ async function assertUnderExposureLimit(uid) {
+@@ -9216,21 +9064,7 @@
   *  other verticals (AI usage) intentionally allow. This is a deliberate,
   *  narrower policy than assertUnderExposureLimit, not a replacement for
   *  it -- both still run where both are wired in. */
@@ -333,7 +389,7 @@ index 7f0c3ac..8c64dd6 100644
  }
  
  /**
-@@ -10489,11 +10321,9 @@ exports.previewAiVoice = onCall({ invoker: "public", secrets: ["ELEVENLABS_API_K
+@@ -10489,11 +10323,9 @@
    if (!ELEVENLABS_VOICES.some((v) => v.id === voiceId)) {
      throw new HttpsError("invalid-argument", "Unknown voiceId.");
    }
@@ -347,7 +403,7 @@ index 7f0c3ac..8c64dd6 100644
    if (!audioBuffer) throw new HttpsError("internal", "Couldn't generate a preview right now -- try again in a moment.");
    return { ok: true, audioBase64: audioBuffer.toString("base64"), mimeType: "audio/mpeg" };
  });
-@@ -10534,10 +10364,7 @@ exports.sendBusinessSms = onCall({ invoker: "public" }, async (request) => {
+@@ -10534,10 +10366,7 @@
    const body = await resp.json().catch(() => ({}));
    if (!resp.ok) throw new HttpsError("internal", "Message failed to send: " + (body.errors ? JSON.stringify(body.errors) : resp.status));
  
@@ -359,7 +415,7 @@ index 7f0c3ac..8c64dd6 100644
    return { ok: true, telnyxId: body.data && body.data.id };
  });
  
-@@ -10703,35 +10530,27 @@ async function telnyxCallAction(callControlId, action, payload) {
+@@ -10703,35 +10532,27 @@
   *  picking one doesn't require anything set up on the ElevenLabs account
   *  beyond the API key. */
  const ELEVENLABS_VOICES = [
@@ -408,7 +464,7 @@ index 7f0c3ac..8c64dd6 100644
      return null;
    }
  }
-@@ -10748,7 +10567,7 @@ async function synthesizeSpeechUrl(uid, text) {
+@@ -10748,7 +10569,7 @@
        const snap = await db.collection("genieClients").doc(uid).get();
        voiceId = (snap.exists && snap.data().phone && snap.data().phone.voiceId) || ELEVENLABS_DEFAULT_VOICE_ID;
      }
@@ -417,7 +473,7 @@ index 7f0c3ac..8c64dd6 100644
      if (!audioBuffer) return null;
      const path = "ai-voice-cache/" + Date.now() + "-" + Math.random().toString(36).slice(2) + ".mp3";
      const bucket = admin.storage().bucket();
-@@ -10843,7 +10662,7 @@ async function aiReceptionistRespond(callControlId, uid, spokenText, turn, other
+@@ -10843,7 +10664,7 @@
    let replyText;
    try {
      const prompt = AI_RECEPTIONIST_PERSONA + "\n\n" + rosterLine + "\n\nCALLER SAID: " + spokenText;
@@ -426,7 +482,7 @@ index 7f0c3ac..8c64dd6 100644
      replyText = (data.content && data.content[0] && data.content[0].text) || null;
    } catch (e) {
      replyText = null;
-@@ -10896,7 +10715,7 @@ async function aiOutreachRespond(callControlId, clientState, spokenText, otherPa
+@@ -10896,7 +10717,7 @@
        "What you opened with: \"" + clientState.script + "\"\n" +
        "THEY JUST SAID: " + spokenText + "\n" +
        "Reply naturally and briefly (1-2 sentences), like a real person on a phone call, not a script.";
@@ -435,7 +491,7 @@ index 7f0c3ac..8c64dd6 100644
      replyText = (data.content && data.content[0] && data.content[0].text) || null;
    } catch (e) {
      replyText = null;
-@@ -11142,7 +10961,7 @@ exports.generateDailyBriefs = onSchedule({ schedule: "every day 07:00", region:
+@@ -11142,7 +10963,7 @@
  
        let text;
        try {
@@ -444,7 +500,7 @@ index 7f0c3ac..8c64dd6 100644
          text = (data.content && data.content[0] && data.content[0].text) || null;
        } catch (e) {
          text = null;
-@@ -11227,3 +11046,8 @@ Object.assign(exports, require('./masterWorkspace').createWorkspaceExports({
+@@ -11227,3 +11048,8 @@
  
  // Server-authoritative niche and membership access; client profile.plan is display-only.
  require('./membership-gates')(exports);
