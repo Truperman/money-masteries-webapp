@@ -31,7 +31,7 @@ service cloud.firestore {
   match /membershipAccess/{uid} {allow read: if own(uid) || admin();allow write: if false;}
   match /products/{id} {
    function validProduct(d){return d.ownerUid is string && d.id is string && d.id.size()<=128 && d.name is string && d.name.size()>0 && d.name.size()<=200 && d.price is number && d.price>=0 && d.price<=1000000;}
-   allow read: if signedIn();
+   allow read: if true; // Published catalog must be viewable by customers before sign-in.
    allow create: if admin() || (niche('ecommerce') && validProduct(request.resource.data) && request.resource.data.ownerUid==request.auth.uid);
    allow update: if admin() || (niche('ecommerce') && resource.data.ownerUid==request.auth.uid && validProduct(request.resource.data) && request.resource.data.ownerUid==resource.data.ownerUid && request.resource.data.id==resource.data.id);
    allow delete: if admin() || (niche('ecommerce') && resource.data.ownerUid==request.auth.uid);
