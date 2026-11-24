@@ -1,6 +1,6 @@
-diff --git a/work/usage-production/legacy-before.js b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js
-index 7f0c3ac..0198378 100644
---- a/work/usage-production/legacy-before.js
+diff --git a/Users/trujillolaptop/Documents/Codex/2026-09-16/files-mentioned-by-the-user-money/work/usage-production/legacy-before.js b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js
+index 7f0c3ac..8c64dd6 100644
+--- a/Users/trujillolaptop/Documents/Codex/2026-09-16/files-mentioned-by-the-user-money/work/usage-production/legacy-before.js
 +++ b/Users/trujillolaptop/Desktop/DESKTOP KEEP/money-masteries-webhook/functions/index.js	
 @@ -138,60 +138,7 @@ async function maybeChargeGenieAccessFee(businessId) {
  }
@@ -134,7 +134,20 @@ index 7f0c3ac..0198378 100644
              feeConfig.pricingVersion || null
            );
          }
-@@ -6009,7 +5952,7 @@ exports.getGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
+@@ -5394,6 +5337,12 @@ const GENIE_CLIENT_TOOLS = [
+  *  Genie can explain it to the client in its own words rather than the
+  *  whole turn failing. */
+ async function runGenieClientTool(name, input, ctx) {
++  if (name === 'browse_and_take_action') return {error:'Independent agent execution is paused until member-specific provider receipts are connected. Use metered Ask Genie for research and drafts.'};
++  const service = {search_properties:'property-lookup',get_property_valuation:'property-valuation'}[name];
++  if (service) return require('./usage-billing/runtime').pricedUnit(ctx.uid, service, () => runGenieClientToolCore(name, input, ctx));
++  return runGenieClientToolCore(name, input, ctx);
++}
++async function runGenieClientToolCore(name, input, ctx) {
+   const uid = ctx.uid;
+   input = input || {};
+   switch (name) {
+@@ -6009,7 +5958,7 @@ exports.getGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
  exports.refreshGenieGrowthIdeas = onCall({ invoker: "public" }, async (request) => {
    if (!request.auth) throw new HttpsError("unauthenticated", "Please log in.");
    const isAdminPreview = !!(request.auth.token && request.auth.token.previewByAdmin);
@@ -143,7 +156,7 @@ index 7f0c3ac..0198378 100644
    return { ok: true, ideas };
  });
  
-@@ -6519,26 +6462,8 @@ async function getEffectiveLeadMarkupMultiplier(uid, userDocData) {
+@@ -6519,26 +6468,8 @@ async function getEffectiveLeadMarkupMultiplier(uid, userDocData) {
   *  reportUsageToStripe exactly, with its own meter-event env var so lead
   *  charges and AI charges can be priced/reported independently. */
  async function reportLeadUsageToStripe(uid, billedCost) {
@@ -172,7 +185,7 @@ index 7f0c3ac..0198378 100644
  }
  
  function tracerfyHeaders() {
-@@ -6871,26 +6796,8 @@ async function getEffectiveVideoMarkupMultiplier(uid, userDocData) {
+@@ -6871,26 +6802,8 @@ async function getEffectiveVideoMarkupMultiplier(uid, userDocData) {
   *  Mirrors reportLeadUsageToStripe exactly, with its own meter-event env
   *  var so video charges can be priced/reported independently. */
  async function reportVideoUsageToStripe(uid, billedCost) {
@@ -201,7 +214,7 @@ index 7f0c3ac..0198378 100644
  }
  
  /** Uploads a data: URL image to Firebase Storage and returns a public URL —
-@@ -7102,30 +7009,8 @@ const PHONE_MARKUP_MULTIPLIER_FALLBACK = Number(process.env.PHONE_MARKUP_MULTIPL
+@@ -7102,30 +7015,8 @@ const PHONE_MARKUP_MULTIPLIER_FALLBACK = Number(process.env.PHONE_MARKUP_MULTIPL
   *  client, IF Stripe billing is fully configured — exact mirror of
   *  reportLeadUsageToStripe/reportVideoUsageToStripe above. Never throws. */
  async function reportPhoneUsageToStripe(uid, billedCost) {
@@ -234,7 +247,7 @@ index 7f0c3ac..0198378 100644
  }
  
  /** Reads config/phonePricing, falling back to PHONE_MARKUP_MULTIPLIER_FALLBACK
-@@ -7289,7 +7174,7 @@ async function logGeniePhoneEvent({ uid, type, direction, otherPartyNumber, ownN
+@@ -7289,7 +7180,7 @@ async function logGeniePhoneEvent({ uid, type, direction, otherPartyNumber, ownN
    });
  
    await reportPhoneUsageToStripe(uid, billedCost);
@@ -243,7 +256,7 @@ index 7f0c3ac..0198378 100644
  }
  
  /** ProsHub Master "Conversations" tab -- real per-member call/text
-@@ -9160,52 +9045,7 @@ exports.getMyBillingStatus = onCall({ invoker: "public" }, async (request) => {
+@@ -9160,52 +9051,7 @@ exports.getMyBillingStatus = onCall({ invoker: "public" }, async (request) => {
   * rather than the generic "try again shortly" message a carded member sees
   * — because for a cardless member there is nothing to auto-settle against.
   */
@@ -297,7 +310,7 @@ index 7f0c3ac..0198378 100644
  }
  
  /** Stricter than assertUnderExposureLimit's $10-cardless-trial allowance --
-@@ -9216,21 +9056,7 @@ async function assertUnderExposureLimit(uid) {
+@@ -9216,21 +9062,7 @@ async function assertUnderExposureLimit(uid) {
   *  other verticals (AI usage) intentionally allow. This is a deliberate,
   *  narrower policy than assertUnderExposureLimit, not a replacement for
   *  it -- both still run where both are wired in. */
@@ -320,7 +333,7 @@ index 7f0c3ac..0198378 100644
  }
  
  /**
-@@ -10489,11 +10315,9 @@ exports.previewAiVoice = onCall({ invoker: "public", secrets: ["ELEVENLABS_API_K
+@@ -10489,11 +10321,9 @@ exports.previewAiVoice = onCall({ invoker: "public", secrets: ["ELEVENLABS_API_K
    if (!ELEVENLABS_VOICES.some((v) => v.id === voiceId)) {
      throw new HttpsError("invalid-argument", "Unknown voiceId.");
    }
@@ -334,7 +347,7 @@ index 7f0c3ac..0198378 100644
    if (!audioBuffer) throw new HttpsError("internal", "Couldn't generate a preview right now -- try again in a moment.");
    return { ok: true, audioBase64: audioBuffer.toString("base64"), mimeType: "audio/mpeg" };
  });
-@@ -10534,10 +10358,7 @@ exports.sendBusinessSms = onCall({ invoker: "public" }, async (request) => {
+@@ -10534,10 +10364,7 @@ exports.sendBusinessSms = onCall({ invoker: "public" }, async (request) => {
    const body = await resp.json().catch(() => ({}));
    if (!resp.ok) throw new HttpsError("internal", "Message failed to send: " + (body.errors ? JSON.stringify(body.errors) : resp.status));
  
@@ -346,7 +359,7 @@ index 7f0c3ac..0198378 100644
    return { ok: true, telnyxId: body.data && body.data.id };
  });
  
-@@ -10703,35 +10524,27 @@ async function telnyxCallAction(callControlId, action, payload) {
+@@ -10703,35 +10530,27 @@ async function telnyxCallAction(callControlId, action, payload) {
   *  picking one doesn't require anything set up on the ElevenLabs account
   *  beyond the API key. */
  const ELEVENLABS_VOICES = [
@@ -395,7 +408,7 @@ index 7f0c3ac..0198378 100644
      return null;
    }
  }
-@@ -10748,7 +10561,7 @@ async function synthesizeSpeechUrl(uid, text) {
+@@ -10748,7 +10567,7 @@ async function synthesizeSpeechUrl(uid, text) {
        const snap = await db.collection("genieClients").doc(uid).get();
        voiceId = (snap.exists && snap.data().phone && snap.data().phone.voiceId) || ELEVENLABS_DEFAULT_VOICE_ID;
      }
@@ -404,7 +417,7 @@ index 7f0c3ac..0198378 100644
      if (!audioBuffer) return null;
      const path = "ai-voice-cache/" + Date.now() + "-" + Math.random().toString(36).slice(2) + ".mp3";
      const bucket = admin.storage().bucket();
-@@ -10843,7 +10656,7 @@ async function aiReceptionistRespond(callControlId, uid, spokenText, turn, other
+@@ -10843,7 +10662,7 @@ async function aiReceptionistRespond(callControlId, uid, spokenText, turn, other
    let replyText;
    try {
      const prompt = AI_RECEPTIONIST_PERSONA + "\n\n" + rosterLine + "\n\nCALLER SAID: " + spokenText;
@@ -413,7 +426,7 @@ index 7f0c3ac..0198378 100644
      replyText = (data.content && data.content[0] && data.content[0].text) || null;
    } catch (e) {
      replyText = null;
-@@ -10896,7 +10709,7 @@ async function aiOutreachRespond(callControlId, clientState, spokenText, otherPa
+@@ -10896,7 +10715,7 @@ async function aiOutreachRespond(callControlId, clientState, spokenText, otherPa
        "What you opened with: \"" + clientState.script + "\"\n" +
        "THEY JUST SAID: " + spokenText + "\n" +
        "Reply naturally and briefly (1-2 sentences), like a real person on a phone call, not a script.";
@@ -422,7 +435,7 @@ index 7f0c3ac..0198378 100644
      replyText = (data.content && data.content[0] && data.content[0].text) || null;
    } catch (e) {
      replyText = null;
-@@ -11142,7 +10955,7 @@ exports.generateDailyBriefs = onSchedule({ schedule: "every day 07:00", region:
+@@ -11142,7 +10961,7 @@ exports.generateDailyBriefs = onSchedule({ schedule: "every day 07:00", region:
  
        let text;
        try {
@@ -431,7 +444,7 @@ index 7f0c3ac..0198378 100644
          text = (data.content && data.content[0] && data.content[0].text) || null;
        } catch (e) {
          text = null;
-@@ -11227,3 +11040,8 @@ Object.assign(exports, require('./masterWorkspace').createWorkspaceExports({
+@@ -11227,3 +11046,8 @@ Object.assign(exports, require('./masterWorkspace').createWorkspaceExports({
  
  // Server-authoritative niche and membership access; client profile.plan is display-only.
  require('./membership-gates')(exports);
