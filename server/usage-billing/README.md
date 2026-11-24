@@ -41,3 +41,9 @@ Code is always **21571**. Offer is ProsHub's existing **$17 every 14 days**, wit
 ## AI connection repair
 
 The invalid legacy environment credential was replaced for funded AI handlers using the existing verified Railway credential in Secret Manager (never client code or git). Explicit supported Sonnet 4.5/4.6 model prices replace guessed family pricing. Provider message IDs are recorded and claimed individually, including multi-call batches; a changed batch cannot charge the same message twice. An operator-funded live inference verified the connection without charging a member.
+
+## Surplus property and calling workflow - local, awaiting activation
+
+New `surplus-data`, `surplus-calling` and `surplus-exports` modules add per-member property previews, paid lead lists, exact property lookups, named former-owner skip traces, private favorites and human callback-first calling. Each provider action binds the authenticated Real Estate member to a private operation and Money Masteries usage account. Quote holds, actual receipts, replay protection and unknown-outcome review prevent automatic duplicate purchases. ProsHub usage funds and charges are not used. No-result data lookups cost zero. New lead contacts export to CSV for ProsHub import.
+
+This extension is NOT deployed or enabled yet. Current blockers: expired Firebase admin authentication; Tracerfy balance 0 and confirmed HTTP 402 on a one-row paid search; carrier configuration and controlled real call test still pending. Full local UI and 12 new backend cases pass. Hosted provider sandbox schema and real free preview succeed. No member charge, real phone call, credit top-up or new recurring carrier rental was made. See work/provider-activation/README.md for exact activation checkpoints. Do not claim those provider gates are complete.

@@ -1,0 +1,29 @@
+'use strict';
+const {onCall,HttpsError}=require('firebase-functions/v2/https');
+const R=require('./runtime');const {defineSecret}=require('firebase-functions/params');const phoneKey=defineSecret('TELNYX_API_KEY'),publicKey=defineSecret('TELNYX_PUBLIC_KEY');
+async function calling(v){const cfg=(await require('firebase-admin/firestore').getFirestore().doc('config/surplusProviders').get()).data()||{};return require('./surplus-calling').createCalling({db:v.db,billing:v.billing,key:phoneKey.value(),config:cfg});}
+function createSurplusExports(){
+ const call=(fn,paid=false)=>onCall({region:'us-central1',invoker:'public',secrets:[R.secret],maxInstances:5,timeoutSeconds:120},async r=>{try{const runtime=R.runtime(),u=await runtime.identity(r);if(r.auth?.token?.previewByAdmin)throw new HttpsError('permission-denied','Provider services are unavailable in impersonation previews.');await runtime.membership.assertNiche(r,'realestate');if(paid)await runtime.billing.assert(u.uid);return await fn(u.uid,r.data||{},runtime);}catch(e){throw R.asHttps(e);}});
+ function service(v){return require('./surplus-data').createSurplusData({db:v.db,billing:v.billing,key:process.env.TRACERFY_API_KEY,priceCredits:async credits=>{const p=(await require('firebase-admin/firestore').getFirestore().doc('config/pricingEngine/services/leads').get()).data();if(!p?.verified||p.pricing_method!=='multiplier'||!Number.isFinite(p.multiplier)||p.multiplier<1||p.multiplier>20)throw new HttpsError('failed-precondition','Lead usage pricing requires administrator verification.');const costNanoUsd=credits*20000000;return {costNanoUsd,chargeNanoUsd:Math.round(costNanoUsd*p.multiplier),rateVersion:'tracerfy-credit-usd-002-'+String(p.pricing_version||'current')+'-'+p.multiplier+'x'};}});}
+ const phoneCall=fn=>onCall({region:'us-central1',invoker:'public',secrets:[R.secret,phoneKey],maxInstances:3,timeoutSeconds:60},async r=>{try{const v=R.runtime(),uid=await v.membership.assertNiche(r,'realestate');if(r.auth?.token?.previewByAdmin)throw new HttpsError('permission-denied','Calling is unavailable in impersonation previews.');return await fn(uid,r.data||{},await calling(v));}catch(e){throw R.asHttps(e);}});
+ return {
+ mmSurplusReconcile:require('firebase-functions/v2/scheduler').onSchedule({region:'us-central1',schedule:'every 15 minutes',secrets:[R.secret],maxInstances:1,timeoutSeconds:540},async()=>{const v=R.runtime(),s=service(v),pending=await v.db.collection('surplusOperations').where('state','in',['pending','received']).limit(50).get();for(const row of pending.docs){try{await s.poll(row.data().uid,row.id);}catch(e){require('firebase-functions/logger').warn('Surplus operation needs review',{operationId:row.id,code:e.code||'unavailable'});}}const expired=await v.db.collection('surplusVerificationSpeech').where('expiresAt','<',Date.now()).limit(200).get();if(!expired.empty){const batch=v.db.batch();for(const d of expired.docs)batch.delete(d.ref);await batch.commit();}}),
+ mmSurplusPhoneSetup:phoneCall((uid,d,s)=>s.verification(uid,d)),
+ mmSurplusPhoneVerify:phoneCall((uid,d,s)=>s.verify(uid,d)),
+ mmSurplusCall:phoneCall((uid,d,s)=>s.call(uid,d)),
+ mmSurplusCallStatus:phoneCall((uid,d,s)=>s.status(uid,d.operationId)),
+ mmSurplusHangup:phoneCall((uid,d,s)=>s.hangup(uid,d.operationId)),
+ mmSurplusCallWebhook:require('firebase-functions/v2/https').onRequest({region:'us-central1',invoker:'public',secrets:[R.secret,phoneKey,publicKey],maxInstances:5,timeoutSeconds:60},async(req,res)=>{try{const timestamp=req.headers['telnyx-timestamp'],signature=req.headers['telnyx-signature-ed25519'];if(!signature||!timestamp||Math.abs(Date.now()/1000-Number(timestamp))>300||!Number.isFinite(Number(timestamp)))return res.status(401).end();const crypto=require('node:crypto'),key=crypto.createPublicKey({key:Buffer.concat([Buffer.from('302a300506032b6570032100','hex'),Buffer.from(publicKey.value(),'base64')]),format:'der',type:'spki'});if(!crypto.verify(null,Buffer.concat([Buffer.from(timestamp+'|'),req.rawBody]),key,Buffer.from(signature,'base64')))return res.status(401).end();const v=R.runtime(),s=await calling(v);await require('./provider-events').runProviderEvent({db:v.db,provider:'telnyx_surplus',eventId:req.body?.data?.id,data:req.body?.data,handler:async(a,b)=>{await s.event(a.body.data);b.json({received:true});},req,res});}catch{res.status(500).json({error:'Carrier event requires review.'});}}),
+ mmSurplusStatus:call(async(uid,d,v)=>{let available=false;try{const a=await service(v).provider('/v1/api/analytics/');available=Number(a.balance)>0;}catch{}const cfg=(await require('firebase-admin/firestore').getFirestore().doc('config/surplusProviders').get()).data()||{};return {platform:'money_masteries',dataConnected:!!process.env.TRACERFY_API_KEY,dataFunded:available,callingReady:cfg.enabled===true,usageBilledSeparately:true};}),
+ mmSurplusQuote:call((uid,d,v)=>service(v).quote(d.kind,Math.min(50,Math.max(1,Number(d.count)||1)))),
+ mmSurplusPreview:call((uid,d,v)=>service(v).preview(d)),
+ mmSurplusSearch:call((uid,d,v)=>service(v).execute(uid,d),true),
+ mmSurplusSearchStatus:call((uid,d,v)=>service(v).poll(uid,d.operationId)),
+ mmSurplusPropertyLookup:call((uid,d,v)=>service(v).lookup(uid,d,'property'),true),
+ mmSurplusSkipTrace:call((uid,d,v)=>service(v).lookup(uid,d,'trace'),true),
+ mmSurplusLeads:call((uid,d,v)=>service(v).leads(uid)),
+ mmSurplusSaveLead:call((uid,d,v)=>service(v).save(uid,d)),
+ mmSurplusFavorite:call((uid,d,v)=>service(v).favorite(uid,d)),
+ };
+}
+module.exports={createSurplusExports};

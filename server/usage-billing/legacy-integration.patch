@@ -500,7 +500,7 @@
          text = (data.content && data.content[0] && data.content[0].text) || null;
        } catch (e) {
          text = null;
-@@ -11227,3 +11048,8 @@
+@@ -11227,3 +11048,11 @@
  
  // Server-authoritative niche and membership access; client profile.plan is display-only.
  require('./membership-gates')(exports);
@@ -509,3 +509,6 @@
 +require('./usage-billing/exports').installLegacy(exports, {verifyTelnyx:verifyTelnyxSignature});
 +
 +exports.mmExportProsHubRecords = require('./usage-billing/export-records').createExport();
++
++// Member-scoped property, skip trace and personal calling from Surplus Funds.
++Object.assign(exports, require('./usage-billing/surplus-exports').createSurplusExports());
