@@ -14700,7 +14700,7 @@ function startCountdown() {
 }
 
 // ── UPGRADE MODAL ────────────────────────────────────────────────────────────
-const MM_TIER_LABELS = { basic: 'Basic', pro: 'Pro', elite: 'Elite' };
+const MM_TIER_LABELS = { pro: 'Pro', elite: 'Elite' };
 function openUpgradeModal(plan) {
   // If the caller already knows which tier the visitor wants (e.g. a specific
   // comp-plan card's "Subscribe Now" button, or a store "Subscribe" button on
@@ -15581,9 +15581,8 @@ window.checkoutGenieWithPromo = checkoutGenieWithPromo;
 // on that doc) is what gets the sponsor's commission credited, same as
 // paypalIPN used to do.
 const MEMBERSHIP_PAYMENT_LINKS = {
-  basic: { monthly: 'https://buy.stripe.com/5kQ9AS10PeFsctJ6a14Rq07', yearly: 'https://buy.stripe.com/6oU00i5h554S8dtaqh4Rq0h' },
-  pro: { monthly: 'https://buy.stripe.com/fZuaEWeRF1SG3Xdbul4Rq08', yearly: 'https://buy.stripe.com/bJeeVcaBpdBodxN55X4Rq0i' },
-  elite: { monthly: 'https://buy.stripe.com/7sY8wO6l954S9hx7e54Rq0n', yearly: 'https://buy.stripe.com/5kQ14m7pdcxkeBRgOF4Rq0j' },
+  pro: { monthly: 'https://buy.stripe.com/fZuaEWeRF1SG3Xdbul4Rq08' },
+  elite: { monthly: 'https://buy.stripe.com/7sY8wO6l954S9hx7e54Rq0n' },
 };
 function openMembershipCheckout(plan) {
   const tier = String(plan || '').toLowerCase();
@@ -15626,7 +15625,7 @@ window.checkoutMembershipWithPromo = checkoutMembershipWithPromo;
 // (see MEMBERSHIP_PAYMENT_LINKS / GENIE_PAYMENT_LINKS above and
 // functions/index.js MEMBERSHIP_TIER_FLAT_PRICE_IDS / GENIE_TIER_FLAT_PRICE_IDS).
 window.mmBillingInterval = window.mmBillingInterval || 'monthly';
-const MM_MEMBERSHIP_PRICES = { basic: { monthly: 19.99, yearly: 199.90 }, pro: { monthly: 50, yearly: 500 }, elite: { monthly: 97, yearly: 990 } };
+const MM_MEMBERSHIP_PRICES = { pro: { monthly: 50 }, elite: { monthly: 97 } };
 const MM_GENIE_PRICES = { chat: { monthly: 50, yearly: 500 }, master: { monthly: 99, yearly: 990 }, super: { monthly: 297, yearly: 2970 } };
 function mmFmtPrice(n) {
   return (Math.round(n * 100) % 100 === 0) ? String(Math.round(n)) : n.toFixed(2);
@@ -26756,7 +26755,6 @@ window.cmLoadLibrary = cmLoadLibrary;
 
 // ── My Account: self-serve membership upgrade/downgrade ──────────────────
 const ACCT_PLAN_META = {
-  basic: { label: 'Basic', price: '$19.99/mo', color: '#6b7280' },
   pro:   { label: 'Pro',          price: '$50/mo',    color: '#2E7BFF' },
   elite: { label: 'Elite',        price: '$97/mo',    color: '#a855f7' },
 };
@@ -27870,5 +27868,7 @@ function reiCalc(){
 <script src="assets/trading-workspace.js?v=20261103"></script>
 <script src="assets/business-focus.js?v=20261111"></script>
 <script src="assets/elite-enrollment.js?v=20261123"></script>
+<script src="assets/membership-options.js?v=20261123"></script>
+<script src="assets/member-numbers.js?v=20261123"></script>
 </body>
 </html>
