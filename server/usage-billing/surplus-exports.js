@@ -1,6 +1,6 @@
 'use strict';
 const {onCall,HttpsError}=require('firebase-functions/v2/https');
-const R=require('./runtime');const {defineSecret}=require('firebase-functions/params');const dataKey=defineSecret('MM_SURPLUS_TRACERFY_KEY'),phoneKey=defineSecret('TELNYX_API_KEY'),publicKey=defineSecret('TELNYX_PUBLIC_KEY');
+const R=require('./runtime');const {defineSecret}=require('firebase-functions/params');const dataKey=defineSecret('MM_SURPLUS_TRACERFY_KEY'),phoneKey=defineSecret('MM_SURPLUS_TELNYX_KEY'),publicKey=defineSecret('MM_SURPLUS_TELNYX_PUBLIC_KEY');
 async function calling(v){const cfg=(await require('firebase-admin/firestore').getFirestore().doc('config/surplusProviders').get()).data()||{};return require('./surplus-calling').createCalling({db:v.db,billing:v.billing,key:phoneKey.value(),config:cfg});}
 function createSurplusExports(){
  const call=(fn,paid=false)=>onCall({region:'us-central1',invoker:'public',secrets:[R.secret,dataKey],maxInstances:5,timeoutSeconds:120},async r=>{try{const runtime=R.runtime(),u=await runtime.identity(r);if(r.auth?.token?.previewByAdmin)throw new HttpsError('permission-denied','Provider services are unavailable in impersonation previews.');await runtime.membership.assertNiche(r,'realestate');if(paid)await runtime.billing.assert(u.uid);return await fn(u.uid,r.data||{},runtime);}catch(e){throw R.asHttps(e);}});
