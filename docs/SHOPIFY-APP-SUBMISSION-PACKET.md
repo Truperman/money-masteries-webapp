@@ -29,6 +29,7 @@ This standalone, non-embedded connector authenticates a signed launch from Shopi
 Owned-store QA created a synthetic product through the actual deployed member endpoint. Shopify returned the expected DRAFT status, price, SKU and ready product image; repeat export did not duplicate it. Synthetic records were cleaned up. The owner separately completed the browser connection to the development store; the server confirmed that owner's link and encrypted refresh credential. Test data is not sales, traffic, earnings or customer performance.
 
 ## Outstanding submission fields and checks
+- Local security work: see `SHOPIFY-SECURITY-SETUP.md` for the current focused scan, recorded checks, coverage limits and dashboard handoff. Local scan results are not a submitted review.
 - Shopify API network/IP allowlist: configure and verify appropriate hosting-provider networks/countries in Dev Dashboard, then enable enforcement. Do not guess ASNs or use an unrestricted rule.
 - Confirm the paid-account/billing arrangement with Shopify, including handling new merchants acquired through an App Store listing.
 - Verify the final listing name, icon, screenshots and any required demonstration/reviewer account. Supply actual business/contact/legal fields requested by Shopify; none have been fabricated here.

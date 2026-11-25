@@ -1,6 +1,6 @@
 # Shopify public-distribution readiness — November 25, 2026
 
-Canonical local-review requirements fetched through Shopify CLI: 100. Evaluated core requirements: 31. Likely passing: 24. Needs review: 7. Likely failing: 0. Category requirements skipped: 69 across 10 groups.
+Canonical local-review requirements fetched through Shopify CLI: 100. Evaluated core requirements: 31. Likely passing: 25. Needs review: 6. Likely failing: 0. Category requirements skipped: 69 across 10 groups.
 
 This is a local review of the selected locally checkable criteria, not Shopify approval or an App Store submission. Public connections remain disabled.
 
@@ -32,7 +32,7 @@ The app is explicitly non-embedded and has no deployed Admin UI extension. Verif
 
 ### 2.3.3 Redirect to the app UI after installation
 
-Callback-to-Money-Masteries UI and explicit account linking are implemented and tested with fixtures. A live merchant browser OAuth/linking run remains to be witnessed.
+Callback-to-Money-Masteries UI and explicit account linking are implemented and tested with fixtures. The owner separately completed the browser flow on the owned development store; the server confirmed the owner-scoped link and encrypted refresh credential. This requirement is now locally likely passing; the browser was not visually inspected by the agent.
 
 ## Core requirement ledger
 
@@ -61,7 +61,7 @@ Callback-to-Money-Masteries UI and explicit account linking are implemented and 
 | 2.2.7 Only launch Max modal with merchant interaction | Likely passing within connector scope |
 | 2.3.1 Initiate installation from a Shopify-owned surface | Likely passing within connector scope |
 | 2.3.2 Authenticate immediately after install | Likely passing within connector scope |
-| 2.3.3 Redirect to the app UI after installation | Needs review |
+| 2.3.3 Redirect to the app UI after installation | Likely passing within connector scope |
 | 2.3.4 Require OAuth authentication immediately after reinstall | Likely passing within connector scope |
 | 3.1.1 Use a valid TLS/SSL certificate | Likely passing within connector scope |
 | 3.2.1 Request read_all_orders access scope only if it provides necessary app functionality | Likely passing within connector scope |
@@ -90,7 +90,7 @@ All requirements inside those groups are skipped; they are not silently counted 
 ## Remaining submission work
 
 - Confirm the existing Elite billing arrangement with Shopify; preserve the approved $50/$97 Money Masteries memberships and separate usage billing unless the owner explicitly approves a change.
-- Complete live browser OAuth and linking on the owned development store. API export success does not prove browser OAuth.
+- Owner browser OAuth/linking is now independently confirmed by the server-owned connection record. Public member installation still requires Shopify distribution review.
 - Prepare the final App Store listing/support/privacy materials and any required registration, account/security and review steps in Shopify Dev Dashboard. No registration fee has been approved or paid.
 - Obtain actual distribution approval and an assigned installation URL before the owner enables public connections.
 - Affiliate acceptance is a separate process. A reconsideration email was sent at the owner's instruction; no affiliate link has been approved.
