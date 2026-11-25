@@ -53,7 +53,7 @@
     },
     {
       id: "creativemaster",
-      name: "Creative Tools",
+      name: "Creative Studio",
       category: "CREATE",
       icon: "✳",
       color: "#cbb2ef",
@@ -103,7 +103,7 @@
     },
     {
       id: "saasmaster",
-      name: "Website Tools",
+      name: "Website & Store · Elite",
       category: "BUILD",
       icon: "⟨/⟩",
       color: "#d4b3e9",
@@ -224,7 +224,7 @@
     section.innerHTML = `<div class="mm-page-head"><div><div class="mm-eyebrow">YOUR BUSINESS WORKSPACE</div><p id="mmWelcome">Good to see you. Let’s make your next move count.</p></div><span class="mm-tag">Learn · Build · Grow</span></div>
       <section class="mm-hero"><div><div class="mm-eyebrow">SMALL STEPS. REAL PROGRESS.</div><h1>Build something<br>that <span>earns.</span></h1><p>Your ideas deserve a working plan. Choose a Master, then use your tools to learn a skill, create an offer, and build a business—one useful step at a time.</p><div class="mm-actions"><button class="mm-btn primary" data-mm-action="navigate" data-route="businessautomation">Meet your agent team <span>↗</span></button><button class="mm-btn" data-mm-action="explore">Explore Masters & Tools ↓</button></div></div><div class="mm-scene" aria-hidden="true"><div class="mm-scene-stack"><div class="mm-slab">M<span style="font-size:25px;align-self:center">↗</span></div><div class="mm-slab"></div><div class="mm-slab"></div></div><div class="mm-orbit-label a"><i></i>Ideas → action</div><div class="mm-orbit-label b">A team behind your next move</div></div></section>
       <div class="mm-overview"><article><small>Your membership</small><strong id="mmPlan">—</strong><span>Tools for your next stage</span></article><article><small>Recorded earnings</small><strong id="mmEarned">$0.00</strong><span>From your account history</span></article><article><small>Your next move</small><strong>One clear goal</strong><span>Start small. Measure the result.</span></article></div>
-      <div class="mm-section-head"><div><h2>From idea to your first offer</h2><p>A practical path through the tools.</p></div></div><div class="mm-path"><button data-mm-action="navigate" data-route="universitymaster"><span class="step">01 / LEARN</span><strong>Choose a useful skill</strong><small>Start with University Tools →</small></button><button data-mm-action="navigate" data-route="creativemaster"><span class="step">02 / CREATE</span><strong>Make your offer tangible</strong><small>Build with Creative Tools →</small></button><button data-mm-action="navigate" data-route="mystoremaster"><span class="step">03 / LAUNCH</span><strong>Give customers a next step</strong><small>Open Ecommerce Master →</small></button><button data-mm-action="navigate" data-route="businessautomation"><span class="step">04 / GROW</span><strong>Build a repeatable process</strong><small>Plan with Business Automation →</small></button></div>
+      <div class="mm-section-head"><div><h2>From idea to your first offer</h2><p>A practical path through the tools.</p></div></div><div class="mm-path"><button data-mm-action="navigate" data-route="universitymaster"><span class="step">01 / LEARN</span><strong>Choose a useful skill</strong><small>Start with University Tools →</small></button><button data-mm-action="navigate" data-route="creativemaster"><span class="step">02 / CREATE</span><strong>Make your offer tangible</strong><small>Build with Creative Studio →</small></button><button data-mm-action="navigate" data-route="mystoremaster"><span class="step">03 / LAUNCH</span><strong>Give customers a next step</strong><small>Open Ecommerce Master →</small></button><button data-mm-action="navigate" data-route="businessautomation"><span class="step">04 / GROW</span><strong>Build a repeatable process</strong><small>Plan with Business Automation →</small></button></div>
       <div class="mm-section-head" id="mmMastersHeading"><div><h2>Your Tools</h2><p>The right tool for what you’re building.</p></div><label><span class="sr-only" style="position:absolute;clip:rect(0,0,0,0)">Find a tool</span><input class="mm-search" id="mmMasterSearch" placeholder="Find a tool…" type="search"></label></div><div class="mm-master-grid">${MASTERS.map((m) => `<button class="mm-master-card" data-mm-action="navigate" data-route="${m.id}" data-search="${esc((m.name + " " + m.text).toLowerCase())}" style="--icon-color:${m.color}"><span class="mm-card-top"><span class="mm-master-icon" aria-hidden="true">${m.icon}</span><span class="mm-tag ${m.id === "businessautomation" ? "featured" : ""}">${m.tag}</span></span><h3>${m.name}</h3><p>${m.text}</p><span class="mm-card-bottom"><span>${m.category}</span><span aria-hidden="true">↗</span></span></button>`).join("")}</div><p id="mmNoMasters" class="mm-muted" hidden>No tools match your search.</p>`;
     area.prepend(section);
     const featured = document.createElement("section");
