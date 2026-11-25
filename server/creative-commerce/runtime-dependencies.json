@@ -1,0 +1,1 @@
+{"node":"22","dependencies":{"@shopify/shopify-api":"15.1.2"},"note":"Install in the authoritative Firebase functions package. Secrets stay in private provider settings encrypted with MM_CREATIVE_CONFIG. Never copy app .env files into this repository."}
