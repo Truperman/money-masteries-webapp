@@ -1,0 +1,8 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Uploads and metadata are only written by authenticated server actions.
+    // Explicit bearer download URLs are used for member-selected shared media.
+    match /{object=**} { allow read, write: if false; }
+  }
+}

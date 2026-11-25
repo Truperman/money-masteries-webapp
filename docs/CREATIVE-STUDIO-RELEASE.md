@@ -26,3 +26,10 @@ Ad network spending is charged directly by the member's ad account. It is separa
 
 ## Validation
 Unit tests exercise billing/identity/ownership, price changes, rejection/uncertainty, OAuth/HMAC/browser/member binding, recurring cost scoping and deduplication. A real Firestore emulator tests concurrent provider submission, transaction conflicts, separate members' exposure and recurring settlement. Browser tests use a fixture backend for actual upload controls, saved form values, library/campaign/catalog/CSV flows, plan differences, account switching and 390px layout. Editor testing imports a synthetic clip, uses actual FableCut operations and encodes a playable H.264 MP4. Live provider generation/posting/advertising and Shopify merchant acceptance are not claimed by these tests.
+
+## Production verification — 2026-11-24
+Firebase's previously unprovisioned media bucket was created in US-CENTRAL1 through the official defaultBucket API. Storage rules deny direct browser reads/writes; server-selected bearer links serve intentionally shared creative. Storage rules/config are included beside this module.
+
+All seven selected Firebase exports deployed successfully. Railway deployment 7b7ac01f-24e5-436f-8747-1b336fbc0669 initially published commit ea99890. Seventeen live checks passed with disposable Pro/Elite accounts: entitlement gates, rejected payer spoofing, approved-provider gate, real cloud upload and cross-member rejection, CSV price/SKU preservation, private database denial, website preview/publication/unpublication, Shopify readiness gates, no-card billing block, real signed-in browser library/site loading and mobile Plans fit. Synthetic QA identities, records and objects were deleted. No generation, social post, ad, member charge or real customer data was used.
+
+68 unit tests passed, plus actual Firestore concurrency tests, browser workflow tests and an encoded H.264 MP4 editor test (720×1280, approximately one second). Later small frontend refinements keep the plan comparison ahead of billing panels and return upload errors to the open editor.
