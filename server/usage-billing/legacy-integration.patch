@@ -500,7 +500,7 @@
          text = (data.content && data.content[0] && data.content[0].text) || null;
        } catch (e) {
          text = null;
-@@ -11227,3 +11048,11 @@
+@@ -11227,3 +11048,13 @@
  
  // Server-authoritative niche and membership access; client profile.plan is display-only.
  require('./membership-gates')(exports);
@@ -512,3 +512,5 @@
 +
 +// Member-scoped property, skip trace and personal calling from Surplus Funds.
 +Object.assign(exports, require('./usage-billing/surplus-exports').createSurplusExports());
++
++Object.assign(exports, require('./usage-billing/proshub-connection').createExports());
