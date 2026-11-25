@@ -21,3 +21,7 @@ Email outputs are drafts, not automated sends. Photography outputs are direction
 ## Verification
 
 80 unit tests pass, including ownership/entitlement/spoofing, concurrent revisions, bounded drafts/observations and calculator edge cases. New browser workflow test covers five tabs, nested builder, AI consent and editable/saveable output, stale drafts, draft-only storefront handoff, margin and experiment math, download, failure recovery, account switching/sign-out and 320–1400px fit. Existing Creative Studio browser suite also passes. Browser suites use fixture backends. Production acceptance is recorded separately after deployment.
+
+## Production acceptance
+
+mmCreativeStudio deployed successfully. The frontend was merged into railway-migration and published on www.moneymasteries.com. Thirteen production checks passed: unauthenticated/Pro denial, authenticated private save/reopen, other-member isolation, spoofed member rejection, stale revision rejection, direct database denial, signed-in browser reload, five tabs, nested website builder and mobile/desktop fit. Temporary synthetic accounts and their records were removed. No paid AI request or message was submitted.
