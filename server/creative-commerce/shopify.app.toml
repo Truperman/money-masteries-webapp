@@ -1,0 +1,26 @@
+# Money Masteries Commerce — standalone product export integration
+client_id = "fec0c46621786eebe98ba9fec43b861c"
+name = "Money Masteries Commerce"
+application_url = "https://us-central1-money-masteries-2cc76.cloudfunctions.net/mmShopifyInstall"
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = false
+
+[access_scopes]
+scopes = "read_products,write_products"
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = ["https://us-central1-money-masteries-2cc76.cloudfunctions.net/mmShopifyCallback"]
+
+[webhooks]
+api_version = "2026-10"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "https://us-central1-money-masteries-2cc76.cloudfunctions.net/mmShopifyWebhook"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://us-central1-money-masteries-2cc76.cloudfunctions.net/mmShopifyWebhook"
