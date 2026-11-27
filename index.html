@@ -15,7 +15,7 @@
 
 <!-- Firebase SDKs -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { initializeMemberSession, installPasswordControls } from "/assets/admin-access.js?v=20261127";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -41,7 +41,7 @@
   };
   // ───────────────────────────────────────────────────────────────────────────
 
-  const app  = initializeApp(firebaseConfig);
+  const app  = await initializeMemberSession(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const storage = getStorage(app);
@@ -616,6 +616,8 @@
       if (statusEl) { statusEl.textContent = 'Could not save — try again.'; statusEl.style.color = '#f87171'; }
     }
   };
+
+  installPasswordControls(auth);
 
   // ── AUTH STATE ─────────────────────────────────────────────────────────────
   onAuthStateChanged(auth, async (user) => {
@@ -1491,7 +1493,7 @@
           '<option value="elite"' + (plan==='elite'?' selected':'') + '>Elite (comped)</option>' +
         '</select></td>' +
         '<td><input class="admin-disc-input" id="disc-' + m.id + '" type="number" min="0" max="100" value="' + disc + '"></td>' +
-        '<td style="white-space:nowrap"><button class="admin-save-btn" onclick="adminSaveMember(\'' + m.id + '\', this)">Apply</button> <button class="admin-edit-btn" onclick="adminOpenEdit(\'' + m.id + '\')">⚙ Edit</button></td>' +
+        '<td style="white-space:nowrap"><button class="admin-save-btn" onclick="adminSaveMember(\'' + m.id + '\', this)">Apply</button> <button class="admin-edit-btn" onclick="adminOpenEdit(\'' + m.id + '\')">⚙ Edit</button> <button class="admin-edit-btn" onclick="mmAdminOpenAccount(\'' + m.id + '\')">Log in</button></td>' +
       '</tr>';
     }).join('');
     if (typeof window.renderPayoutsTable === 'function') window.renderPayoutsTable(list);
